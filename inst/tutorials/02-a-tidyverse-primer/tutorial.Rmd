@@ -27,12 +27,19 @@ options(tutorial.exercise.timelimit = 60,
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
-<!-- CHECKLIST BEFORE STARTING: -->
-<!-- * Edit yaml at the top of this file -->
-<!-- * Save the file as "tutorial.Rmd" in a new directory under inst/tutorials/. -->
-<!-- * Load any necessary libraries for the tutorial in the first code chunk -->
-<!-- * Review: https://ppbds.github.io/tutorial.helpers/articles/instructions.html -->
-<!-- * Delete this and the other commented instructions below. -->
+<!-- DK: Fix introduction. -->
+
+<!-- Use this order: -->
+
+<!-- mtcars -->
+<!-- mtcars[1, ] -->
+<!-- mtcars[c(2, 4), ] -->
+<!-- mtcars[c(4, 2), ] -->
+<!-- mtcars$gear -->
+<!-- order(mtcars$gear) -->
+<!-- mtcars[order(mtcars$gear), ] -->
+
+<!-- Do Summary. -->
 
 ## Introduction
 ### 
@@ -41,7 +48,10 @@ In this tutorial, we briefly discuss important principles of the `tidyverse` des
 
 
 ## Tidyverse principles
-The full set of strategies and tactics for writing R code in the tidyverse style can be found at the website https://design.tidyverse.org. Here we can briefly describe several of the general tidyverse design principles, their motivation, and how we think about modeling as an application of these principles.
+###
+
+The full set of strategies and tactics for writing R code in the *Tidyverse* style can be found at the website https://design.tidyverse.org. Here we can briefly describe several of the general *Tidyverse* design principles, their motivation, and how we think about modeling as an application of these principles.
+
 ### 
 
 ### Exercise 1
@@ -58,7 +68,7 @@ library(...)
 
 ### 
 
-At first we will not be using the tidyverse functions, as we are trying to understand the core language of R. We will be using data frame `mtcars` to understand this language.
+At first we will not be using the **tidyverse** functions, as we are trying to understand the core language of R. We will be using data frame `mtcars` to understand this language.
 
 ### Exercise 2
 
