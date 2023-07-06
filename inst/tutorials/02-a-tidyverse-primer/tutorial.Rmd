@@ -14,6 +14,8 @@ description: 'Tutorial for Chapter 2: A Tidyverse Primer'
 ```{r setup, include = FALSE}
 library(learnr)
 library(tutorial.helpers)
+library(tidyverse)
+library(tidymodels)
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
         tutorial.storage = "local") 
@@ -35,43 +37,48 @@ options(tutorial.exercise.timelimit = 60,
 ## Introduction
 ### 
 
-<!-- Two to four sentence about the main topics covered in this tutorial. Why are we here? What will students get out of giving you 90 minutes of their lives? How does this tutorial connect to other tutorials? -->
+In this tutorial, we briefly discuss important principles of the `tidyverse` design philosophy and how they apply in the context of modeling software that is easy to use properly and supports good statistical practices. Both `tidymodels` and the `tidyverse` build on the R language, and `tidymodels` applies `tidyverse` principles to building models.
+
 
 ## Tidyverse principles
+The full set of strategies and tactics for writing R code in the tidyverse style can be found at the website https://design.tidyverse.org. Here we can briefly describe several of the general tidyverse design principles, their motivation, and how we think about modeling as an application of these principles.
 ### 
 
 ### Exercise 1
 
-Type `mtcars` and hit "Run Code."
+First, load the `tidyverse` library.
 
 ```{r tidyverse-principles-1, exercise = TRUE}
 
 ```
 
-
 ```{r tidyverse-principles-1-hint-1, eval = FALSE}
-mtcars
+library(...)
 ```
 
 ### 
 
-`mtcars` is an R dataframe with information about `r dim(mtcars)[1]` cars. 
+At first we will not be using the tidyverse functions, as we are trying to understand the core language of R. We will be using data frame `mtcars` to understand this language.
 
 ### Exercise 2
+
+Type `mtcars` and hit "Run Code."
 
 ```{r tidyverse-principles-2, exercise = TRUE}
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
-
 ```{r tidyverse-principles-2-hint-1, eval = FALSE}
-
+mtcars
 ```
 
 ### 
 
+`mtcars` is an R data frame with information about 32 cars. 
+
 ### Exercise 3
+
+Now we will sort the data frame by the column `gears`. We can do this by using the `order()` function. After copying the previous code, put `mtcars$gear` in `[]`. Don't forget the `,` after the order() expression!
 
 ```{r tidyverse-principles-3, exercise = TRUE}
 
@@ -80,14 +87,82 @@ mtcars
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-principles-3-hint-1, eval = FALSE}
+mtcars[order(mtcars$...),]
+```
+
+### 
+
+As you can see, the mtcars data frame column `mpg` is traditionally ordered from descending order. 
+
+### Exercise 4
+
+Copy the code from above and order the `mpg` column as well by adding it to the `order()` function. Don't forget the `,` after the `order()` function!
+
+```{r tidyverse-principles-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-principles-4-hint-1, eval = FALSE}
+mtcars[order(mtcars$gear, mtcars$mpg), ]
+```
+
+### 
+
+We have now successfully order the data frame `mtcars` by `mpg` and `gears`. You can see that for each `gear` value, the `mpg` is in descending order.
+
+### 
+
+### Exercise 5
+
+Run the code below.
+
+```{r tidyverse-principles-5, exercise = TRUE}
+arrange(.data = mtcars, gear, mpg)
 
 ```
 
 ### 
 
-### Exercise 4
+Notice that the output is the exactly similar in Excerise 4. This is the way order a data frame using the `tidyverse` function `arrange()`.
 
-```{r tidyverse-principles-4}
+### 
+
+Great job! You have learned the core language of R and compared its functionality to the `tidyverse` package.
+
+### 
+
+## Reuse Existing Data Structures
+### 
+
+Whenever possible, functions should avoid returning a novel data structure. This reduces the cognitive load when using software; no additional syntax or methods are required.
+
+### 
+
+We will be using the `rsample` package to give an example of using existing data structures that make statistical calculations happen quicker and more efficient
+
+### 
+
+### Exercise 1
+
+Load the `rsample` library.
+
+```{r reuse-existing-data--1, exercise = TRUE}
+
+```
+
+```{r reuse-existing-data--1-hint-1, eval = FALSE}
+library(...)
+```
+
+### 
+
+### Exercise 2
+
+Get a better understanding of the `rsample` library by typing in `?rsample` into the console. Look at the description in the help tab. CP/CR.
+
+```{r reuse-existing-data--2}
 question_text(NULL,
 	answer(NULL, correct = TRUE),
 	allow_retry = TRUE,
@@ -98,18 +173,84 @@ question_text(NULL,
 
 ### 
 
+The `rsample` package makes it easier to store data. Resampling allows us to  make more accurate predictions and gather more information about a sample.
+
+### 
+
+One resampling method is called bootstrap, which is resampling a single data set to create many simulated samples. This can be done by using the `bootstraps()`
+
+### 
+
+### Exercise 3
+
+Find out more about `bootstraps` by typing `bootstraps`in the console. Look at the description. CP/CR
+
+```{r reuse-existing-data--3}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+### Exercise 4
+
+We will explore `rsample` by resampling `mtcars` using the bootstrap method. Access `bootstraps()` from the `rsample` package using `::`.  
+```{r reuse-existing-data--4, exercise = TRUE}
+
+```
+
+```{r reuse-existing-data--4-hint-1, eval = FALSE}
+rsample::bootstraps()
+```
+
+### 
+This will throw an error, because a data frame was not specified. Our data frame is `mtcars`.
+
+### 
+
 ### Exercise 5
 
-```{r tidyverse-principles-5, exercise = TRUE}
+Using the previous code, enter `mtcars` in `bootstraps()`. 
+```{r reuse-existing-data--5, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r tidyverse-principles-5-hint-1, eval = FALSE}
+```{r reuse-existing-data--5-hint, eval = FALSE}
+rsample::bootstraps(mtcars)
+```
+
+###
+
+As you can see, this outputs
+25 rows of bootstraps. But we only want 3 bootstrap splits.
+###
+### Exercise 6
+
+Using the previous code, only produce 3 splits using the `times` parameter in `bootstraps()`.
+```{r reuse-existing-data--6, exercise = TRUE}
 
 ```
 
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r reuse-existing-data--6-hint, eval = FALSE}
+rsample::bootstraps(mtcars, times = ...)
+```
+
+###
+
+
+
+## Design for the Pipe and Functional Programming
+### 
+
+## Tidyverse Syntax
 ### 
 
 ## Summary
