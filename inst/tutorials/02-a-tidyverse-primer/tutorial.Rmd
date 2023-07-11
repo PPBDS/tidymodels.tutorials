@@ -276,7 +276,7 @@ rsample::bootstraps()
 
 This will throw an error, because a data frame was not specified. Our data frame is `mtcars`.
 
-###
+### 
 
 ### Exercise 5
 
@@ -311,12 +311,14 @@ rsample::bootstraps(mtcars, times = ...)
 ```
 
 ### 
+
 One important feature in the tibble produced by `rsample` is that the *splits** column is a list. In this instance, each element of the list has the same type of object: an `rsplit` object that contains the information about which rows of `mtcars` belong in the bootstrap sample. 
 
-###
+### 
+
 Great Job! You understood the meaning and importance of resampling using the bootstrap method. This was achieved using the `bootstrap()` method from the `rsample` library.
 
-###
+### 
 
 ## Design for the Pipe and Functional Programming
 ### 
@@ -325,7 +327,6 @@ Great Job! You understood the meaning and importance of resampling using the boo
 ### 
 
 ## Summary
-
 This tutorial covered [Chapter 2: Tidyverse Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles) 
 from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We briefly discused the important principles of the [**tidyverse**](https://www.tidyverse.org/packages/) design philosophy and how they apply in the context of modeling software that is easy to use and supports good statistical practices. You have learned the relationship between **tidymodels** and **tidyverse**, as [**tidymodels**](https://www.tidymodels.org/packages/) applies **tidyverse** principles to building models.
 
