@@ -27,7 +27,7 @@ options(tutorial.exercise.timelimit = 60,
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
-<!-- DK: Fix introduction. -->
+<!-- DK: Fix introduction.   PK: Done-->
 
 <!-- Use this order: -->
 
@@ -37,18 +37,19 @@ options(tutorial.exercise.timelimit = 60,
 <!-- mtcars[c(4, 2), ] -->
 <!-- mtcars$gear -->
 <!-- order(mtcars$gear) -->
-<!-- mtcars[order(mtcars$gear), ] -->
+<!-- mtcars[order(mtcars$gear), ]   PK: Done.-->
 
-<!-- Do Summary. -->
+<!-- Do Summary.   PK: Done -->
 
 ## Introduction
 ### 
 
-In this tutorial, we briefly discuss important principles of the `tidyverse` design philosophy and how they apply in the context of modeling software that is easy to use properly and supports good statistical practices. Both `tidymodels` and the `tidyverse` build on the R language, and `tidymodels` applies `tidyverse` principles to building models.
+This tutorial covers [Chapter 2: Tidyverse Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles) 
+from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We briefly discuss important principles of the [**tidyverse**](https://www.tidyverse.org/packages/) design philosophy and how they apply in the context of modeling software that is easy to use properly and supports good statistical practices. Both **tidymodels** and the **tidyverse** build on the R language, and [**tidymodels**](https://www.tidymodels.org/packages/) applies **tidyverse** principles to building models.
 
 
 ## Tidyverse principles
-###
+### 
 
 The full set of strategies and tactics for writing R code in the *Tidyverse* style can be found at the website https://design.tidyverse.org. Here we can briefly describe several of the general *Tidyverse* design principles, their motivation, and how we think about modeling as an application of these principles.
 
@@ -88,7 +89,7 @@ mtcars
 
 ### Exercise 3
 
-Now we will sort the data frame by the column `gears`. We can do this by using the `order()` function. After copying the previous code, put `mtcars$gear` in `[]`. Don't forget the `,` after the order() expression!
+Next, we will extract the information regarding the first row of `mtcars`. In square brackets, next to `mtcars`, put `1,` and hit "Run Code."
 
 ```{r tidyverse-principles-3, exercise = TRUE}
 
@@ -97,16 +98,18 @@ Now we will sort the data frame by the column `gears`. We can do this by using t
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-principles-3-hint-1, eval = FALSE}
-mtcars[order(mtcars$...),]
+mtcars[1, ]
 ```
 
 ### 
 
-As you can see, the mtcars data frame column `mpg` is traditionally ordered from descending order. 
+We can now see that every column of the first row in `mtcars` is printed.
+
+### 
 
 ### Exercise 4
 
-Copy the code from above and order the `mpg` column as well by adding it to the `order()` function. Don't forget the `,` after the `order()` function!
+Next, we will try extracting the second and fourth row. Copy the previous code from before and inside the brackets, select the rows `2,4` using `c()`. Remember to use a `,` after you put the vector in the bracket.
 
 ```{r tidyverse-principles-4, exercise = TRUE}
 
@@ -115,6 +118,58 @@ Copy the code from above and order the `mpg` column as well by adding it to the 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-principles-4-hint-1, eval = FALSE}
+mtcars[c(2,4),]
+```
+
+### 
+
+Now you can see every column printed for the second and fourth row of `mtcars`. You can also try other values to obtain the rows desired.
+
+### 
+
+### Exercise 5
+
+Now we will look at the `gear` column in `mtcars`. Run the code below.
+
+```{r tidyverse-principles-5, exercise = TRUE}
+mtcars$gear
+```
+
+### 
+
+The `gear` column from `mtcars` should be printed on your screen.
+
+### 
+
+### Exercise 6
+
+Now we will sort the data frame by the column `gear`. We can do this by using the `order()` function. After copying the previous code, put `mtcars$gear` in `[]`. Don't forget the `,` after the order() expression!
+
+```{r tidyverse-principles-6, exercise = TRUE}
+
+```
+
+```{r tidyverse-principles-6-hint-1, eval = FALSE}
+mtcars[order(mtcars$...),]
+```
+
+### 
+
+As you can see, the mtcars data frame column `gear` is ordered from descending order using the `order()` function.
+
+### 
+
+### Exercise 7
+
+Copy the code from above and order the `mpg` column as well by adding it to the `order()` function. Don't forget the `,` after the `order()` function!
+
+```{r tidyverse-principles-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-principles-7-hint-1, eval = FALSE}
 mtcars[order(mtcars$gear, mtcars$mpg), ]
 ```
 
@@ -124,11 +179,11 @@ We have now successfully order the data frame `mtcars` by `mpg` and `gears`. You
 
 ### 
 
-### Exercise 5
+### Exercise 8
 
 Run the code below.
 
-```{r tidyverse-principles-5, exercise = TRUE}
+```{r tidyverse-principles-8, exercise = TRUE}
 arrange(.data = mtcars, gear, mpg)
 
 ```
@@ -150,7 +205,7 @@ Whenever possible, functions should avoid returning a novel data structure. This
 
 ### 
 
-We will be using the `rsample` package to give an example of using existing data structures that make statistical calculations happen quicker and more efficient
+We will be using the `rsample` package to give an example of using existing data structures that make statistical calculations happen quicker and more efficient.
 
 ### 
 
@@ -208,7 +263,7 @@ question_text(NULL,
 
 ### Exercise 4
 
-We will explore `rsample` by resampling `mtcars` using the bootstrap method. Access `bootstraps()` from the `rsample` package using `::`.  
+We will explore `rsample` using the bootstrap method. Access `bootstraps()` from the `rsample` library using `::`.  
 ```{r reuse-existing-data--4, exercise = TRUE}
 
 ```
@@ -218,6 +273,7 @@ rsample::bootstraps()
 ```
 
 ### 
+
 This will throw an error, because a data frame was not specified. Our data frame is `mtcars`.
 
 ### 
@@ -231,15 +287,16 @@ Using the previous code, enter `mtcars` in `bootstraps()`.
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r reuse-existing-data--5-hint, eval = FALSE}
+```{r reuse-existing-data--5-hint-1, eval = FALSE}
 rsample::bootstraps(mtcars)
 ```
 
-###
+### 
 
-As you can see, this outputs
-25 rows of bootstraps. But we only want 3 bootstrap splits.
-###
+As you can see, this outputs 25 rows of bootstraps. But we only want 3 bootstrap splits.
+
+### 
+
 ### Exercise 6
 
 Using the previous code, only produce 3 splits using the `times` parameter in `bootstraps()`.
@@ -249,13 +306,19 @@ Using the previous code, only produce 3 splits using the `times` parameter in `b
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r reuse-existing-data--6-hint, eval = FALSE}
+```{r reuse-existing-data--6-hint-1, eval = FALSE}
 rsample::bootstraps(mtcars, times = ...)
 ```
 
-###
+### 
 
+One important feature in the tibble produced by `rsample` is that the *splits** column is a list. In this instance, each element of the list has the same type of object: an `rsplit` object that contains the information about which rows of `mtcars` belong in the bootstrap sample. 
 
+### 
+
+Great Job! You understood the meaning and importance of resampling using the bootstrap method. This was achieved using the `bootstrap()` method from the `rsample` library.
+
+### 
 
 ## Design for the Pipe and Functional Programming
 ### 
@@ -264,6 +327,9 @@ rsample::bootstraps(mtcars, times = ...)
 ### 
 
 ## Summary
+This tutorial covered [Chapter 2: Tidyverse Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles) 
+from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We briefly discused the important principles of the [**tidyverse**](https://www.tidyverse.org/packages/) design philosophy and how they apply in the context of modeling software that is easy to use and supports good statistical practices. You have learned the relationship between **tidymodels** and **tidyverse**, as [**tidymodels**](https://www.tidymodels.org/packages/) applies **tidyverse** principles to building models.
+
 ### 
 
 <!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
