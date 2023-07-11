@@ -88,7 +88,7 @@ mtcars
 
 ### Exercise 3
 
-Now we will sort the data frame by the column `gears`. We can do this by using the `order()` function. After copying the previous code, put `mtcars$gear` in `[]`. Don't forget the `,` after the order() expression!
+Next, we will extract the information regarding the first row of `mtcars`. In square brackets, next to `mtcars`, put `1,` and hit "Run Code."
 
 ```{r tidyverse-principles-3, exercise = TRUE}
 
@@ -96,13 +96,68 @@ Now we will sort the data frame by the column `gears`. We can do this by using t
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
+```{r tidyverse-principles-3-hint, eval = FALSE}
+mtcars[1, ]
+```
+
+###
+
+We can now see that every column of the first row in `mtcars` is printed.
+
+###
+
+### Exercise 4
+
+Next, we will try extracting the second and fourth row. Copy the previous code from before and inside the brackets, select the rows `2,4` using `c()`. Remember to use a `,` after you put the vector in the bracket.
+
+```{r tidyverse-principles-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-principles-4-hint, eval = FALSE}
+mtcars[c(2,4),]
+```
+
+###
+
+Now you can see every column printed for the second and fourth row of `mtcars`. You can also try other values to obtain the rows desired.
+
+###
+
+### Exercise 5
+
+Now we will look at the `gear` column in `mtcars`. Run the code below.
+
+```{r tidyverse-principles-5, exercise = TRUE}
+mtcars$gear
+```
+
+###
+
+The `gear` column from `mtcars` should be printed on your screen.
+
+###
+
+### Exercise 3
+
+Now we will sort the data frame by the column `gear`. We can do this by using the `order()` function. After copying the previous code, put `mtcars$gear` in `[]`. Don't forget the `,` after the order() expression!
+
+```{r tidyverse-principles-3, exercise = TRUE}
+
+```
+
+
 ```{r tidyverse-principles-3-hint-1, eval = FALSE}
 mtcars[order(mtcars$...),]
 ```
 
 ### 
 
-As you can see, the mtcars data frame column `mpg` is traditionally ordered from descending order. 
+As you can see, the mtcars data frame column `gear` is ordered from descending order using the `order()` function.
+
+###
 
 ### Exercise 4
 
