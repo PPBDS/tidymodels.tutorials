@@ -311,7 +311,7 @@ rsample::bootstraps(mtcars, times = ...)
 ```
 
 ### 
-One important feature in the tibble produced by `rsample` is that the 8*splits** column is a list. In this instance, each element of the list has the same type of object: an `rsplit` object that contains the information about which rows of `mtcars` belong in the bootstrap sample. 
+One important feature in the tibble produced by `rsample` is that the *splits** column is a list. In this instance, each element of the list has the same type of object: an `rsplit` object that contains the information about which rows of `mtcars` belong in the bootstrap sample. 
 
 ###
 Great Job! You understood the meaning and importance of resampling using the bootstrap method. This was achieved using the `bootstrap()` method from the `rsample` library.
