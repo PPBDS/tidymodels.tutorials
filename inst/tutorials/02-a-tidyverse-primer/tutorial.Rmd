@@ -27,7 +27,7 @@ options(tutorial.exercise.timelimit = 60,
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
-<!-- DK: Fix introduction.   PK: Done-->
+<!-- DK: Read the Style Guide: https://ppbds.github.io/primer/style-guide.html -->
 
 <!-- Use this order: -->
 
@@ -36,28 +36,28 @@ options(tutorial.exercise.timelimit = 60,
 <!-- mtcars[c(2, 4), ] -->
 <!-- mtcars[c(4, 2), ] -->
 <!-- mtcars$gear -->
+<!-- order(c(6, 9, 8)) -->
 <!-- order(mtcars$gear) -->
-<!-- mtcars[order(mtcars$gear), ]   PK: Done.-->
+<!-- mtcars[order(mtcars$gear), ] -->
 
-<!-- Do Summary.   PK: Done -->
 
 ## Introduction
 ### 
 
 This tutorial covers [Chapter 2: Tidyverse Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles) 
-from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We briefly discuss important principles of the [**tidyverse**](https://www.tidyverse.org/packages/) design philosophy and how they apply in the context of modeling software that is easy to use properly and supports good statistical practices. Both **tidymodels** and the **tidyverse** build on the R language, and [**tidymodels**](https://www.tidymodels.org/packages/) applies **tidyverse** principles to building models.
+from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We briefly discuss important principles of the [*Tidyverse*](https://www.tidyverse.org) design philosophy and how they apply in the context of modeling software that is easy to use properly and supports good statistical practices. The [**tidymodels**](https://www.tidymodels.org/) and the [**tidyverse**](https://tidyverse.tidyverse.org/) packages build on the R language, and [**tidymodels**](https://www.tidymodels.org/packages/) applies *Tidyverse* principles to building models.
 
 
 ## Tidyverse principles
 ### 
 
-The full set of strategies and tactics for writing R code in the *Tidyverse* style can be found at the website https://design.tidyverse.org. Here we can briefly describe several of the general *Tidyverse* design principles, their motivation, and how we think about modeling as an application of these principles.
+The full set of strategies and tactics for writing R code in the *Tidyverse* style can be found at the [website](https://design.tidyverse.org). Here we can briefly describe several of the general *Tidyverse* design principles, their motivation, and how we think about modeling as an application of these principles.
 
-### 
+
 
 ### Exercise 1
 
-First, load the `tidyverse` library.
+Load the **tidyverse** library.
 
 ```{r tidyverse-principles-1, exercise = TRUE}
 
@@ -69,7 +69,7 @@ library(...)
 
 ### 
 
-At first we will not be using the **tidyverse** functions, as we are trying to understand the core language of R. We will be using data frame `mtcars` to understand this language.
+At first we will not be using the **tidyverse** functions, as we are trying to understand the core language of R. 
 
 ### Exercise 2
 
@@ -85,7 +85,7 @@ mtcars
 
 ### 
 
-`mtcars` is an R data frame with information about 32 cars. 
+`mtcars` is an R data frame with information about `r dim(mtcars)[1]` cars. 
 
 ### Exercise 3
 
@@ -105,7 +105,6 @@ mtcars[1, ]
 
 We can now see that every column of the first row in `mtcars` is printed.
 
-### 
 
 ### Exercise 4
 
@@ -118,16 +117,17 @@ Next, we will try extracting the second and fourth row. Copy the previous code f
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-principles-4-hint-1, eval = FALSE}
-mtcars[c(2,4),]
+mtcars[c(2, 4), ]
 ```
 
 ### 
 
-Now you can see every column printed for the second and fourth row of `mtcars`. You can also try other values to obtain the rows desired.
+Now you can see every column printed for the second and fourth row of `mtcars`.
 
-### 
 
 ### Exercise 5
+
+<!-- DK: Make them type. -->
 
 Now we will look at the `gear` column in `mtcars`. Run the code below.
 
@@ -138,8 +138,6 @@ mtcars$gear
 ### 
 
 The `gear` column from `mtcars` should be printed on your screen.
-
-### 
 
 ### Exercise 6
 
@@ -327,10 +325,14 @@ Great Job! You understood the meaning and importance of resampling using the boo
 ### 
 
 ## Summary
+###
+
+<!-- DK: Change this to match Introduction. -->
+
 This tutorial covered [Chapter 2: Tidyverse Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles) 
 from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We briefly discused the important principles of the [**tidyverse**](https://www.tidyverse.org/packages/) design philosophy and how they apply in the context of modeling software that is easy to use and supports good statistical practices. You have learned the relationship between **tidymodels** and **tidyverse**, as [**tidymodels**](https://www.tidymodels.org/packages/) applies **tidyverse** principles to building models.
 
-### 
+
 
 <!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
 
