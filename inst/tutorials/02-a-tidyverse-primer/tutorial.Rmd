@@ -9,6 +9,9 @@ output:
     allow_skip: yes
 runtime: shiny_prerendered
 description: 'Tutorial for Chapter 2: A Tidyverse Primer'
+editor_options:
+  markdown:
+    wrap: 72
 ---
 
 ```{r setup, include = FALSE}
@@ -16,6 +19,7 @@ library(learnr)
 library(tutorial.helpers)
 library(tidyverse)
 library(tidymodels)
+library(magrittr)
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
         tutorial.storage = "local") 
@@ -32,28 +36,44 @@ options(tutorial.exercise.timelimit = 60,
 <!-- Use this order: -->
 
 <!-- mtcars -->
-<!-- mtcars[1, ] -->
-<!-- mtcars[c(2, 4), ] -->
-<!-- mtcars[c(4, 2), ] -->
-<!-- mtcars$gear -->
-<!-- order(c(6, 9, 8)) -->
-<!-- order(mtcars$gear) -->
-<!-- mtcars[order(mtcars$gear), ] -->
 
+<!-- mtcars[1, ] -->
+
+<!-- mtcars[c(2, 4), ] -->
+
+<!-- mtcars[c(4, 2), ] -->
+
+<!-- mtcars$gear -->
+
+<!-- order(c(6, 9, 8)) -->
+
+<!-- order(mtcars$gear) -->
+
+<!-- mtcars[order(mtcars$gear), ] -->
 
 ## Introduction
 ### 
 
-This tutorial covers [Chapter 2: Tidyverse Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles) 
-from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We briefly discuss important principles of the [*Tidyverse*](https://www.tidyverse.org) design philosophy and how they apply in the context of modeling software that is easy to use properly and supports good statistical practices. The [**tidymodels**](https://www.tidymodels.org/) and the [**tidyverse**](https://tidyverse.tidyverse.org/) packages build on the R language, and [**tidymodels**](https://www.tidymodels.org/packages/) applies *Tidyverse* principles to building models.
-
+This tutorial covers [Chapter 2: Tidyverse
+Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles)
+from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and
+Julia Silge. We briefly discuss important principles of the
+[*Tidyverse*](https://www.tidyverse.org) design philosophy and how they
+apply in the context of modeling software that is easy to use properly
+and supports good statistical practices. The
+[**tidymodels**](https://www.tidymodels.org/) and the
+[**tidyverse**](https://tidyverse.tidyverse.org/) packages build on the
+R language, and [**tidymodels**](https://www.tidymodels.org/packages/)
+applies *Tidyverse* principles to building models.
 
 ## Tidyverse principles
 ### 
 
-The full set of strategies and tactics for writing R code in the *Tidyverse* style can be found at the [website](https://design.tidyverse.org). Here we can briefly describe several of the general *Tidyverse* design principles, their motivation, and how we think about modeling as an application of these principles.
-
-
+The full set of strategies and tactics for writing R code in the
+*Tidyverse* style can be found at this
+[website](https://design.tidyverse.org). Here we can briefly describe
+several of the general *Tidyverse* design principles, their motivation,
+and how we think about modeling as an application of these principles.
 
 ### Exercise 1
 
@@ -69,7 +89,8 @@ library(...)
 
 ### 
 
-At first we will not be using the **tidyverse** functions, as we are trying to understand the core language of R. 
+At first we will not be using the **tidyverse** functions, as we are
+trying to understand the core language of R.
 
 ### Exercise 2
 
@@ -85,17 +106,24 @@ mtcars
 
 ### 
 
-`mtcars` is an R data frame with information about `r dim(mtcars)[1]` cars. 
+`mtcars` is an R data frame with information about `r dim(mtcars)[1]`
+cars.
 
 ### Exercise 3
 
-Next, we will extract the information regarding the first row of `mtcars`. In square brackets, next to `mtcars`, put `1,` and hit "Run Code."
+Next, we will extract the information regarding the first row of
+`mtcars`. In square brackets, next to `mtcars`, put `1,` and hit "Run
+Code."
 
 ```{r tidyverse-principles-3, exercise = TRUE}
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
+<button onclick="transfer_code(this)">
+
+Copy previous code
+
+</button>
 
 ```{r tidyverse-principles-3-hint-1, eval = FALSE}
 mtcars[1, ]
@@ -103,18 +131,25 @@ mtcars[1, ]
 
 ### 
 
-We can now see that every column of the first row in `mtcars` is printed.
-
+We can now see that every column of the first row in `mtcars` is
+printed.
 
 ### Exercise 4
 
-Next, we will try extracting the second and fourth row. Copy the previous code from before and inside the brackets, select the rows `2,4` using `c()`. Remember to use a `,` after you put the vector in the bracket.
+Next, we will try extracting the second and fourth row. Copy the
+previous code from before and inside the brackets, select the rows `2,4`
+using `c()`. Remember to use a `,` after you put the vector in the
+bracket.
 
 ```{r tidyverse-principles-4, exercise = TRUE}
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
+<button onclick="transfer_code(this)">
+
+Copy previous code
+
+</button>
 
 ```{r tidyverse-principles-4-hint-1, eval = FALSE}
 mtcars[c(2, 4), ]
@@ -122,90 +157,147 @@ mtcars[c(2, 4), ]
 
 ### 
 
-Now you can see every column printed for the second and fourth row of `mtcars`.
-
+Now you can see every column printed for the second and fourth row of
+`mtcars`.
 
 ### Exercise 5
 
-<!-- DK: Make them type. -->
-
-Now we will look at the `gear` column in `mtcars`. Run the code below.
+Now we will look at the `gear` column in `mtcars`. Extract `gear` from
+`mtcars` using `$`.
 
 ```{r tidyverse-principles-5, exercise = TRUE}
+
+```
+
+```{r tidyverse-principles-5-hint-1, eval = FALSE}
 mtcars$gear
 ```
 
 ### 
 
-The `gear` column from `mtcars` should be printed on your screen.
+Each car in `mtcars` has a listed amount of gears ranging from 3 to 5.
+This can be ordered, however.
 
 ### Exercise 6
 
-Now we will sort the data frame by the column `gear`. We can do this by using the `order()` function. After copying the previous code, put `mtcars$gear` in `[]`. Don't forget the `,` after the order() expression!
+To understand the functionality of `order()`, pass in a vector argument
+of `6, 9, 8` using `c()`.
 
 ```{r tidyverse-principles-6, exercise = TRUE}
 
 ```
 
 ```{r tidyverse-principles-6-hint-1, eval = FALSE}
-mtcars[order(mtcars$...),]
+order(c(6, 9, 8))
 ```
 
 ### 
 
-As you can see, the mtcars data frame column `gear` is ordered from descending order using the `order()` function.
-
-### 
+The `order()` does not order the elements as entered in the arguments,
+but rather sorts them and returns the index of each value.
 
 ### Exercise 7
 
-Copy the code from above and order the `mpg` column as well by adding it to the `order()` function. Don't forget the `,` after the `order()` function!
+Copy the previous code. Now, instead, pass 'mtcars\$gear' as the
+argument.
 
 ```{r tidyverse-principles-7, exercise = TRUE}
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
+<button onclick="transfer_code(this)">
+
+Copy previous code
+
+</button>
 
 ```{r tidyverse-principles-7-hint-1, eval = FALSE}
+order(mtcars$...)
+```
+
+### 
+
+The `order()` sorts a string vector by looking at the first letter of
+each string and sorting it in alphabetical order, returning the indexes
+of the words in the vector.
+
+### Exercise 8
+
+Copy the previous code. In `mtcars[]`, pass in the previous code in the
+brackets. Don't forget the `,` after the `order()` expression within the
+brackets!
+
+```{r tidyverse-principles-8, exercise = TRUE}
+
+```
+
+```{r tidyverse-principles-8-hint-1, eval = FALSE}
+mtcars[order(mtcars$gear), ]
+```
+
+### 
+
+As you can see, the mtcars data frame column `gear` is ordered from
+**descending** order using the `order()` function.
+
+### Exercise 9
+
+Copy the previous code. Add `mtcars$mpg` into the `order()` function.
+Don't forget the `,` after the `order()` expression within the brackets!
+
+```{r tidyverse-principles-9, exercise = TRUE}
+
+```
+
+<button onclick="transfer_code(this)">
+
+Copy previous code
+
+</button>
+
+```{r tidyverse-principles-9-hint-1, eval = FALSE}
 mtcars[order(mtcars$gear, mtcars$mpg), ]
 ```
 
 ### 
 
-We have now successfully order the data frame `mtcars` by `mpg` and `gears`. You can see that for each `gear` value, the `mpg` is in descending order.
+We have now successfully order the data frame `mtcars` by `mpg` and
+`gears`. You can see that for each `gear` value, the `mpg` is in
+descending order.
 
-### 
-
-### Exercise 8
+### Exercise 10
 
 Run the code below.
 
-```{r tidyverse-principles-8, exercise = TRUE}
+```{r tidyverse-principles-10, exercise = TRUE}
 arrange(.data = mtcars, gear, mpg)
 
 ```
 
 ### 
 
-Notice that the output is the exactly similar in Excerise 4. This is the way order a data frame using the `tidyverse` function `arrange()`.
+Notice that the output is the exactly similar in Exercise 9. This is the
+way order a data frame using the `tidyverse` function `arrange()`.
 
-### 
-
-Great job! You have learned the core language of R and compared its functionality to the `tidyverse` package.
+Great job! You have learned the core language of R and compared its
+functionality to the `tidyverse` package.
 
 ### 
 
 ## Reuse Existing Data Structures
 ### 
 
-Whenever possible, functions should avoid returning a novel data structure. This reduces the cognitive load when using software; no additional syntax or methods are required.
+<!-- PK: Fix this intro -->
+
+Whenever possible, functions should avoid returning a novel data
+structure. This reduces the cognitive load when using software; no
+additional syntax or methods are required.
 
 ### 
 
-We will be using the `rsample` package to give an example of using existing data structures that make statistical calculations happen quicker and more efficient.
-
-### 
+We will be using the `rsample` package to give an example of using
+existing data structures that make statistical calculations happen
+quicker and more efficient.
 
 ### Exercise 1
 
@@ -223,7 +315,9 @@ library(...)
 
 ### Exercise 2
 
-Get a better understanding of the `rsample` library by typing in `?rsample` into the console. Look at the description in the help tab. CP/CR.
+Get a better understanding of the `rsample` library by typing in
+`?rsample` into the console. Look at the description in the help tab.
+CP/CR.
 
 ```{r reuse-existing-data--2}
 question_text(NULL,
@@ -236,17 +330,20 @@ question_text(NULL,
 
 ### 
 
-The `rsample` package makes it easier to store data. Resampling allows us to  make more accurate predictions and gather more information about a sample.
+The `rsample` package makes it easier to store data. Resampling allows
+us to make more accurate predictions and gather more information about a
+sample.
 
 ### 
 
-One resampling method is called bootstrap, which is resampling a single data set to create many simulated samples. This can be done by using the `bootstraps()`
-
-### 
+One resampling method is called bootstrap, which is resampling a single
+data set to create many simulated samples. This can be done by using the
+`bootstraps()`
 
 ### Exercise 3
 
-Find out more about `bootstraps` by typing `bootstraps`in the console. Look at the description. CP/CR
+Find out more about `bootstraps` by typing `bootstraps`in the console.
+Look at the description. CP/CR
 
 ```{r reuse-existing-data--3}
 question_text(NULL,
@@ -261,7 +358,9 @@ question_text(NULL,
 
 ### Exercise 4
 
-We will explore `rsample` using the bootstrap method. Access `bootstraps()` from the `rsample` library using `::`.  
+We will explore `rsample` using the bootstrap method. Access
+`bootstraps()` from the `rsample` library using `::`.
+
 ```{r reuse-existing-data--4, exercise = TRUE}
 
 ```
@@ -272,18 +371,22 @@ rsample::bootstraps()
 
 ### 
 
-This will throw an error, because a data frame was not specified. Our data frame is `mtcars`.
-
-### 
+This will throw an error, because a data frame was not specified. Our
+data frame is `mtcars`.
 
 ### Exercise 5
 
-Using the previous code, enter `mtcars` in `bootstraps()`. 
+Using the previous code, enter `mtcars` in `bootstraps()`.
+
 ```{r reuse-existing-data--5, exercise = TRUE}
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
+<button onclick="transfer_code(this)">
+
+Copy previous code
+
+</button>
 
 ```{r reuse-existing-data--5-hint-1, eval = FALSE}
 rsample::bootstraps(mtcars)
@@ -291,48 +394,330 @@ rsample::bootstraps(mtcars)
 
 ### 
 
-As you can see, this outputs 25 rows of bootstraps. But we only want 3 bootstrap splits.
-
-### 
+As you can see, this outputs 25 rows of bootstraps. But we only want 3
+bootstrap splits.
 
 ### Exercise 6
 
-Using the previous code, only produce 3 splits using the `times` parameter in `bootstraps()`.
+Using the previous code, only produce 3 splits using the `times`
+parameter in `bootstraps()`.
+
 ```{r reuse-existing-data--6, exercise = TRUE}
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
+<button onclick="transfer_code(this)">
+
+Copy previous code
+
+</button>
 
 ```{r reuse-existing-data--6-hint-1, eval = FALSE}
-rsample::bootstraps(mtcars, times = ...)
+rsample::bootstraps(mtcars, times = 3)
 ```
 
 ### 
 
-One important feature in the tibble produced by `rsample` is that the *splits** column is a list. In this instance, each element of the list has the same type of object: an `rsplit` object that contains the information about which rows of `mtcars` belong in the bootstrap sample. 
+One important feature in the tibble produced by `rsample` is that the
+\*splits\*\* column is a list. In this instance, each element of the
+list has the same type of object: an `rsplit` object that contains the
+information about which rows of `mtcars` belong in the bootstrap sample.
 
 ### 
 
-Great Job! You understood the meaning and importance of resampling using the bootstrap method. This was achieved using the `bootstrap()` method from the `rsample` library.
-
-### 
+Great Job! You understood the meaning and importance of resampling using
+the bootstrap method. This was achieved using the `bootstrap()` method
+from the `rsample` library.
 
 ## Design for the Pipe and Functional Programming
+### 
+
+We are used to using the conventional pipe operator `|>` and using
+simple lines of code to produce a desired output. However, we will
+explore a different pipe operator and how to reduce complexity when
+using functions.
+
+### Exercise 1
+
+The **magrittr** package introduces a different pipe operator, `%>%`.
+
+Load the library `magrittr` using library().
+
+```{r design-for-the-pipe--1, exercise = TRUE}
+
+```
+
+```{r design-for-the-pipe--1-hint-1, eval = FALSE}
+library(magrittr)
+```
+
+### 
+
+When using the `%>%` pipe operator, you can use `.` to refer to the data
+frame that is being piped. This is, however, invalid when using the more
+modern operator,`|>`.
+
+### Exercise 2
+
+We will be exploring the `%>%` pipe operator using `mtcars`. We will be
+looking at how data visualization can be more readable
+
+As seen in the previous section, run the code below.
+
+```{r design-for-the-pipe--2, exercise = TRUE}
+arrange(mtcars, gear)
+```
+
+### 
+
+`slice()` lets you index rows by their integer locations. It allows you
+to select, remove, and duplicate rows.
+
+### Exercise 3
+
+Copy the previous code and add it as a parameter in `slice()`.
+
+```{r design-for-the-pipe--3, exercise = TRUE}
+
+```
+
+<button onclick="transfer_code(this)">
+
+Copy previous code
+
+</button>
+
+```{r design-for-the-pipe--3-hint-1, eval = FALSE}
+slice(arrange(mtcars, gear))
+```
+
+### 
+
+As you can see, only the row of all the column names was printed out.
+This is because the number of rows to be extracted was never specified.
+
+### Exercise 4
+
+Copy the previous code. Add the parameter `5` in `slice()`.
+
+```{r design-for-the-pipe--4, exercise = TRUE}
+
+```
+
+<button onclick="transfer_code(this)">
+
+Copy previous code
+
+</button>
+
+```{r design-for-the-pipe--4-hint-1, eval = FALSE}
+slice(arrange(mtcars, gear), 5)
+```
+
+### 
+
+Notice how that the output is the 5th row in `mtcars`, which is sorted
+by number of gears. However, how can we extract multiple consecutive
+rows?
+
+### Exercise 5
+
+To extract multiple consecutive rows, we can use `:`. Copy the previous
+code and replace the parameter `5` with `1:10`.
+
+```{r design-for-the-pipe--5, exercise = TRUE}
+
+```
+
+<button onclick="transfer_code(this)">
+
+Copy previous code
+
+</button>
+
+```{r design-for-the-pipe--5-hint-1, eval = FALSE}
+slice(arrange(mtcars, gear), 1:10)
+```
+
+### 
+
+This way of slicing a data set can be hard to read and might confuse the
+audience looking at your code. Using the `%>%` pipe operator can help
+with user readability.
+
+### Exercise 6
+
+<!-- PK: Not sure if this step is too confusing. -->
+
+We will continue to use the `mtcars` data set, as we are quite
+comfortable with it up to this point. Pipe `arrange(gear)` after typing
+mtcars on the first line with the use of the `%>%` operator.
+
+```{r design-for-the-pipe--6, exercise = TRUE}
+
+```
+
+```{r design-for-the-pipe--6-hint-1, eval = FALSE}
+mtcars %>%
+  arrange(gear)
+```
+
+### Exercise 7
+
+Copy the previous. Extract the first 10 rows of the ordered data set by
+adding `slice()` to the pipe.
+
+```{r design-for-the-pipe--7, exercise = TRUE}
+
+```
+
+<button onclick="transfer_code(this)">
+
+Copy previous code
+
+</button>
+
+```{r design-for-the-pipe--7-hint-1, eval = FALSE}
+mtcars %>%
+  arrange(gear) %>%
+  slice(1:10)
+```
+
+### 
+
+User readability is crucial to making coding a more friendly environment
+for collaboration when working on projects involving multiple entities.
+
+### Exercise 8
+
+When plotting using **ggplot**, the pipe operator becomes invalid. To
+`"pipe"` in when plotting, use the `+` symbol. Run the code below to
+observe plotting.
+
+```{r design-for-the-pipe--8, exercise = TRUE}
+ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point() + 
+  geom_smooth(method = lm)
+```
+
 ### 
 
 ## Tidyverse Syntax
 ### 
 
-## Summary
+Let's begin our discussion of tidyverse syntax by exploring more deeply
+what a tibble is, and how tibbles work. Tibbles have slightly different
+rules than basic data frames in R.
+
+### Exercise 1
+
+Here are some of the aspects of `data.frame()`:
+
+-   The column names should be non-empty
+
+-   The row names should be unique
+
+-   The data stored in a data frame can be of numeric, factor or
+    character type
+
+-   Each column should contain same number of data items
+
+Type in `data.frame()`.
+
+```{r tidyverse-syntax-1, exercise = TRUE}
+
+```
+
+```{r tidyverse-syntax-1-hint-1, eval = FALSE}
+data.frame()
+```
+
+To initialize columns in a data frame, you must give a name within ""
+and set it equal to a certain desired values.
+
+### Exercise 2
+
+Copy the previous code. Add the column name parameter, `column 1`, in the `data.frame()` function.
+```{r tidyverse-syntax-2, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-syntax-2-hint-1, eval = FALSE}
+data.frame("column 1")
+```
+
+### 
+
+As you can see, there is only one row with the name of the column. The column name, however, seems hard to read and is confusing. How can we eliminate this confusion?
+
+### Exercise 3
+
+`check.names = FALSE` will eliminate any confusion of the true column name. Copy the previous code and add that as the parameter of `data.frame()`.
+```{r tidyverse-syntax-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-syntax-3-hint-1, eval = FALSE}
+data.frame("column 1", check.names = FALSE)
+```
+
+### Exercise 4
+
+Now lets assign values to the column using the `=` sign. Copy the previous code and set the column name to values from 1 to 3. 
+```{r tidyverse-syntax-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-syntax-4-hint-1, eval = FALSE}
+"Remember to use the : symbol to get multiple consecutive numbers."
+```
+
+```{r tidyverse-syntax-4-hint-2, eval = FALSE}
+data.frame("column 1" = 1:3, check.names = FALSE)
+```
+
+### 
+
+Standard data frames enable partial matching of arguments so that code using only a portion of the column names still works.
+
+### Exercise 5
+
+Now to create another row, copy the previous code and add the column name parameter `2` to `data.frame()` and set it equal to the values 4 to 6.
+```{r tidyverse-syntax-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-syntax-5-hint, eval = FALSE}
+data.frame("column 1" = 1:3, `2` = 4:6, check.names = FALSE)
+```
+
 ###
+
+
+
+## Summary
+### 
 
 <!-- DK: Change this to match Introduction. -->
 
-This tutorial covered [Chapter 2: Tidyverse Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles) 
-from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We briefly discused the important principles of the [**tidyverse**](https://www.tidyverse.org/packages/) design philosophy and how they apply in the context of modeling software that is easy to use and supports good statistical practices. You have learned the relationship between **tidymodels** and **tidyverse**, as [**tidymodels**](https://www.tidymodels.org/packages/) applies **tidyverse** principles to building models.
-
-
+This tutorial covered [Chapter 2: Tidyverse
+Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles)
+from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and
+Julia Silge. We briefly discused the important principles of the
+[**tidyverse**](https://www.tidyverse.org/packages/) design philosophy
+and how they apply in the context of modeling software that is easy to
+use and supports good statistical practices. You have learned the
+relationship between **tidymodels** and **tidyverse**, as
+[**tidymodels**](https://www.tidymodels.org/packages/) applies
+**tidyverse** principles to building models.
 
 <!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
 
