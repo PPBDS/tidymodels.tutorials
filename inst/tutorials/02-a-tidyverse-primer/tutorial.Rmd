@@ -19,6 +19,9 @@ library(tidymodels)
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 600, 
         tutorial.storage = "local") 
+
+df <- data.frame("column 1" = 1:3, `two` = 4:6, check.names = FALSE)
+tbl <- tibble(`column 1` = 1:3, `two` = 4:6)
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -531,13 +534,10 @@ Now lets assign values to the column using the `=` sign. Copy the previous code 
 data.frame("column 1" = 1:3, check.names = FALSE)
 ```
 
-### 
-
-Standard data frames enable partial matching of arguments so that code using only a portion of the column names still works.
 
 ### Exercise 5
 
-Now to create another row, copy the previous code and add the column name parameter `2` to `data.frame()` and set it equal to the values 4 to 6.
+Now to create another row, copy the previous code and add the column name parameter `two` to `data.frame()` and set it equal to the values 4 to 6. Set this data frame to `df`.
 
 ```{r tidyverse-syntax-5, exercise = TRUE}
 
@@ -546,15 +546,90 @@ Now to create another row, copy the previous code and add the column name parame
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-5-hint-1, eval = FALSE}
-data.frame("column 1" = 1:3, `2` = 4:6, check.names = FALSE)
+df <- data.frame("column 1" = 1:3, `two` = 4:6, check.names = FALSE)
 ```
 
 ### 
 
+Tibbles are the modern version of data frames. They only print the first ten rows and print column names that fit.
+
+### Exercise 6
+
+Copy the previous code. Replace `data.frame()` with `tibble()`, keeping the first two parameters the same and deleting the `check.names` parameter. Set this tibble to `tbl` using the assignment operator `<-`.
+
+```{r tidyverse-syntax-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-syntax-6-hint, eval = FALSE}
+tbl <- tibble(`column 1` = 1:3, `two` = 4:6)
+```
+
+###
+
+Tibbles also prevent one of the most common R errors: dropping dimensions. If a standard data frame subsets the columns down to a single column, the object is converted to a vector. Tibbles never do this.
+
+### Exercise 7
+
+Within the brackets of `tbl[]` and `df[]` (on two different lines), type in `, "two"` and compare the differences of the printed outcome.
+
+```{r tidyverse-syntax-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-syntax-7-hint, eval = FALSE}
+tbl[, "str"]
+df[, "str"]
+```
+
+###
+
+The tibble keeps the structure of a column while the data frame turns it into a vector of values.
+
+### Exercise 8
+
+Standard data frames enable partial matching of arguments so that code using only a portion of the column names still works. Extract the `two` column from the data frame `df` using the `tw`, which is only the partial name of the column `two`.
+
+```{r tidyverse-syntax-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-syntax-8-hint, eval = FALSE}
+df$tw
+```
+
+###
+
+As you can see, even though the partial name of the column was called, the data frame recognized it as the column `two` and printed the desired column.
+
+### Exercise 9
+
+Copy the previous code. Replace `df` with `tbl` and press "Run Code".
+
+```{r tidyverse-syntax-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-syntax-9-hint, eval = FALSE}
+tbl$tw
+```
+
+###
+
+The warning message: "Unknown or uninitialized column: `tw`" shows up becase the full column name must be entered to extract the correct column from the tibble. Tibbles prevent this from happening since it can lead to accidental errors
+
 ## Summary
 ### 
 
-<!-- DK: Change this to match Introduction. -->
+<!-- DK: Change this to match Introduction. PK: Done.-->
 
 This tutorial covered [Chapter 2: Tidyverse
 Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles)
