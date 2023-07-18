@@ -30,13 +30,8 @@ tbl <- tibble(`column 1` = 1:3, `two` = 4:6)
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
-<!-- DK: Put back code button formatting. PK: Done-->
 
-<!-- Can you figure out why wrapping magically works? PK: Done-->
-
-<!-- DK: Ensure spaces between code chunks and text. PK: Done-->
-
-<!-- DK: Get rid of magrittr. Use |> instead of %>% unless you have a good reason not to. PK: Done-->
+<!-- DK: Use test chunks for all questions. May not always be possible. -->
 
 ## Introduction
 ### 
@@ -220,7 +215,7 @@ Great job! You have learned the core language of R and compared its functionalit
 ## Reuse Existing Data Structures
 ### 
 
-<!-- PK: Fix this intro -->
+<!-- Fix this intro -->
 
 Whenever possible, functions should avoid returning a novel data structure. This reduces the cognitive load when using software; no additional syntax or methods are required.
 
@@ -305,8 +300,14 @@ Using the previous code, enter `mtcars` in `bootstraps()`.
 <button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r reuse-existing-data--5-hint-1, eval = FALSE}
+rsample::bootstraps(...)
+```
+
+
+```{r, include=FALSE}
 rsample::bootstraps(mtcars)
 ```
+
 
 ### 
 
@@ -323,8 +324,14 @@ Using the previous code, only produce 3 splits using the `times` parameter in `b
 <button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r reuse-existing-data--6-hint-1, eval = FALSE}
+rsample::bootstraps(mtcars, ... = 3)
+```
+
+
+```{r, include=FALSE}
 rsample::bootstraps(mtcars, times = 3)
 ```
+
 
 ### 
 
@@ -409,8 +416,6 @@ This way of slicing a data set can be hard to read and might confuse the audienc
 
 ### Exercise 5
 
-<!-- PK: Not sure if this step is too confusing. -->
-
 We will continue to use the `mtcars` data set, as we are quite comfortable with it up to this point. Pipe `arrange(gear)` after typing mtcars on the first line with the use of the `|>` operator.
 
 ```{r design-for-the-pipe--5, exercise = TRUE}
@@ -421,6 +426,8 @@ We will continue to use the `mtcars` data set, as we are quite comfortable with 
 mtcars |>
   arrange(gear)
 ```
+
+<!-- DK: Drop some knowledge. -->
 
 ### Exercise 6
 
@@ -582,9 +589,14 @@ Within the brackets of `tbl[]` and `df[]` (on two different lines), type in `, "
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-7-hint, eval = FALSE}
-tbl[, "str"]
-df[, "str"]
+tbl[, ...]
+df[, ...]
 ```
+
+```{r, include=FALSE}
+tbl[, "two"]
+```
+
 
 ###
 
@@ -629,7 +641,6 @@ The warning message: "Unknown or uninitialized column: `tw`" shows up becase the
 ## Summary
 ### 
 
-<!-- DK: Change this to match Introduction. PK: Done.-->
 
 This tutorial covered [Chapter 2: Tidyverse
 Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles)
