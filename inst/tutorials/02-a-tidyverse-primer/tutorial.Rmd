@@ -33,7 +33,7 @@ url <- "https://data.cityofchicago.org/api/views/5neh-572f/rows.csv?accessType=D
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
-<!-- DK: Use test chunks for all questions. May not always be possible. -->
+<!-- DK: Use test chunks for all questions. May not always be possible. PK: Done.-->
 
 ## Introduction
 ### 
@@ -88,7 +88,7 @@ Next, we will extract the information regarding the first row of `mtcars`. In sq
 <button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-principles-3-hint-1, eval = FALSE}
-mtcars[1, ]
+mtcars[..., ]
 ```
 
 ### 
@@ -106,6 +106,10 @@ Next, we will try extracting the second and fourth row. Copy the previous code f
 <button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-principles-4-hint-1, eval = FALSE}
+mtcars[...(2, 4), ]
+```
+
+```{r include = FALSE}
 mtcars[c(2, 4), ]
 ```
 
@@ -122,6 +126,10 @@ Now we will look at the `gear` column in `mtcars`. Extract `gear` from `mtcars` 
 ```
 
 ```{r tidyverse-principles-5-hint-1, eval = FALSE}
+...$gear
+```
+
+```{r include = FALSE}
 mtcars$gear
 ```
 
@@ -138,6 +146,10 @@ To understand the functionality of `order()`, pass in a vector argument of `6, 9
 ```
 
 ```{r tidyverse-principles-6-hint-1, eval = FALSE}
+order(...(6, 9, 8))
+```
+
+```{r include = FALSE}
 order(c(6, 9, 8))
 ```
 
@@ -147,7 +159,7 @@ The `order()` does not order the elements as entered in the arguments, but rathe
 
 ### Exercise 7
 
-Copy the previous code. Now, instead, pass 'mtcars\$gear' as the argument.
+Copy the previous code. Now, instead, pass `mtcars$gear` as the argument.
 
 ```{r tidyverse-principles-7, exercise = TRUE}
 
@@ -158,6 +170,11 @@ Copy the previous code. Now, instead, pass 'mtcars\$gear' as the argument.
 ```{r tidyverse-principles-7-hint-1, eval = FALSE}
 order(mtcars$...)
 ```
+
+```{r include = FALSE}
+order(mtcars$gear)
+```
+
 
 ### 
 
@@ -172,12 +189,16 @@ Copy the previous code. In `mtcars[]`, pass in the previous code in the brackets
 ```
 
 ```{r tidyverse-principles-8-hint-1, eval = FALSE}
-mtcars[order(mtcars$gear), ]
+mtcars[order(...$gear), ]
+```
+
+```{r include = FALSE}
+mtcars[order(mtcars$gear)]
 ```
 
 ### 
 
-As you can see, the mtcars data frame column `gear` is ordered from **descending** order using the `order()` function.
+As you can see, the mtcars data frame column `gear` is ordered from *descending* order using the `order()` function.
 
 ### Exercise 9
 
@@ -190,6 +211,10 @@ Copy the previous code. Add `mtcars$mpg` into the `order()` function. Don't forg
 <button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-principles-9-hint-1, eval = FALSE}
+mtcars[order(mtcars$..., mtcars$...), ]
+```
+
+```{r include = FALSE}
 mtcars[order(mtcars$gear, mtcars$mpg), ]
 ```
 
@@ -235,6 +260,10 @@ Load the `rsample` library.
 
 ```{r reuse-existing-data--1-hint-1, eval = FALSE}
 library(...)
+```
+
+```{r include = FALSE}
+library(rsample)
 ```
 
 ### 
@@ -284,6 +313,10 @@ We will explore **rsample** using the bootstrap method. Access `bootstraps()` fr
 ```
 
 ```{r reuse-existing-data--4-hint-1, eval = FALSE}
+...::bootstraps()
+```
+
+```{r include = FALSE}
 rsample::bootstraps()
 ```
 
@@ -369,6 +402,10 @@ Copy the previous code and add it as a parameter in `slice()`.
 <button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r design-for-the-pipe--2-hint-1, eval = FALSE}
+slice(...(mtcars, gear))
+```
+
+```{r include = FALSE}
 slice(arrange(mtcars, gear))
 ```
 
@@ -387,6 +424,10 @@ Copy the previous code. Add the parameter `5` in `slice()`.
 <button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r design-for-the-pipe--3-hint-1, eval = FALSE}
+slice(...(mtcars, gear), 5)
+```
+
+```{r include = FALSE}
 slice(arrange(mtcars, gear), 5)
 ```
 
@@ -405,6 +446,10 @@ Copy the previous code and replace the parameter `5` with `1:10`.
 <button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r design-for-the-pipe--4-hint-1, eval = FALSE}
+slice(arrange(mtcars, gear), ...)
+```
+
+```{r include = FALSE}
 slice(arrange(mtcars, gear), 1:10)
 ```
 
@@ -422,9 +467,15 @@ We will continue to use the `mtcars` data set, as we are quite comfortable with 
 
 ```{r design-for-the-pipe--5-hint-1, eval = FALSE}
 mtcars |>
+  arrange(...)
+```
+
+```{r include = FALSE}
+mtcars |>
   arrange(gear)
 ```
 
+###
 <!-- DK: Drop some knowledge. -->
 
 ### Exercise 6
@@ -438,6 +489,12 @@ Copy the previous. Extract the first 10 rows of the ordered data set by adding `
 <button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r design-for-the-pipe--6-hint-1, eval = FALSE}
+mtcars |>
+  arrange(...) |>
+  slice(...)
+```
+
+```{r include = FALSE}
 mtcars |>
   arrange(gear) |>
   slice(1:10)
@@ -482,15 +539,17 @@ Type in `data.frame()`.
 
 ```
 
-```{r tidyverse-syntax-1-hint-1, eval = FALSE}
+```{r include = FALSE}
 data.frame()
 ```
+
+### 
 
 To initialize columns in a data frame, you must give a name within "" and set it equal to a certain desired values.
 
 ### Exercise 2
 
-Copy the previous code. Add the column name parameter, `column 1`, in the `data.frame()` function.
+Copy the previous code. Add the column name parameter, `"column 1"`, in the `data.frame()` function.
 
 ```{r tidyverse-syntax-2, exercise = TRUE}
 
@@ -499,6 +558,10 @@ Copy the previous code. Add the column name parameter, `column 1`, in the `data.
 <button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-2-hint-1, eval = FALSE}
+data.frame("...")
+```
+
+```{r include = FALSE}
 data.frame("column 1")
 ```
 
@@ -517,6 +580,10 @@ As you can see, there is only one row with the name of the column. The column na
 <button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-3-hint-1, eval = FALSE}
+data.frame("...", check.names = ...)
+```
+
+```{r include = FALSE}
 data.frame("column 1", check.names = FALSE)
 ```
 
@@ -535,6 +602,10 @@ Now lets assign values to the column using the `=` sign. Copy the previous code 
 ```
 
 ```{r tidyverse-syntax-4-hint-2, eval = FALSE}
+data.frame("..." = 1:3, check.names = ...)
+```
+
+```{r include = FALSE}
 data.frame("column 1" = 1:3, check.names = FALSE)
 ```
 
@@ -549,6 +620,10 @@ Now to create another row, copy the previous code and add the column name parame
 <button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-5-hint-1, eval = FALSE}
+df <- data.frame("column 1" = 1:3, `...` = 4:6, check.names = ...)
+```
+
+```{r include = FALSE}
 df <- data.frame("column 1" = 1:3, `two` = 4:6, check.names = FALSE)
 ```
 
@@ -567,6 +642,10 @@ Copy the previous code. Replace `data.frame()` with `tibble()`, keeping the firs
 <button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-6-hint-1, eval = FALSE}
+tbl <- tibble(`...` = 1:3, `...` = 4:6)
+```
+
+```{r include = FALSE}
 tbl <- tibble(`column 1` = 1:3, `two` = 4:6)
 ```
 
@@ -609,6 +688,10 @@ Standard data frames enable partial matching of arguments so that code using onl
 <button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-8-hint-1, eval = FALSE}
+...$tw
+```
+
+```{r include = FALSE}
 df$tw
 ```
 
@@ -627,12 +710,16 @@ Copy the previous code. Replace `df` with `tbl` and press "Run Code".
 <button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-9-hint-1, eval = FALSE}
+...$tw
+```
+
+```{r include = FALSE}
 tbl$tw
 ```
 
 ### 
 
-The warning message: "Unknown or uninitialized column: `tw`" shows up because the full column name must be entered to extract the correct column from the tibble. Tibbles prevent this from happening since it can lead to accidental errors
+The warning message: "Unknown or uninitialized column: `tw`" shows up because the full column name must be entered to extract the correct column from the tibble. Tibbles prevent partial matching from happening since it can lead to accidental errors.
 
 ### Exercise 10
 
@@ -662,10 +749,6 @@ library(...)
 library(lubridate)
 ```
 
-### 
-
-<!-- PK: Knowledge Drop -->
-
 ### Exercise 11
 
 We will also need the **readr** package to use functions that deal with csv files. Load the library using `library()`.
@@ -683,8 +766,6 @@ library(...)
 ```{r include = FALSE}
 library(readr)
 ```
-
-### 
 
 ### Exercise 12
 
@@ -712,7 +793,7 @@ Now that the data set is assigned to `url`, we will now read the data using the 
 read_csv(...)
 ```
 
-```{r}
+```{r include = FALSE}
 read_csv(url)
 ```
 
@@ -766,7 +847,7 @@ read_csv(url)|>
 
 ### 
 
-<!-- PK: Knoweldge Drop -->
+<!-- PK: Knowledge Drop -->
 
 ### Exercise 16
 
@@ -807,7 +888,13 @@ We also want to make the rides in the units of 1k. Copy the previous code and se
 ```{r tidyverse-syntax-17-hint-1, eval = FALSE}
 read_csv(url)|>
   select(station = stationname, date, rides)|>
-  mutate(date = mdy(date), rides = .../1000)
+  mutate(date = mdy(...), rides = .../1000)
+```
+
+```{r include = FALSE}
+read_csv(url)|>
+  select(station = stationname, date, rides)|>
+  mutate(date = mdy(date), rides = rides/1000)
 ```
 
 ### 
@@ -826,8 +913,8 @@ To summarize the records using the maximum number of rides, we first need to gro
 
 ```{r tidyverse-syntax-18-hint-1, eval = FALSE}
 read_csv(url)|>
-  select(station = stationname, date, rides)|>
-  mutate(date = mdy(date), rides = rides/1000)|>
+  select(station = stationname, date, ...)|>
+  mutate(date = mdy(...), rides = rides/1000)|>
   group_by(..., ...)
 ```
 
@@ -854,13 +941,13 @@ Now that we have grouped the data set by date and station, we will now summarize
 
 ```{r tidyverse-syntax-19-hint-1, eval = FALSE}
 read_csv(url)|>
-  select(station = stationname, date, rides)|>
-  mutate(date = mdy(date), rides = rides/1000)|>
+  select(station = stationname, date, ...)|>
+  mutate(date = mdy(...), rides = rides/1000)|>
   group_by(date, station)|>
   summarize(rides = max(...))
 ```
 
-```{r}
+```{r include = FALSE}
 read_csv(url)|>
   select(station = stationname, date, rides)|>
   mutate(date = mdy(date), rides = rides/1000)|>
@@ -870,7 +957,7 @@ read_csv(url)|>
 
 ### 
 
-<!-- PK: Knowledge Drops -->
+<!-- PK: Knowledge Drop -->
 
 ### Exercise 20
 
@@ -887,7 +974,7 @@ read_csv(url)|>
   select(station = stationname, date, rides)|>
   mutate(date = mdy(date), rides = rides/1000)|>
   group_by(date, station)|>
-  summarize(rides = max(rides), .groups = "...")
+  summarize(rides = max(...), .groups = "...")
 ```
 
 ```{r include = FALSE}
@@ -904,8 +991,6 @@ read_csv(url)|>
 ### 
 
 This tutorial covered [Chapter 2: Tidyverse Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We briefly discused the important principles of the [**tidyverse**](https://www.tidyverse.org/packages/) design philosophy and how they apply in the context of modeling software that is easy to use and supports good statistical practices. You have learned the relationship between **tidymodels** and **tidyverse**, as [**tidymodels**](https://www.tidymodels.org/packages/) applies **tidyverse** principles to building models.
-
-<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
 
 ```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
 ```
