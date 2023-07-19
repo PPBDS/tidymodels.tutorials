@@ -8,12 +8,13 @@ output:
     progressive: true
     allow_skip: true
 runtime: shiny_prerendered
-description: "ADD DESCRIPTION (a single sentence)"
+description: "Tutorial for Chapter 3: A Review of R Modeling Fundamentals"
 ---
 
 ```{r setup, include = FALSE}
 library(learnr)
 library(tutorial.helpers)
+library(tidyverse)
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
         tutorial.storage = "local") 
@@ -35,10 +36,34 @@ options(tutorial.exercise.timelimit = 60,
 ## Introduction
 ###
 
-<!-- Two to four sentence about the main topics covered in this tutorial. Why are we here? What will students get out of giving you 90 minutes of their lives? How does this tutorial connect to other tutorials? -->
 
-## First section (use sentence case)
+This tutorial covers [Chapter 3: A Review of R Modeling Fundamentals](https://www.tmwr.org/base-r.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This chapter is a brief illustration of core language conventions that are important to be aware of even if you never use base R for models at all. This chapter is not exhaustive, but it provides readers (especially those new to R) the basic, most commonly used motifs.
+
+
+
+## Modeling in base R
 ###
+
+To demonstrate some fundamentals for modeling in base R, let’s use experimental data from McDonald (2009), by way of Mangiafico (2015), on the relationship between the ambient temperature and the rate of cricket chirps per minute. Data were collected for two species: O. exclamationis and O. niveus. The data are contained in a data frame called crickets with a total of 31 data points.
+
+### Exercise 1
+
+Load the **tidyverse** library using `library()`.
+
+```{r modeling-in-base-r-1, exercise = TRUE}
+
+```
+
+```{r modeling-in-base-r-1-hint, eval = FALSE}
+library(...)
+```
+
+```{r, include=FALSE}
+library(tidyverse)
+```
+
+###
+
 
 ## Summary
 ###
