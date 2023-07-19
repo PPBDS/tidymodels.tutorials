@@ -1,0 +1,49 @@
+---
+title: "A Review of R Modeling Fundamentals"
+author: David Kane and Aryan Kancherla
+tutorial:
+  id: "a-review-of-r-modeling-fundamentals"
+output: 
+  learnr::tutorial:
+    progressive: true
+    allow_skip: true
+runtime: shiny_prerendered
+description: "ADD DESCRIPTION (a single sentence)"
+---
+
+```{r setup, include = FALSE}
+library(learnr)
+library(tutorial.helpers)
+knitr::opts_chunk$set(echo = FALSE)
+options(tutorial.exercise.timelimit = 60, 
+        tutorial.storage = "local") 
+```
+
+```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
+```
+
+```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
+```
+
+<!-- CHECKLIST BEFORE STARTING: -->
+<!-- * Edit yaml at the top of this file -->
+<!-- * Save the file as "tutorial.Rmd" in a new directory under inst/tutorials/. -->
+<!-- * Load any necessary libraries for the tutorial in the first code chunk -->
+<!-- * Review: https://ppbds.github.io/tutorial.helpers/articles/instructions.html -->
+<!-- * Delete this and the other commented instructions below. -->
+
+## Introduction
+###
+
+<!-- Two to four sentence about the main topics covered in this tutorial. Why are we here? What will students get out of giving you 90 minutes of their lives? How does this tutorial connect to other tutorials? -->
+
+## First section (use sentence case)
+###
+
+## Summary
+###
+
+<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+
+```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
+```
