@@ -1,11 +1,10 @@
+Read Modelling Basics chapters.
+
 # Pratham
 
+Chapter 4.
 
 # Aryan
-
-Set up project with create_ and so on.
-
-Do the (only) tutorial as if you were a student.
 
 Submit a PR with corrections and questions.
 
