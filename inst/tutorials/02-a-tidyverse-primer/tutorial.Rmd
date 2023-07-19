@@ -36,13 +36,11 @@ url <- "https://data.cityofchicago.org/api/views/5neh-572f/rows.csv?accessType=D
 <!-- DK: Use test chunks for all questions. May not always be possible. -->
 
 ## Introduction
-
 ### 
 
 This tutorial covers [Chapter 2: Tidyverse Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We briefly discuss important principles of the [*Tidyverse*](https://www.tidyverse.org) design philosophy and how they apply in the context of modeling software that is easy to use properly and supports good statistical practices. The [**tidymodels**](https://www.tidymodels.org/) and the [**tidyverse**](https://tidyverse.tidyverse.org/) packages build on the R language, and [**tidymodels**](https://www.tidymodels.org/packages/) applies *Tidyverse* principles to building models.
 
 ## Tidyverse principles
-
 ### 
 
 The full set of strategies and tactics for writing R code in the *Tidyverse* style can be found at this [website](https://design.tidyverse.org). Here we can briefly describe several of the general *Tidyverse* design principles, their motivation, and how we think about modeling as an application of these principles.
@@ -217,7 +215,6 @@ Great job! You have learned the core language of R and compared its functionalit
 ### 
 
 ## Reuse Existing Data Structures
-
 ### 
 
 <!-- Fix this intro -->
@@ -280,7 +277,7 @@ question_text(NULL,
 
 ### Exercise 4
 
-We will explore `rsample` using the bootstrap method. Access `bootstraps()` from the `rsample` library using `::`.
+We will explore **rsample** using the bootstrap method. Access `bootstraps()` from the **rsample** library using `::`.
 
 ```{r reuse-existing-data--4, exercise = TRUE}
 
@@ -308,7 +305,7 @@ Using the previous code, enter `mtcars` in `bootstraps()`.
 rsample::bootstraps(...)
 ```
 
-```{r, include=FALSE}
+```{r include = FALSE}
 rsample::bootstraps(mtcars)
 ```
 
@@ -330,20 +327,19 @@ Using the previous code, only produce 3 splits using the `times` parameter in `b
 rsample::bootstraps(mtcars, ... = 3)
 ```
 
-```{r, include=FALSE}
+```{r include = FALSE}
 rsample::bootstraps(mtcars, times = 3)
 ```
 
 ### 
 
-One important feature in the tibble produced by `rsample` is that the \*splits\*\* column is a list. In this instance, each element of the list has the same type of object: an `rsplit` object that contains the information about which rows of `mtcars` belong in the bootstrap sample.
+One important feature in the tibble produced by **rsample** is that the *splits* column is a list. In this instance, each element of the list has the same type of object: an `rsplit` object that contains the information about which rows of `mtcars` belong in the bootstrap sample.
 
 ### 
 
-Great Job! You understood the meaning and importance of resampling using the bootstrap method. This was achieved using the `bootstrap()` method from the `rsample` library.
+Great Job! You understood the meaning and importance of resampling using the bootstrap method. This was achieved using the `bootstrap()` method from the **rsample** library.
 
 ## Design for the Pipe and Functional Programming
-
 ### 
 
 We are used to using the conventional pipe operator `|>` and using simple lines of code to produce a desired output. We will revisit this useful pipe operator and how to reduce complexity when using functions.
@@ -464,7 +460,6 @@ ggplot(mtcars, aes(x = wt, y = mpg)) +
 ### 
 
 ## Tidyverse Syntax
-
 ### 
 
 Let's begin our discussion of tidyverse syntax by exploring more deeply what a tibble is, and how tibbles work. Tibbles have slightly different rules than basic data frames in R.
@@ -571,7 +566,7 @@ Copy the previous code. Replace `data.frame()` with `tibble()`, keeping the firs
 
 <button onclick="transfer_code(this)">Copy previous code</button>
 
-```{r tidyverse-syntax-6-hint, eval = FALSE}
+```{r tidyverse-syntax-6-hint-1, eval = FALSE}
 tbl <- tibble(`column 1` = 1:3, `two` = 4:6)
 ```
 
@@ -589,12 +584,12 @@ Within the brackets of `tbl[]` and `df[]` (on two different lines), type in `, "
 
 <button onclick="transfer_code(this)">Copy previous code</button>
 
-```{r tidyverse-syntax-7-hint, eval = FALSE}
+```{r tidyverse-syntax-7-hint-1, eval = FALSE}
 tbl[, ...]
 df[, ...]
 ```
 
-```{r, include=FALSE}
+```{r include = FALSE}
 tbl[, "two"]
 df[, "two"]
 ```
@@ -613,7 +608,7 @@ Standard data frames enable partial matching of arguments so that code using onl
 
 <button onclick="transfer_code(this)">Copy previous code</button>
 
-```{r tidyverse-syntax-8-hint, eval = FALSE}
+```{r tidyverse-syntax-8-hint-1, eval = FALSE}
 df$tw
 ```
 
@@ -631,7 +626,7 @@ Copy the previous code. Replace `df` with `tbl` and press "Run Code".
 
 <button onclick="transfer_code(this)">Copy previous code</button>
 
-```{r tidyverse-syntax-9-hint, eval = FALSE}
+```{r tidyverse-syntax-9-hint-1, eval = FALSE}
 tbl$tw
 ```
 
@@ -659,11 +654,11 @@ First, we will be using the **lubridate** package to convert the dates into the 
 
 ```
 
-```{r tidyverse-syntax-10-hint, eval = FALSE}
+```{r tidyverse-syntax-10-hint-1, eval = FALSE}
 library(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 library(lubridate)
 ```
 
@@ -681,53 +676,31 @@ We will also need the **readr** package to use functions that deal with csv file
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r tidyverse-syntax-11-hint, eval = FALSE}
+```{r tidyverse-syntax-11-hint-1, eval = FALSE}
 library(...)
 ```
 
-```{r, include= FALSE}
+```{r include = FALSE}
 library(readr)
 ```
 
-###
-
-### Exercise 11
-
-Next, we will need to use the data set we are looking at. Run the code to store the data set in the variable `url`.
-
-```{r tidyverse-syntax-11, exercise = TRUE}
-url <- "https://data.cityofchicago.org/api/views/5neh-572f/rows.csv?accessType=DOWNLOAD&bom=true&format=true"
-```
-
-###
-
-<!-- PK: Knowledge Drop -->
+### 
 
 ### Exercise 12
 
-Now that the data set is assigned to `url`, we will now read the data using the function `read_csv()`. Within in `read_csv()`, put `url` as the parameter. Hit "Run Code".
+Next, we will need to use the data set we are looking at. Run the code to store the data set in the variable `url`.
 
 ```{r tidyverse-syntax-12, exercise = TRUE}
-
+url <- "https://data.cityofchicago.org/api/views/5neh-572f/rows.csv?accessType=DOWNLOAD&bom=true&format=true"
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
-
-```{r tidyverse-syntax-12-hint, eval = FALSE}
-read_csv(...)
-```
-
-```{r}
-read_csv(url)
-```
-
-###
+### 
 
 <!-- PK: Knowledge Drop -->
 
 ### Exercise 13
 
-Copy the previous code. Select the columns `stationname, date, rides` using select(). 
+Now that the data set is assigned to `url`, we will now read the data using the function `read_csv()`. Within in `read_csv()`, put `url` as the parameter. Hit "Run Code".
 
 ```{r tidyverse-syntax-13, exercise = TRUE}
 
@@ -735,23 +708,21 @@ Copy the previous code. Select the columns `stationname, date, rides` using sele
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r tidyverse-syntax-13-hint, eval = FALSE}
-read_csv(url)|>
-  select(..., ..., ...)
+```{r tidyverse-syntax-13-hint-1, eval = FALSE}
+read_csv(...)
 ```
 
-```{r, include = FALSE}
-read_csv(url)|>
-  select(stationname, date, rides)
+```{r}
+read_csv(url)
 ```
 
-###
+### 
 
 <!-- PK: Knowledge Drop -->
 
 ### Exercise 14
 
-We want to reduce confusion with one of the column names and make it more clear to the what the data is portraying. Copy the previous code and rename `stationname` to station using the `=` operator within `select()`.
+Copy the previous code. Select the columns `stationname, date, rides` using select(). 
 
 ```{r tidyverse-syntax-14, exercise = TRUE}
 
@@ -759,23 +730,23 @@ We want to reduce confusion with one of the column names and make it more clear 
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r tidyverse-syntax-14-hint, eval = FALSE}
+```{r tidyverse-syntax-14-hint-1, eval = FALSE}
 read_csv(url)|>
-  select(... = stationname, date, rides)
+  select(..., ..., ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 read_csv(url)|>
-  select(station = stationname, date, rides)
+  select(stationname, date, rides)
 ```
 
-###
+### 
 
-<!-- PK: Knoweldge Drop -->
+<!-- PK: Knowledge Drop -->
 
 ### Exercise 15
 
-
+We want to reduce confusion with one of the column names and make it more clear to the what the data is portraying. Copy the previous code and rename `stationname` to station using the `=` operator within `select()`.
 
 ```{r tidyverse-syntax-15, exercise = TRUE}
 
@@ -783,15 +754,153 @@ read_csv(url)|>
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r tidyverse-syntax-15-hint, eval = FALSE}
+```{r tidyverse-syntax-15-hint-1, eval = FALSE}
+read_csv(url)|>
+  select(... = stationname, date, rides)
+```
+
+```{r include = FALSE}
+read_csv(url)|>
+  select(station = stationname, date, rides)
+```
+
+### 
+
+<!-- PK: Knoweldge Drop -->
+
+### Exercise 16
+
+We need to change the dates in the data set to the correct R form using `mdy()`. Copy the previous code and pipe it to mutate(). Inside the function, add `date` as the parameter for `mdy()` and set that expression to `date`.
+
+```{r tidyverse-syntax-16, exercise = TRUE}
 
 ```
 
-###
+<button onclick = "transfer_code(this)">Copy previous code</button>
 
+```{r tidyverse-syntax-16-hint-1, eval = FALSE}
+read_csv(url)|>
+  select(station = stationname, date, rides)|>
+  mutate(date = mdy(...))
+```
+
+```{r include = FALSE}
+read_csv(url)|>
+  select(station = stationname, date, rides)|>
+  mutate(date = mdy(date))
+```
+
+### 
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 17
+
+We also want to make the rides in the units of 1k. Copy the previous code and set `rides` equal to `rides/1000`.
+
+```{r tidyverse-syntax-17, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-syntax-17-hint-1, eval = FALSE}
+read_csv(url)|>
+  select(station = stationname, date, rides)|>
+  mutate(date = mdy(date), rides = .../1000)
+```
+
+### 
+
+<!-- PK: Knowledge Drop -->
+ 
+### Exercise 18
+
+To summarize the records using the maximum number of rides, we first need to group the data by `date` and `station`. Copy the previous code and pipe `group_by()` with the parameters being `date` and `station`.
+
+```{r tidyverse-syntax-18, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-syntax-18-hint-1, eval = FALSE}
+read_csv(url)|>
+  select(station = stationname, date, rides)|>
+  mutate(date = mdy(date), rides = rides/1000)|>
+  group_by(..., ...)
+```
+
+```{r include = FALSE}
+read_csv(url)|>
+  select(station = stationname, date, rides)|>
+  mutate(date = mdy(date), rides = rides/1000)|>
+  group_by(date, station)
+```
+
+### 
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 19
+
+Now that we have grouped the data set by date and station, we will now summarize it by the maximum rides using the `summarize()` functin. Copy the previous code and pipe it to `summarize()`. Add the parameter of the max `rides` using them `max()` function and setting the expression equal to `rides`.
+
+```{r tidyverse-syntax-19, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-syntax-19-hint-1, eval = FALSE}
+read_csv(url)|>
+  select(station = stationname, date, rides)|>
+  mutate(date = mdy(date), rides = rides/1000)|>
+  group_by(date, station)|>
+  summarize(rides = max(...))
+```
+
+```{r}
+read_csv(url)|>
+  select(station = stationname, date, rides)|>
+  mutate(date = mdy(date), rides = rides/1000)|>
+  group_by(date, station)|>
+  summarize(rides = max(rides))
+```
+
+### 
+
+<!-- PK: Knowledge Drops -->
+
+### Exercise 20
+
+Finally, we do not want the grouped structure to remain after summarizing the data by the maximum rides. Copy the previous code and add `.groups = "drop"` to `summarize()`.
+
+```{r tidyverse-syntax-20, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-syntax-20-hint-1, eval = FALSE}
+read_csv(url)|>
+  select(station = stationname, date, rides)|>
+  mutate(date = mdy(date), rides = rides/1000)|>
+  group_by(date, station)|>
+  summarize(rides = max(rides), .groups = "...")
+```
+
+```{r include = FALSE}
+read_csv(url)|>
+  select(station = stationname, date, rides)|>
+  mutate(date = mdy(date), rides = rides/1000)|>
+  group_by(date, station)|>
+  summarize(rides = max(rides), .groups = "drop")
+```
+
+### 
 
 ## Summary
-
 ### 
 
 This tutorial covered [Chapter 2: Tidyverse Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We briefly discused the important principles of the [**tidyverse**](https://www.tidyverse.org/packages/) design philosophy and how they apply in the context of modeling software that is easy to use and supports good statistical practices. You have learned the relationship between **tidymodels** and **tidyverse**, as [**tidymodels**](https://www.tidymodels.org/packages/) applies **tidyverse** principles to building models.
