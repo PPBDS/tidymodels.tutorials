@@ -16,12 +16,15 @@ library(learnr)
 library(tutorial.helpers)
 library(tidyverse)
 library(tidymodels)
+library(lubridate)
+library(readr)
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 600, 
         tutorial.storage = "local") 
 
 df <- data.frame("column 1" = 1:3, `two` = 4:6, check.names = FALSE)
 tbl <- tibble(`column 1` = 1:3, `two` = 4:6)
+url <- "https://data.cityofchicago.org/api/views/5neh-572f/rows.csv?accessType=DOWNLOAD&bom=true&format=true"
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -30,15 +33,16 @@ tbl <- tibble(`column 1` = 1:3, `two` = 4:6)
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
-
 <!-- DK: Use test chunks for all questions. May not always be possible. -->
 
 ## Introduction
+
 ### 
 
 This tutorial covers [Chapter 2: Tidyverse Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We briefly discuss important principles of the [*Tidyverse*](https://www.tidyverse.org) design philosophy and how they apply in the context of modeling software that is easy to use properly and supports good statistical practices. The [**tidymodels**](https://www.tidymodels.org/) and the [**tidyverse**](https://tidyverse.tidyverse.org/) packages build on the R language, and [**tidymodels**](https://www.tidymodels.org/packages/) applies *Tidyverse* principles to building models.
 
 ## Tidyverse principles
+
 ### 
 
 The full set of strategies and tactics for writing R code in the *Tidyverse* style can be found at this [website](https://design.tidyverse.org). Here we can briefly describe several of the general *Tidyverse* design principles, their motivation, and how we think about modeling as an application of these principles.
@@ -213,6 +217,7 @@ Great job! You have learned the core language of R and compared its functionalit
 ### 
 
 ## Reuse Existing Data Structures
+
 ### 
 
 <!-- Fix this intro -->
@@ -221,7 +226,7 @@ Whenever possible, functions should avoid returning a novel data structure. This
 
 ### 
 
-We will be using the `rsample` package to give an example of using existing data structures that make statistical calculations happen quicker and more efficient.
+We will be using the **rsample** package to give an example of using existing data structures that make statistical calculations happen quicker and more efficient.
 
 ### Exercise 1
 
@@ -239,7 +244,7 @@ library(...)
 
 ### Exercise 2
 
-Get a better understanding of the `rsample` library by typing in `?rsample` into the console. Look at the description in the help tab. CP/CR.
+Get a better understanding of the **rsample** library by typing in `?rsample` into the console. Look at the description in the help tab. CP/CR.
 
 ```{r reuse-existing-data--2}
 question_text(NULL,
@@ -252,15 +257,15 @@ question_text(NULL,
 
 ### 
 
-The `rsample` package makes it easier to store data. Resampling allows us to make more accurate predictions and gather more information about a sample.
+The **rsample** package makes it easier to store data. Resampling allows us to make more accurate predictions and gather more information about a sample.
 
 ### 
 
-One resampling method is called bootstrap, which is resampling a single data set to create many simulated samples. This can be done by using the `bootstraps()`
+One resampling method is called bootstrap, which is resampling a single data set to create many simulated samples. This can be done by using the `bootstraps()`.
 
 ### Exercise 3
 
-Find out more about `bootstraps` by typing `bootstraps`in the console. Look at the description. CP/CR
+Find out more about `bootstraps` by typing `?bootstraps`in the console. Look at the description. CP/CR
 
 ```{r reuse-existing-data--3}
 question_text(NULL,
@@ -303,11 +308,9 @@ Using the previous code, enter `mtcars` in `bootstraps()`.
 rsample::bootstraps(...)
 ```
 
-
 ```{r, include=FALSE}
 rsample::bootstraps(mtcars)
 ```
-
 
 ### 
 
@@ -327,11 +330,9 @@ Using the previous code, only produce 3 splits using the `times` parameter in `b
 rsample::bootstraps(mtcars, ... = 3)
 ```
 
-
 ```{r, include=FALSE}
 rsample::bootstraps(mtcars, times = 3)
 ```
-
 
 ### 
 
@@ -342,6 +343,7 @@ One important feature in the tibble produced by `rsample` is that the \*splits\*
 Great Job! You understood the meaning and importance of resampling using the bootstrap method. This was achieved using the `bootstrap()` method from the `rsample` library.
 
 ## Design for the Pipe and Functional Programming
+
 ### 
 
 We are used to using the conventional pipe operator `|>` and using simple lines of code to produce a desired output. We will revisit this useful pipe operator and how to reduce complexity when using functions.
@@ -462,6 +464,7 @@ ggplot(mtcars, aes(x = wt, y = mpg)) +
 ### 
 
 ## Tidyverse Syntax
+
 ### 
 
 Let's begin our discussion of tidyverse syntax by exploring more deeply what a tibble is, and how tibbles work. Tibbles have slightly different rules than basic data frames in R.
@@ -474,8 +477,7 @@ Here are some of the aspects of `data.frame()`:
 
 -   The row names should be unique
 
--   The data stored in a data frame can be of numeric, factor or
-    character type
+-   The data stored in a data frame can be of numeric, factor or character type
 
 -   Each column should contain same number of data items
 
@@ -499,7 +501,7 @@ Copy the previous code. Add the column name parameter, `column 1`, in the `data.
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
+<button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-2-hint-1, eval = FALSE}
 data.frame("column 1")
@@ -507,7 +509,7 @@ data.frame("column 1")
 
 ### 
 
-As you can see, there is only one row with the name of the column. The column name, however, seems hard to read and is confusing. 
+As you can see, there is only one row with the name of the column. The column name, however, seems hard to read and is confusing.
 
 ### Exercise 3
 
@@ -517,7 +519,7 @@ As you can see, there is only one row with the name of the column. The column na
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
+<button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-3-hint-1, eval = FALSE}
 data.frame("column 1", check.names = FALSE)
@@ -525,13 +527,13 @@ data.frame("column 1", check.names = FALSE)
 
 ### Exercise 4
 
-Now lets assign values to the column using the `=` sign. Copy the previous code and set the column name to values from 1 to 3. 
+Now lets assign values to the column using the `=` sign. Copy the previous code and set the column name to values from 1 to 3.
 
 ```{r tidyverse-syntax-4, exercise = TRUE}
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
+<button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-4-hint-1, eval = FALSE}
 "Remember to use the : symbol to get multiple consecutive numbers."
@@ -541,7 +543,6 @@ Now lets assign values to the column using the `=` sign. Copy the previous code 
 data.frame("column 1" = 1:3, check.names = FALSE)
 ```
 
-
 ### Exercise 5
 
 Now to create another row, copy the previous code and add the column name parameter `two` to `data.frame()` and set it equal to the values 4 to 6. Set this data frame to `df`.
@@ -550,7 +551,7 @@ Now to create another row, copy the previous code and add the column name parame
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
+<button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-5-hint-1, eval = FALSE}
 df <- data.frame("column 1" = 1:3, `two` = 4:6, check.names = FALSE)
@@ -568,13 +569,13 @@ Copy the previous code. Replace `data.frame()` with `tibble()`, keeping the firs
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
+<button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-6-hint, eval = FALSE}
 tbl <- tibble(`column 1` = 1:3, `two` = 4:6)
 ```
 
-###
+### 
 
 Tibbles also prevent one of the most common R errors: dropping dimensions. If a standard data frame subsets the columns down to a single column, the object is converted to a vector. Tibbles never do this.
 
@@ -586,7 +587,7 @@ Within the brackets of `tbl[]` and `df[]` (on two different lines), type in `, "
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
+<button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-7-hint, eval = FALSE}
 tbl[, ...]
@@ -595,10 +596,10 @@ df[, ...]
 
 ```{r, include=FALSE}
 tbl[, "two"]
+df[, "two"]
 ```
 
-
-###
+### 
 
 The tibble keeps the structure of a column while the data frame turns it into a vector of values.
 
@@ -610,13 +611,13 @@ Standard data frames enable partial matching of arguments so that code using onl
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
+<button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-8-hint, eval = FALSE}
 df$tw
 ```
 
-###
+### 
 
 As you can see, even though the partial name of the column was called, the data frame recognized it as the column `two` and printed the desired column.
 
@@ -628,30 +629,172 @@ Copy the previous code. Replace `df` with `tbl` and press "Run Code".
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
+<button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-9-hint, eval = FALSE}
 tbl$tw
 ```
 
-###
-
-The warning message: "Unknown or uninitialized column: `tw`" shows up becase the full column name must be entered to extract the correct column from the tibble. Tibbles prevent this from happening since it can lead to accidental errors
-
-## Summary
 ### 
 
+The warning message: "Unknown or uninitialized column: `tw`" shows up because the full column name must be entered to extract the correct column from the tibble. Tibbles prevent this from happening since it can lead to accidental errors
 
-This tutorial covered [Chapter 2: Tidyverse
-Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles)
-from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and
-Julia Silge. We briefly discused the important principles of the
-[**tidyverse**](https://www.tidyverse.org/packages/) design philosophy
-and how they apply in the context of modeling software that is easy to
-use and supports good statistical practices. You have learned the
-relationship between **tidymodels** and **tidyverse**, as
-[**tidymodels**](https://www.tidymodels.org/packages/) applies
-**tidyverse** principles to building models.
+### Exercise 10
+
+To demonstrate some syntax, let's use tidyverse functions to read in data that could be used in modeling. The data set comes from the city of Chicago's data portal and contains daily ridership data for the city's elevated train stations. The data set has columns for:
+
+-   the station identifier (numeric)
+
+-   the station name (character)
+
+-   the date (character in mm/dd/yyyy format)
+
+-   the day of the week (character)
+
+-   the number of riders (numeric)
+
+First, we will be using the **lubridate** package to convert the dates into the proper R format. Load the **lubridate** library using `library()`.
+
+```{r tidyverse-syntax-10, exercise = TRUE}
+
+```
+
+```{r tidyverse-syntax-10-hint, eval = FALSE}
+library(...)
+```
+
+```{r, include = FALSE}
+library(lubridate)
+```
+
+### 
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 11
+
+We will also need the **readr** package to use functions that deal with csv files. Load the library using `library()`.
+
+```{r tidyverse-syntax-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-syntax-11-hint, eval = FALSE}
+library(...)
+```
+
+```{r, include= FALSE}
+library(readr)
+```
+
+###
+
+### Exercise 11
+
+Next, we will need to use the data set we are looking at. Run the code to store the data set in the variable `url`.
+
+```{r tidyverse-syntax-11, exercise = TRUE}
+url <- "https://data.cityofchicago.org/api/views/5neh-572f/rows.csv?accessType=DOWNLOAD&bom=true&format=true"
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 12
+
+Now that the data set is assigned to `url`, we will now read the data using the function `read_csv()`. Within in `read_csv()`, put `url` as the parameter. Hit "Run Code".
+
+```{r tidyverse-syntax-12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-syntax-12-hint, eval = FALSE}
+read_csv(...)
+```
+
+```{r}
+read_csv(url)
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 13
+
+Copy the previous code. Select the columns `stationname, date, rides` using select(). 
+
+```{r tidyverse-syntax-13, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-syntax-13-hint, eval = FALSE}
+read_csv(url)|>
+  select(..., ..., ...)
+```
+
+```{r, include = FALSE}
+read_csv(url)|>
+  select(stationname, date, rides)
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 14
+
+We want to reduce confusion with one of the column names and make it more clear to the what the data is portraying. Copy the previous code and rename `stationname` to station using the `=` operator within `select()`.
+
+```{r tidyverse-syntax-14, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-syntax-14-hint, eval = FALSE}
+read_csv(url)|>
+  select(... = stationname, date, rides)
+```
+
+```{r, include = FALSE}
+read_csv(url)|>
+  select(station = stationname, date, rides)
+```
+
+###
+
+<!-- PK: Knoweldge Drop -->
+
+### Exercise 15
+
+
+
+```{r tidyverse-syntax-15, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-syntax-15-hint, eval = FALSE}
+
+```
+
+###
+
+
+## Summary
+
+### 
+
+This tutorial covered [Chapter 2: Tidyverse Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We briefly discused the important principles of the [**tidyverse**](https://www.tidyverse.org/packages/) design philosophy and how they apply in the context of modeling software that is easy to use and supports good statistical practices. You have learned the relationship between **tidymodels** and **tidyverse**, as [**tidymodels**](https://www.tidymodels.org/packages/) applies **tidyverse** principles to building models.
 
 <!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
 
