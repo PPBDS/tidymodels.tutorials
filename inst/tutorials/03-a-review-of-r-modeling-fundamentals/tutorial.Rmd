@@ -1,8 +1,8 @@
 ---
-title: "A Review of R Modeling Fundamentals"
+title: A Review of R Modeling Fundamentals
 author: David Kane and Aryan Kancherla
 tutorial:
-  id: "a-review-of-r-modeling-fundamentals"
+  id: a-review-of-r-modeling-fundamentals
 output: 
   learnr::tutorial:
     progressive: true
