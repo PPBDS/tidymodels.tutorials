@@ -1,0 +1,14 @@
+# Pratham
+
+
+# Aryan
+
+Set up project with create_ and so on.
+
+Do the (only) tutorial as if you were a student.
+
+Submit a PR with corrections and questions.
+
+Read the book, chapters 1 to 3.
+
+Start 03 tutorial.
