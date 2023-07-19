@@ -15,8 +15,7 @@ RoxygenNote: 7.2.3
 Suggests: 
     learnr,
     testthat (>= 3.0.0),
-    tutorial.helpers
+    tutorial.helpers,
+    tidyverse,
+    tidymodels
 Config/testthat/edition: 3
-Depends: 
-    tidymodels,
-    tidyverse
