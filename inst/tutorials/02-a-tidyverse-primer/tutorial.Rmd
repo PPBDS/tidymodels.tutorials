@@ -27,6 +27,11 @@ tbl <- tibble(`column 1` = 1:3, `two` = 4:6)
 url <- "https://data.cityofchicago.org/api/views/5neh-572f/rows.csv?accessType=DOWNLOAD&bom=true&format=true"
 
 chicago <- read_csv(url)
+
+compute_log_ratio <- function(mpg, wt, log_base = exp(1)) {
+  (log(mpg/wt, base = log_base))
+}
+result <- compute_log_ratio(mtcars$mpg, mtcars$wt)
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -325,7 +330,8 @@ We will explore **rsample** using the bootstrap method. Access `bootstraps()` fr
 <!-- DK: Shouldn't error = TRUE work here? -->
 
 ```{r include = FALSE}
-# rsample::bootstraps()
+#rsample::bootstraps()
+
 ```
 
 This will throw an error, because a data frame was not specified. Our data frame is `mtcars`.
@@ -521,6 +527,290 @@ ggplot(mtcars, aes(x = wt, y = mpg)) +
 ```
 
 ### 
+
+In many real-world cases, the element-wise operation of interest is too complex for a vectorized solution. In such a case, a good approach is to write a function to do the computations.
+
+###
+
+The *strucutre* of a function is as follows: 
+
+function_name <- function(arg1, arg2, ...){
+  return("something")
+}
+
+*Example function*:
+
+add_numbers <- function(num1, num2){
+  sum <- num1 + num2
+  return(sum)
+}
+
+result <- add_numbers(5, 3)
+print(result)
+
+Expected Printed Result: `#[1] 8`
+
+### Exercise 8
+
+We will be computing the log ratio of  the mpg vs weight from the cars in them `mtcars` data set. Make the function for the `compute_log_ratio` and set it equal to a function with arguments `mpg` and `wt`. Remember to follow this expression with `{}`.
+
+```{r design-for-the-pipe--8, exercise = TRUE}
+
+```
+
+
+```{r design-for-the-pipe--8-hint, eval = FALSE}
+compute_log_ratio <- ...(mpg, wt){
+  
+}
+```
+
+```{r include = FALSE}
+compute_log_ratio <- function(mpg, wt){
+  
+}
+```
+
+###
+
+We can also have parameters of functions that are set to certain values within in function(). An example would be fctn_name <- function(..., log_base = exp(1)). You should not use this as a argument, however, you *call* the function.
+
+### Exercise 9
+
+Since we are computing the log ratio, we need to set the base of the log to 1. Copy the previous code and add the parameter `log_base = exp(1)`.
+
+```{r design-for-the-pipe--9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r design-for-the-pipe--9-hint, eval = FALSE}
+...<- function(..., ..., log_base = exp(...)){
+  
+}
+```
+
+```{r include = FALSE}
+compute_log_ratio <- function(mpg, wt, log_base = exp(1)){
+  
+}
+```
+
+###
+
+There are certain functions were you do not have to necessarily have a return() statement. Rather you can have the function print a desired value based on the arguments. However, it is best practice to have the function return some value.
+
+### Exercise 10
+
+It is crucial to have the return statement in the function. Copy the previous code and add the `return()` statement within the `{}` brackets.
+
+```{r design-for-the-pipe--10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r design-for-the-pipe--10-hint, eval = FALSE}
+...{
+  ...()
+}
+```
+
+```{r include = FALSE}
+compute_log_ratio <- function(mpg, wt, log_base = exp(1)){
+  return()
+}
+```
+
+###
+
+The return() statement exits the function and returns the value you desire. It can be any R object, such as a number, character, vector, list, or even NULL.
+
+### Exercise 11
+
+The log() function, in this case, will take the ratio between `mpg/wt` and take a log base, which was set to exp(1). First, copy the previous code and within the return statement, return log() with the first argument being `mpg/wt`.
+
+```{r design-for-the-pipe--11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r design-for-the-pipe--11-hint, eval = FALSE}
+...{
+  return(...(mpg/wt))
+}
+```
+
+```{r include = FALSE}
+compute_log_ratio <- function(mpg, wt, log_base = exp(1)){
+  return(log(mpg/wt))
+}
+```
+
+### Exercise 12
+
+Copy the previous code and add the base as a parameter for `log()`, which is equal to the log_base argument set in the function parameters for `compute_log_ratio`.
+
+```{r design-for-the-pipe--12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r design-for-the-pipe--12-hint, eval = FALSE}
+...{
+  return(log(mpg/wt, base = ...))
+}
+```
+
+```{r include = FALSE}
+compute_log_ratio <- function(mpg, wt, log_base = exp(1)){
+  return(log(mpg/wt), base = log_base)
+}
+```
+
+###
+
+To access any function that we have created, we must call this function in order to use it and give it the right number of parameters.
+
+### Exercise 13
+
+We must call the function outside of the function. Set `result` to `compute_log_ratio()`.
+
+```{r design-for-the-pipe--13, exercise = TRUE}
+
+```
+
+
+```{r design-for-the-pipe--13-hint, eval = FALSE}
+result <- ...()
+```
+
+```{r include = FALSE}
+#result <- compute_log_ratio()
+```
+
+### Exercise 14
+
+Set the arguments of the function to the columns `mpg` and `wt` from `mtcars` using the `$` symbol.
+
+```{r design-for-the-pipe--14, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r design-for-the-pipe--14-hint, eval = FALSE}
+result <- compute_log_ratio(mtcars$..., mtcars$...)
+```
+<!-- PK: Throwing an error here -->
+```{r include = FALSE}
+#result <- compute_log_ratio(mtcars$mpg, mtcars$wt)
+```
+
+### Exercise 15
+
+Finally, print this value. You should get a series of values with the compute log ratios between `mpg` and `wt`.
+
+```{r design-for-the-pipe--15, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r design-for-the-pipe--15-hint, eval = FALSE}
+print(...)
+```
+
+```{r}
+print(result)
+```
+
+###
+
+In R, the head() function views first few rows of a data frame or a vector without displaying the entire data set. 
+
+### Exercise 16
+
+We will be using the **Tidyverse** package **purr** to further examine the uses of functional programming. The most basic function, map(), always returns a list and uses the basic syntax of `map(vector, function)`.
+
+First, within the function head(), add the parameter `mtcars$mpg` and `3`, since we want to look at the first 3 rows of the `mpg` column.
+
+```{r design-for-the-pipe--16, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r design-for-the-pipe--16-hint, eval = FALSE}
+head(mtcars$mpg, ...)
+```
+
+```{r include = FALSE}
+head(mtcars$mpg, 3)
+```
+
+###
+
+There are many types of map function in the **purr** package, such as `map_dbl()`, `map2_dbl()`, etc.
+
+### Exercise 17
+
+Copy the previous code. Pipe the code to `map()` and add the parameter `sqrt`, as we want to take the square root of the `mpg` column.
+
+```{r design-for-the-pipe--17, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r design-for-the-pipe--17-hint, eval = FALSE}
+...|>
+  map(sqrt)
+```
+
+```{r include = FALSE}
+head(mtcars$mpg, 3)|>
+  map(sqrt)
+```
+
+###
+
+As you can see, `map()` returned the list of the `mpg`  of the first 3 rows of `mtcars` square rooted.
+
+### Exercise 18
+
+map_dbl() returns the a vector compared to a list returned when map() is called. Copy the previous code and change map() to map_dlb().
+
+```{r design-for-the-pipe--18, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r design-for-the-pipe--18-hint, eval = FALSE}
+head(mtcars$mpg, 3)|>
+  map_dbl(sqrt)
+```
+
+### Exercise 19
+
+map2_dbl() operates across multiple vectors. Within the function, there are three parameters, in this case: two vectors and the function that must be used on those two vectors. Within map2_dbl(), enter the `mpg` and `wt` columns from mtcars, with the third function parameter being `compute_log_ratio()`.
+
+```{r design-for-the-pipe--19, exercise = TRUE}
+mtcars
+```
+
+
+```{r design-for-the-pipe--19-hint, eval = FALSE}
+map2_dbl(mtcars$mpg, mtcars$wt, compute_log_ratio)
+```
+
+###
+
+Great Job! You now have a better understanding of how the pipe operator `|>` works and how functional programming can help create a more understandable solution to complex problems.
 
 ## Tidyverse Syntax
 ### 
@@ -787,7 +1077,7 @@ url <- "https://data.cityofchicago.org/api/views/5neh-572f/rows.csv?accessType=D
 
 ### Exercise 13
 
-Now that the data set is assigned to `url`, we will now read the data using the function `read_csv()`. Within in `read_csv()`, put `url` as the parameter. Hit "Run Code".
+Now that the data set is assigned to `url`, we will now read the data using the function `read_csv()`. Within in `read_csv()`, put `url` as the parameter and set the expression equal to "chicago". Hit "Run Code".
 
 ```{r tidyverse-syntax-13, exercise = TRUE}
 
@@ -796,11 +1086,11 @@ Now that the data set is assigned to `url`, we will now read the data using the 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-13-hint-1, eval = FALSE}
-read_csv(...)
+chicago <- read_csv(...)
 ```
 
 ```{r include = FALSE}
-read_csv(url)
+chicago <- read_csv(url)
 ```
 
 ### 
@@ -818,12 +1108,12 @@ Copy the previous code. Select the columns `stationname, date, rides` using sele
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-14-hint-1, eval = FALSE}
-read_csv(url)|>
+chicago |>
   select(..., ..., ...)
 ```
 
 ```{r include = FALSE}
-read_csv(url)|>
+chicago |>
   select(stationname, date, rides)
 ```
 
@@ -842,12 +1132,12 @@ We want to reduce confusion with one of the column names and make it more clear 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-15-hint-1, eval = FALSE}
-read_csv(url) |>
+chicago |>
   select(... = stationname, date, rides)
 ```
 
 ```{r include = FALSE}
-read_csv(url) |>
+chicago |>
   select(station = stationname, date, rides)
 ```
 
@@ -866,14 +1156,13 @@ We need to change the dates in the data set to the correct R form using `mdy()`.
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-16-hint-1, eval = FALSE}
-read_csv(url)|>
-  select(station = stationname, date, rides)|>
+... |>
   mutate(date = mdy(...))
 ```
 
 ```{r include = FALSE}
-read_csv(url)|>
-  select(station = stationname, date, rides)|>
+chicago |>
+  select(station = stationname, date, rides) |>
   mutate(date = mdy(date))
 ```
 
@@ -892,14 +1181,13 @@ We also want to make the rides in the units of 1k. Copy the previous code and se
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-17-hint-1, eval = FALSE}
-read_csv(url)|>
-  select(station = stationname, date, rides)|>
+... |>
   mutate(date = mdy(...), rides = .../1000)
 ```
 
 ```{r include = FALSE}
-read_csv(url)|>
-  select(station = stationname, date, rides)|>
+chicago |>
+  select(station = stationname, date, rides) |>
   mutate(date = mdy(date), rides = rides/1000)
 ```
 
@@ -918,16 +1206,14 @@ To summarize the records using the maximum number of rides, we first need to gro
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-18-hint-1, eval = FALSE}
-read_csv(url)|>
-  select(station = stationname, date, ...)|>
-  mutate(date = mdy(...), rides = rides/1000)|>
+... |>
   group_by(..., ...)
 ```
 
 ```{r include = FALSE}
-read_csv(url)|>
-  select(station = stationname, date, rides)|>
-  mutate(date = mdy(date), rides = rides/1000)|>
+chicago |>
+  select(station = stationname, date, rides) |>
+  mutate(date = mdy(date), rides = rides/1000) |>
   group_by(date, station)
 ```
 
@@ -946,18 +1232,15 @@ Now that we have grouped the data set by date and station, we will now summarize
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-19-hint-1, eval = FALSE}
-read_csv(url) |>
-  select(station = stationname, date, ...)|>
-  mutate(date = mdy(...), rides = rides/1000)|>
-  group_by(date, station)|>
+... |>
   summarize(rides = max(...))
 ```
 
 ```{r include = FALSE}
-read_csv(url)|>
-  select(station = stationname, date, rides)|>
-  mutate(date = mdy(date), rides = rides/1000)|>
-  group_by(date, station)|>
+chicago|>
+  select(station = stationname, date, rides) |>
+  mutate(date = mdy(date), rides = rides/1000) |>
+  group_by(date, station) |>
   summarize(rides = max(rides))
 ```
 
@@ -976,15 +1259,12 @@ Finally, we do not want the grouped structure to remain after summarizing the da
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-20-hint-1, eval = FALSE}
-read_csv(url)|>
-  select(station = stationname, date, rides)|>
-  mutate(date = mdy(date), rides = rides/1000)|>
-  group_by(date, station)|>
-  summarize(rides = max(...), .groups = "...")
+... |>
+  summarize(rides = max(rides), .groups = "...")
 ```
 
 ```{r include = FALSE}
-read_csv(url)|>
+chicago|>
   select(station = stationname, date, rides)|>
   mutate(date = mdy(date), rides = rides/1000)|>
   group_by(date, station)|>
