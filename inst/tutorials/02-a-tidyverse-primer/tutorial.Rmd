@@ -724,7 +724,7 @@ print(result)
 
 ###
 
-In R, the head() function views first few rows of a data frame or a vector without displaying the entire dataset. 
+In R, the head() function views first few rows of a data frame or a vector without displaying the entire data set. 
 
 ### Exercise 16
 
