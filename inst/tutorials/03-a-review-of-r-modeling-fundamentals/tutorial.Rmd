@@ -27,24 +27,28 @@ options(tutorial.exercise.timelimit = 60,
 ```
 
 <!-- CHECKLIST BEFORE STARTING: -->
+
 <!-- * Edit yaml at the top of this file -->
+
 <!-- * Save the file as "tutorial.Rmd" in a new directory under inst/tutorials/. -->
+
 <!-- * Load any necessary libraries for the tutorial in the first code chunk -->
+
 <!-- * Review: https://ppbds.github.io/tutorial.helpers/articles/instructions.html -->
+
 <!-- * Delete this and the other commented instructions below. -->
 
 ## Introduction
-###
 
+### 
 
 This tutorial covers [Chapter 3: A Review of R Modeling Fundamentals](https://www.tmwr.org/base-r.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This chapter is a brief illustration of core language conventions that are important to be aware of even if you never use base R for models at all. This chapter is not exhaustive, but it provides readers (especially those new to R) the basic, most commonly used motifs.
 
+## Fundamentals for Modeling in Base R
 
+### 
 
-## Modeling in base R
-###
-
-To demonstrate some fundamentals for modeling in base R, let’s use experimental data from McDonald (2009), by way of Mangiafico (2015), on the relationship between the ambient temperature and the rate of cricket chirps per minute. Data were collected for two species: O. exclamationis and O. niveus. The data are contained in a data frame called crickets with a total of 31 data points.
+To demonstrate some fundamentals for modeling in base R, let's use experimental data from McDonald (2009), by way of Mangiafico (2015), on the relationship between the ambient temperature and the rate of cricket chirps per minute. Data were collected for two species: O. exclamationis and O. niveus. The data are contained in a data frame called crickets with a total of 31 data points.
 
 ### Exercise 1
 
@@ -62,13 +66,273 @@ library(...)
 library(tidyverse)
 ```
 
+### 
+
+The core **tidyverse** library includes the following packages: **ggplot2**, **dplyr**, **tidyr**, **readr**, **purrr**, **tibble**, **stringr**, and **forcats**.
+
+### Exercise 2
+
+The `data()` function is used to load specified data sets. Lets use `data()` to load the **modeldata** package and the `crickets` dataframe. In the code chunk below, type in `data()`. Set the first argument to `crickets`. The second argument, called `package`, should be set to `"modeldata"`, which is the package where the `crickets` dataframe is from.
+
+```{r modeling-in-base-r-2, exercise = TRUE}
+
+```
+
+```{r modeling-in-base-r-2-hint, eval = FALSE}
+data(..., package = ...)
+```
+
+```{r include=FALSE}
+data(crickets, package = "modeldata")
+```
+
+### 
+
+Here's another way to load the **modeldata** package and `crickets` dataframe:
+
+```         
+library(modeldata)
+crickets
+```
+
+### Exercise 3
+
+The `names()` function can be used to get the column names of `crickets`. In the code chunk below, type in `names()`, passing in `crickets`.
+
+```{r modeling-in-base-r-3, exercise = TRUE}
+
+```
+
+```{r modeling-in-base-r-3-hint, eval = FALSE}
+...(...)
+```
+
+```{r include=FALSE}
+names(crickets)
+```
+
+### 
+
+As you can see, the column names of the `crickets` dataframe are `species, temp` and `rate`. The `rate` column refers to the crickets chirping rate.
+
+### Exercise 4
+
+Lets plot this data. In the code chunk below, type in `crickets` and pipe it to `ggplot()`. Inside ggplot, type in `aes()`. Inside `aes()`, set `x` to `temp`, `y` to `rate`, `color` to `species`, `pch` to `species`, `lty` to `species`.
+
+```{r modeling-in-base-r-4, exercise = TRUE}
+
+```
+
+```{r modeling-in-base-r-4-hint, eval = FALSE}
+... |>
+  ...(aes(x = ..., y = ..., color = ..., pch = ..., lty = ...))
+```
+
+```{r include=FALSE}
+crickets |>
+  ggplot(aes(x = temp, y = rate, color = species, pch = species, lty = species))
+```
+
+### 
+
+The plot elements will be colored differently for each species.
+
+### Exercise 5
+
+Copy the previous code. Add a layer with `geom_point()` and pass in `size = 2`.
+
+```{r modeling-in-base-r-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-in-base-r-5-hint, eval = FALSE}
+... + 
+  geom_point(... = ...)
+```
+
+```{r include=FALSE}
+crickets |>
+  ggplot(aes(x = temp, y = rate, color = species, pch = species, lty = species)) +
+    geom_point(size = 2)
+```
+
+### 
+
+### Exercise 6
+
+Now, lets create a linear model. Copy the previous code and add `geom_smooth()`. Inside `geom_smooth()`, set `method` to `lm`, `se` to `FALSE`, and `alpha` to `0.5`.
+
+```{r modeling-in-base-r-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-in-base-r-6-hint, eval = FALSE}
+... +
+  geom_smooth(method = ..., se = ..., ... = ... )
+```
+
+```{r include=FALSE}
+crickets |>
+  ggplot(aes(x = temp, y = rate, color = species, pch = species, lty = species)) +
+    geom_point(size = 2) + 
+      geom_smooth(method = lm, se = FALSE, alpha = 0.5)
+```
+
+### 
+
+As you can see, this code shows a simple linear model fit created separately for each species.
+
+### Exercise 7
+
+Next, lets change the color scheme using `scale_colour_brewer()`. Copy the the previous code and add `scale_colour_brewer()`. Inside this function, set `palette` to `"Paired"`.
+
+```{r modeling-in-base-r-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-in-base-r-7-hint, eval = FALSE}
+... +
+  scale_colour_brewer(... = "...")
+```
+
+```{r include=FALSE}
+crickets |>
+  ggplot(aes(x = temp, y = rate, color = species, pch = species, lty = species)) +
+    geom_point(size = 2) + 
+      geom_smooth(method = lm, se = FALSE, alpha = 0.5) + 
+         scale_color_brewer(palette = "Paired")
+```
+
+### 
+
+As you can see, the colors have been changed to a lighter and darker blue. Click [here](https://ggplot2.tidyverse.org/reference/scale_brewer.html) to learn more about the ColorBrewer.
+
+### Exercise 8
+
+Copy the previous code and add your `labs()`. The final graph should look like this:
+
+```{r}
+crickets |>
+  ggplot(aes(x = temp, y = rate, color = species, pch = species, lty = species)) +
+    geom_point(size = 2) + 
+      geom_smooth(method = lm, se = FALSE, alpha = 0.5) + 
+         scale_color_brewer(palette = "Paired") +
+            labs(
+              x = "Temperature (C)", 
+              y = "Chirp Rate (per minute)"
+            )
+```
+
+```{r modeling-in-base-r-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-in-base-r-8-hint, eval = FALSE}
+... + 
+  labs(
+    x = "...",
+    y = "..."
+  )
+```
+
+### 
+
+The data exhibit fairly linear trends for each species. For a given temperature, *O*. *exclamationis* appears to chirp more per minute than the other species. For an inferential model, the researchers might have specified the following null hypotheses prior to seeing the data:
+
+-   Temperature has no effect on the chirp rate.
+
+-   There are no differences between the species' chirp rate.
+
+There may be some scientific or practical value in predicting the chirp rate but in this example we will focus on inference.
+
+### Exercise 9
+
+To fit an ordinary linear model in R, the `lm()` function is commonly used. The important arguments to this function are a model formula and a data frame that contains the data (and note that the formula is *symbolic*.)
+
+Lets create a fitted linear model using the `crickets` data frame. In the code chunk below, type in `lm()`. Set `formula` to `rate ~ temp` and `data` to `crickets`.
+
+```{r modeling-in-base-r-9, exercise = TRUE}
+
+```
+
+```{r modeling-in-base-r-9-hint, eval = FALSE}
+...(formula = ... ~ ..., data = ...)
+```
+
+```{r include=FALSE}
+lm(formula = rate ~ temp, data = crickets)
+```
+
+### 
+
+The `rate ~ temp` specifies that the chirp rate is the outcome (since it is on the left-hand side of the tilde `~`) and that the temperature value is the predictor.
+
+### Exercise 10
+
+Suppose the data contained the time of day in which the measurements were obtained in a column called `time`.
+
+Copy the previous code and change to `formula` argument to `rate ~ temp + time`.
+
+```{r modeling-in-base-r-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-in-base-r-10-hint, eval = FALSE}
+lm(formula = rate ~ temp, data = crickets)
+
+```
+
+```{r include=FALSE}
+lm(formula = rate ~ temp + time, data = crickets)
+```
+
+### 
+
+The `rate ~ temp + time` formula would not add the time and temperature values together. Instead, this formula would symbolically represent that temperature and time should be added as separate *main effects* to the model. A *main effect* is a model term that contains a single predictor variable.
+
+### Exercise 11
+
+The `species` column can be added to the fitted model using the same syntax as we added `time`. Copy the previous code and change `time` to `species`.
+
+```{r modeling-in-base-r-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-in-base-r-11-hint, eval = FALSE}
+lm(formula = rate ~ temp + ..., data = crickets)
+```
+
+```{r include=FALSE}
+lm(formula = rate ~ temp + time, data = crickets)
+```
+
+### 
+
+Note that the vast majority of model functions cannot operate on non-numeric data (`species` is non-numeric). For species, the model needs to encode the species data in a numeric format.
+
+The most common approach is to use indicator variables (a.k.a. dummy variables) in place of the original qualitative values. In this instance, since species has two possible values, the model formula will [automatically encode]{.underline} this column as numeric by adding a new column that has a value of zero when the species is `"O. exclamationis"` and a value of one when the data correspond to `"O. niveus"`.
+
+## R Formula
 ###
 
 
 ## Summary
-###
+### 
 
-<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+This chapter reviewed core R language conventions for creating and using models that are an important foundation for the rest of this book. The formula operator is an expressive and important aspect of fitting models in R and often serves multiple purposes in non-tidymodels functions. Traditional R approaches to modeling have some limitations, especially when it comes to fluently handling and visualizing model output. The **tidymodels** metapackage applies tidyverse design philosophy to modeling packages.
+
 
 ```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
 ```
