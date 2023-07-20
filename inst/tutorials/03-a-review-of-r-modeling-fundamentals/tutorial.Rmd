@@ -3,21 +3,27 @@ title: A Review of R Modeling Fundamentals
 author: David Kane and Aryan Kancherla
 tutorial:
   id: a-review-of-r-modeling-fundamentals
-output: 
+output:
   learnr::tutorial:
-    progressive: true
-    allow_skip: true
+    progressive: yes
+    allow_skip: yes
 runtime: shiny_prerendered
-description: "Tutorial for Chapter 3: A Review of R Modeling Fundamentals"
+description: 'Tutorial for Chapter 3: A Review of R Modeling Fundamentals'
 ---
 
 ```{r setup, include = FALSE}
 library(learnr)
 library(tutorial.helpers)
 library(tidyverse)
+library(modeldata)
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
-        tutorial.storage = "local") 
+        tutorial.storage = "local")
+
+interaction_fit <- lm(formula = rate ~ (temp + species)^2, data = crickets)
+main_effect_fit <-  lm(rate ~ temp + species, data = crickets) 
+new_values <- data.frame(species = "O. exclamationis", temp = 15:20)
+
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -27,48 +33,517 @@ options(tutorial.exercise.timelimit = 60,
 ```
 
 <!-- CHECKLIST BEFORE STARTING: -->
+
 <!-- * Edit yaml at the top of this file -->
+
 <!-- * Save the file as "tutorial.Rmd" in a new directory under inst/tutorials/. -->
+
 <!-- * Load any necessary libraries for the tutorial in the first code chunk -->
+
 <!-- * Review: https://ppbds.github.io/tutorial.helpers/articles/instructions.html -->
+
 <!-- * Delete this and the other commented instructions below. -->
 
 ## Introduction
-###
-
+### 
 
 This tutorial covers [Chapter 3: A Review of R Modeling Fundamentals](https://www.tmwr.org/base-r.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This chapter is a brief illustration of core language conventions that are important to be aware of even if you never use base R for models at all. This chapter is not exhaustive, but it provides readers (especially those new to R) the basic, most commonly used motifs.
 
+## Fundamentals for Modeling in Base R
+### 
 
-
-## Modeling in base R
-###
-
-To demonstrate some fundamentals for modeling in base R, let’s use experimental data from McDonald (2009), by way of Mangiafico (2015), on the relationship between the ambient temperature and the rate of cricket chirps per minute. Data were collected for two species: O. exclamationis and O. niveus. The data are contained in a data frame called crickets with a total of 31 data points.
+To demonstrate some fundamentals for modeling in base R, let's use experimental data from McDonald (2009), by way of Mangiafico (2015), on the relationship between the ambient temperature and the rate of cricket chirps per minute. Data were collected for two species: O. exclamationis and O. niveus. The data are contained in a data frame called crickets with a total of 31 data points.
 
 ### Exercise 1
 
-Load the **tidyverse** library using `library()`.
+Load the **tidyverse** and **modeldata** libraries using `library()`.
 
-```{r modeling-in-base-r-1, exercise = TRUE}
+```{r fundamentals-for-mod-1, exercise = TRUE}
 
 ```
 
-```{r modeling-in-base-r-1-hint, eval = FALSE}
+```{r fundamentals-for-mod-1-hint-1, eval = FALSE}
+library(...)
 library(...)
 ```
 
-```{r, include=FALSE}
+```{r include = FALSE}
 library(tidyverse)
+library(modeldata)
 ```
 
-###
+### 
 
+The core **tidyverse** library includes the following packages: **ggplot2**, **dplyr**, **tidyr**, **readr**, **purrr**, **tibble**, **stringr**, and **forcats**.
+
+### Exercise 2
+
+The `data()` function is used to load specified data sets. Lets use `data()` to load the **modeldata** package and the `crickets` dataframe. In the code chunk below, type in `data()`. Set the first argument to `crickets`. The second argument, called `package`, should be set to `"modeldata"`, which is the package where the `crickets` dataframe is from.
+
+```{r fundamentals-for-mod-2, exercise = TRUE}
+
+```
+
+```{r fundamentals-for-mod-2-hint-1, eval = FALSE}
+data(..., package = ...)
+```
+
+```{r include = FALSE}
+data(crickets, package = "modeldata")
+```
+
+### 
+
+Here's another way to load the **modeldata** package and `crickets` dataframe:
+
+```         
+library(modeldata)
+crickets
+```
+
+### Exercise 3
+
+The `names()` function can be used to get the column names of `crickets`. In the code chunk below, type in `names()`, passing in `crickets`.
+
+```{r fundamentals-for-mod-3, exercise = TRUE}
+
+```
+
+```{r fundamentals-for-mod-3-hint-1, eval = FALSE}
+...(...)
+```
+
+```{r include = FALSE}
+names(crickets)
+```
+
+### 
+
+As you can see, the column names of the `crickets` dataframe are `species, temp` and `rate`. The `rate` column refers to the crickets chirping rate.
+
+### Exercise 4
+
+Lets plot this data. In the code chunk below, type in `crickets` and pipe it to `ggplot()`. Inside ggplot, type in `aes()`. Inside `aes()`, set `x` to `temp`, `y` to `rate`, `color` to `species`, `pch` to `species`, `lty` to `species`.
+
+```{r fundamentals-for-mod-4, exercise = TRUE}
+
+```
+
+```{r fundamentals-for-mod-4-hint-1, eval = FALSE}
+... |>
+  ...(aes(x = ..., y = ..., color = ..., pch = ..., lty = ...))
+```
+
+```{r include = FALSE}
+crickets |>
+  ggplot(aes(x = temp, y = rate, color = species, pch = species, lty = species))
+```
+
+### 
+
+The plot elements will be colored differently for each species.
+
+### Exercise 5
+
+Copy the previous code. Add a layer with `geom_point()` and pass in `size = 2`.
+
+```{r fundamentals-for-mod-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r fundamentals-for-mod-5-hint-1, eval = FALSE}
+... + 
+  geom_point(... = ...)
+```
+
+```{r include = FALSE}
+crickets |>
+  ggplot(aes(x = temp, y = rate, color = species, pch = species, lty = species)) +
+    geom_point(size = 2)
+```
+
+### 
+
+### Exercise 6
+
+Now, lets create a linear model. Copy the previous code and add `geom_smooth()`. Inside `geom_smooth()`, set `method` to `lm`, `se` to `FALSE`, and `alpha` to `0.5`.
+
+```{r fundamentals-for-mod-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r fundamentals-for-mod-6-hint-1, eval = FALSE}
+... +
+  geom_smooth(method = ..., se = ..., ... = ... )
+```
+
+```{r include = FALSE}
+crickets |>
+  ggplot(aes(x = temp, y = rate, color = species, pch = species, lty = species)) +
+    geom_point(size = 2) + 
+      geom_smooth(method = lm, se = FALSE, alpha = 0.5)
+```
+
+### 
+
+As you can see, this code shows a simple linear model fit created separately for each species.
+
+### Exercise 7
+
+Next, lets change the color scheme using `scale_colour_brewer()`. Copy the the previous code and add `scale_colour_brewer()`. Inside this function, set `palette` to `"Paired"`.
+
+```{r fundamentals-for-mod-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r fundamentals-for-mod-7-hint-1, eval = FALSE}
+... +
+  scale_colour_brewer(... = "...")
+```
+
+```{r include = FALSE}
+crickets |>
+  ggplot(aes(x = temp, y = rate, color = species, pch = species, lty = species)) +
+    geom_point(size = 2) + 
+      geom_smooth(method = lm, se = FALSE, alpha = 0.5) + 
+         scale_color_brewer(palette = "Paired")
+```
+
+### 
+
+As you can see, the colors have been changed to a lighter and darker blue. Click [here](https://ggplot2.tidyverse.org/reference/scale_brewer.html) to learn more about the ColorBrewer.
+
+### Exercise 8
+
+Copy the previous code and add your `labs()`. The final graph should look like this:
+
+```{r}
+crickets |>
+  ggplot(aes(x = temp, y = rate, color = species, pch = species, lty = species)) +
+    geom_point(size = 2) + 
+      geom_smooth(method = lm, se = FALSE, alpha = 0.5) + 
+         scale_color_brewer(palette = "Paired") +
+            labs(
+              x = "Temperature (C)", 
+              y = "Chirp Rate (per minute)"
+            )
+```
+
+```{r fundamentals-for-mod-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r fundamentals-for-mod-8-hint-1, eval = FALSE}
+... + 
+  labs(
+    x = "...",
+    y = "..."
+  )
+```
+
+### 
+
+The data exhibit fairly linear trends for each species. For a given temperature, *O*. *exclamationis* appears to chirp more per minute than the other species. For an inferential model, the researchers might have specified the following null hypotheses prior to seeing the data:
+
+-   Temperature has no effect on the chirp rate.
+
+-   There are no differences between the species' chirp rate.
+
+There may be some scientific or practical value in predicting the chirp rate but in this example we will focus on inference.
+
+### Exercise 9
+
+To fit an ordinary linear model in R, the `lm()` function is commonly used. The important arguments to this function are a model formula and a data frame that contains the data (and note that the formula is *symbolic*.)
+
+Lets create a fitted linear model using the `crickets` data frame. In the code chunk below, type in `lm()`. Set `formula` to `rate ~ temp` and `data` to `crickets`.
+
+```{r fundamentals-for-mod-9, exercise = TRUE}
+
+```
+
+```{r fundamentals-for-mod-9-hint-1, eval = FALSE}
+...(formula = ... ~ ..., data = ...)
+```
+
+```{r include = FALSE}
+lm(formula = rate ~ temp, data = crickets)
+```
+
+### 
+
+The `rate ~ temp` specifies that the chirp rate is the outcome (since it is on the left-hand side of the tilde `~`) and that the temperature value is the predictor.
+
+### Exercise 10
+
+Suppose the data contained the time of day in which the measurements were obtained in a column called `time`.
+
+Here's what the formula would look like:
+
+```
+rate ~ temp + time
+```
+
+### 
+
+A common misunderstanding is that this formula would add the time and temperature values together. What this formula would actually do is symbolically represent that temperature and time should be added as separate *main effects* to the model. 
+
+A *main effect* is a model term that contains a single predictor variable.
+
+### Exercise 11
+
+Lets add `species` to our fitted model. Copy the code from Exercise 9 and add `speices` after `temp`.
+
+```{r fundamentals-for-mod-11, exercise = TRUE}
+
+```
+
+```{r fundamentals-for-mod-11-hint-1, eval = FALSE}
+lm(formula = rate ~ temp + ..., data = crickets)
+```
+
+```{r include = FALSE}
+lm(formula = rate ~ temp + species, data = crickets)
+```
+
+### 
+
+Note that the vast majority of model functions cannot operate on non-numeric data (`species` is non-numeric). For species, the model needs to encode the species data in a numeric format.
+
+The most common approach is to use indicator variables (a.k.a. dummy variables) in place of the original qualitative values. In this instance, since species has two possible values, the model formula will [automatically encode]{.underline} this column as numeric by adding a new column that has a value of zero when the species is `"O. exclamationis"` and a value of one when the data correspond to `"O. niveus"`.
+
+### Exercise 12
+
+When creating this fitted linear model, the slopes of the regression lines could be different for each species. To accomodate for this, we can add an interaction term.
+
+Copy paste the code from above. After `species`, type in `+ temp:species`.
+
+```{r fundamentals-for-mod-12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r fundamentals-for-mod-12-hint-1, eval = FALSE}
+lm(formula = rate ~ temp + species + ... : ..., data = crickets)
+```
+
+```{r include = FALSE}
+lm(formula = rate ~ temp + species + temp:species, data = crickets)
+```
+
+### 
+
+An interaction term is where two (or more) variables interact to affect a third variable.
+
+### Exercise 13
+
+There are some shortcuts to achieve what was done in the previous exercise. Press "Run Code".
+
+```{r fundamentals-for-mod-13, exercise = TRUE}
+lm(formula = rate ~ temp * species, data = crickets)
+lm(formula = rate ~ (temp + species)^2, data = crickets)
+```
+
+```{r include = FALSE}
+lm(formula = rate ~ (temp + species)^2, data = crickets)
+lm(formula = rate ~ temp * species, data = crickets)
+```
+
+### 
+
+In addition to the convenience of automatically creating indicator variables, the formula offers a few other niceties, such as using other functions in the formula argument (ex: `log()` and `poly()`) and using the period shortcut (`~ (.)^3`).
+
+### Exercise 14
+
+Now, lets use our fitted model to make plots. Copy the previous code and delete the first line. Save the second line to the variable `interaction_fit`.
+
+```{r fundamentals-for-mod-14, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r fundamentals-for-mod-14-hint-1, eval = FALSE}
+... <- lm(...)
+```
+
+```{r include = FALSE}
+interaction_fit <- lm(formula = rate ~ (temp + species)^2, data = crickets)
+```
+
+### 
+
+### Exercise 15
+
+Type in `plot()` and pass in `interaction_fit`.
+
+```{r fundamentals-for-mod-15, exercise = TRUE}
+
+```
+
+```{r fundamentals-for-mod-15-hint-1, eval = FALSE}
+plot(...)
+```
+
+```{r include = FALSE}
+plot(interaction_fit)
+```
+
+### 
+
+This method produces a set of four plots for the object, each showing different aspects of the fitted object.
+
+### Exercise 16
+
+Our next order of business with the crickets is to assess if the inclusion of the interaction term is necessary. The most appropriate approach for this model is to recompute the model without the interaction term and use the `anova()` method.
+
+Copy the model from Exercise 11 and save it to the variable `main_effect_fit`.
+
+```{r fundamentals-for-mod-16, exercise = TRUE}
+
+```
+
+```{r fundamentals-for-mod-16-hint-1, eval = FALSE}
+... <- lm(...)
+```
+
+```{r include = FALSE}
+main_effect_fit <-  lm(rate ~ temp + species, data = crickets) 
+```
+
+### 
+
+### Exercise 17
+
+In order to assess the necessity of the interaction variable, we need to use the `anova()` function. Type in `?anova()` to the Console and look at the Description section. CP/CR.
+
+```{r fundamentals-for-mod-17}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+The `anova()` function takes in fitted objects as arguments, like the `main_effect_fit` and `interactive_fit` objects we created earlier.
+
+### Exercise 18
+
+Pass in `main_effect_fit` and `interactive_fit` to the `anova()` function. Press "Run Code" when done. 
+
+```{r fundamentals-for-mod-18, exercise = TRUE}
+
+```
+
+```{r fundamentals-for-mod-18-hint-1, eval = FALSE}
+anova(..., ...)
+```
+
+### 
+
+This function displays a series of statistical information. Looking towards the bottom right of the output, you will see the number `0.25`. This number represents the p-value. 
+
+The p-value determines the statistical significance of the data; a p-value of < 0.05 means that the data *is* statistically significant. However, this data produced a p-value of `0.25`, implying a lack of evidence against the null hypothesis that the interaction term is not needed by the model.
+
+### Exercise 19
+
+Because of the p-value, we need to conduct further analysis on the model without the use of the interaction variable (which is `species`).
+
+Using the `summary()` will help. In the code chunk below, type in `summary()`, passing in `main_effect_fit`.
+
+```{r fundamentals-for-mod-19, exercise = TRUE}
+
+```
+
+```{r fundamentals-for-mod-19-hint-1, eval = FALSE}
+summary(...)
+```
+
+```{r include = FALSE}
+summary(main_effect_fit)
+```
+
+### 
+
+The chirp rate for each species increases by 3.6 chirps as the temperature increases by a single degree. This term shows strong statistical significance as evidenced by the p-value. The species term has a value of -10.07. This indicates that, across all temperature values, `O. niveus` has a chirp rate that is about 10 fewer chirps per minute than `O. exclamationis`. Similar to the temperature term, the species effect is associated with a very small p-value.
+
+### Exercise 20
+
+If we want to calculate the chirp rate at a temperature that was not observed in the experiment, we can use the `predict()` method. Run `?predict()` in the Console and look at the Description section. CP/CR
+
+```{r fundamentals-for-mod-20}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+The `predict()` function the model object and a data frame of new values in order to make predictions.
+
+### Exercise 21
+
+Lets make the data frame of new values, which we need in order to use `predict()`. In the code chunk below, type in `data.frame()`. Set `species` to `"O. exclamationis"` and `temp` to `15:20`. Save the code to the variable `new_values`.
+
+```{r fundamentals-for-mod-21, exercise = TRUE}
+
+```
+
+```{r fundamentals-for-mod-21-hint-1, eval = FALSE}
+... <- ...(... = "O. exclamationis", temp = ...)
+```
+
+```{r include = FALSE}
+new_values <- data.frame(species = "O. exclamationis", temp = 15:20)
+```
+
+### 
+
+This model will estimate the chirp rate for `O. exclamationis` for temperatures between 15° C and 20° C.
+
+### Exercise 22
+
+Now lets estimate the predicted values. Type in `predict()`, passing in `main_effect_fit` and `new_values`. 
+
+```{r fundamentals-for-mod-22, exercise = TRUE}
+
+```
+
+```{r fundamentals-for-mod-22-hint-1, eval = FALSE}
+predict(..., ...)
+```
+
+```{r include = FALSE}
+predict(main_effect_fit, new_values)
+```
+
+### 
+
+All the displayed numbers are predicted chirp rates of the `O. exclamationis` species for temperatures between 15° C and 20° C.
+
+
+## R Formula
+### 
 
 ## Summary
-###
+### 
 
-<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+This chapter reviewed core R language conventions for creating and using models that are an important foundation for the rest of this book. The formula operator is an expressive and important aspect of fitting models in R and often serves multiple purposes in non-tidymodels functions. Traditional R approaches to modeling have some limitations, especially when it comes to fluently handling and visualizing model output. The **tidymodels** metapackage applies tidyverse design philosophy to modeling packages.
+
 
 ```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
 ```
