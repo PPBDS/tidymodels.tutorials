@@ -32,17 +32,6 @@ new_values <- data.frame(species = "O. exclamationis", temp = 15:20)
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
-<!-- CHECKLIST BEFORE STARTING: -->
-
-<!-- * Edit yaml at the top of this file -->
-
-<!-- * Save the file as "tutorial.Rmd" in a new directory under inst/tutorials/. -->
-
-<!-- * Load any necessary libraries for the tutorial in the first code chunk -->
-
-<!-- * Review: https://ppbds.github.io/tutorial.helpers/articles/instructions.html -->
-
-<!-- * Delete this and the other commented instructions below. -->
 
 ## Introduction
 ### 
@@ -94,7 +83,7 @@ data(crickets, package = "modeldata")
 
 ### 
 
-Here's another way to load the **modeldata** package and `crickets` dataframe:
+Here's another way to load the **modeldata** package and `crickets` tibble:
 
 ```         
 library(modeldata)
@@ -122,6 +111,8 @@ names(crickets)
 As you can see, the column names of the `crickets` dataframe are `species, temp` and `rate`. The `rate` column refers to the crickets chirping rate.
 
 ### Exercise 4
+
+<!-- DK: Insert code here creating cricket plot, and assigning it to an object. Then, print the object. Then print the object again at the end. -->
 
 Lets plot this data. In the code chunk below, type in `crickets` and pipe it to `ggplot()`. Inside ggplot, type in `aes()`. Inside `aes()`, set `x` to `temp`, `y` to `rate`, `color` to `species`, `pch` to `species`, `lty` to `species`.
 
@@ -160,11 +151,17 @@ Copy the previous code. Add a layer with `geom_point()` and pass in `size = 2`.
 
 ```{r include = FALSE}
 crickets |>
-  ggplot(aes(x = temp, y = rate, color = species, pch = species, lty = species)) +
+  ggplot(aes(x = temp, 
+             y = rate, 
+             color = species, 
+             pch = species, 
+             lty = species)) +
     geom_point(size = 2)
 ```
 
 ### 
+
+<!-- DK: Drop some knowledge. -->
 
 ### Exercise 6
 
@@ -345,6 +342,8 @@ An interaction term is where two (or more) variables interact to affect a third 
 
 ### Exercise 13
 
+<!-- DK: These should be two exercises, with instructions. Students should type. -->
+
 There are some shortcuts to achieve what was done in the previous exercise. Press "Run Code".
 
 ```{r fundamentals-for-mod-13, exercise = TRUE}
@@ -372,7 +371,7 @@ Now, lets use our fitted model to make plots. Copy the previous code and delete 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r fundamentals-for-mod-14-hint-1, eval = FALSE}
-... <- lm(...)
+... <- lm(formula = rate ~ (temp + species)^2, data = crickets)
 ```
 
 ```{r include = FALSE}

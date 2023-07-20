@@ -4,3 +4,4 @@
 ^TODO.txt$
 ^\.github$
 ^README\.Rmd$
+tutorials/[^/]*/(?!(data|images|.*Rmd))
