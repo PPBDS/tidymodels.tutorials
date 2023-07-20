@@ -25,7 +25,8 @@ options(tutorial.exercise.timelimit = 600,
 df <- data.frame("column 1" = 1:3, `two` = 4:6, check.names = FALSE)
 tbl <- tibble(`column 1` = 1:3, `two` = 4:6)
 url <- "https://data.cityofchicago.org/api/views/5neh-572f/rows.csv?accessType=DOWNLOAD&bom=true&format=true"
-read_csv(url) -> chicago
+
+chicago <- read_csv(url)
 
 compute_log_ratio <- function(mpg, wt, log_base = exp(1)) {
   (log(mpg/wt, base = log_base))
@@ -39,7 +40,11 @@ result <- compute_log_ratio(mtcars$mpg, mtcars$wt)
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
-<!-- DK: Use test chunks for all questions. May not always be possible. PK: Done.-->
+<!-- DK: Spaces around |> always. -->
+
+<!-- DK: Figure out which tests are taking so long. -->
+
+<!-- DK: Change read_csv(url) as the beginng of the pipe. Instead, download the data once, then build the pipe starting from that data set. -->
 
 ## Introduction
 ### 
@@ -322,11 +327,12 @@ We will explore **rsample** using the bootstrap method. Access `bootstraps()` fr
 ...::bootstraps()
 ```
 
+<!-- DK: Shouldn't error = TRUE work here? -->
+
 ```{r include = FALSE}
 #rsample::bootstraps()
-```
 
-### 
+```
 
 This will throw an error, because a data frame was not specified. Our data frame is `mtcars`.
 

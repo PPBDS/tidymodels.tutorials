@@ -1,3 +1,6 @@
 ^tidymodels\.tutorials\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+^TODO.txt$
+^\.github$
+^README\.Rmd$
