@@ -279,43 +279,32 @@ The `rate ~ temp` specifies that the chirp rate is the outcome (since it is on t
 
 Suppose the data contained the time of day in which the measurements were obtained in a column called `time`.
 
-Copy the previous code and change to `formula` argument to `rate ~ temp + time`.
-
-```{r modeling-in-base-r-10, exercise = TRUE}
+Here's what the formula would look like:
 
 ```
-
-<button onclick = "transfer_code(this)">Copy previous code</button>
-
-```{r modeling-in-base-r-10-hint, eval = FALSE}
-lm(formula = rate ~ temp, data = crickets)
-
-```
-
-```{r include=FALSE}
-lm(formula = rate ~ temp + time, data = crickets)
+rate ~ temp + time
 ```
 
 ### 
 
-The `rate ~ temp + time` formula would not add the time and temperature values together. Instead, this formula would symbolically represent that temperature and time should be added as separate *main effects* to the model. A *main effect* is a model term that contains a single predictor variable.
+A common misunderstanding is that this formula would add the time and temperature values together. What this formula would actually do is symbolically represent that temperature and time should be added as separate *main effects* to the model. 
+
+A *main effect* is a model term that contains a single predictor variable.
 
 ### Exercise 11
 
-The `species` column can be added to the fitted model using the same syntax as we added `time`. Copy the previous code and change `time` to `species`.
+Lets add `species` to our fitted model. Copy the code from Exercise 9 and add `speices` after `temp`.
 
 ```{r modeling-in-base-r-11, exercise = TRUE}
 
 ```
-
-<button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r modeling-in-base-r-11-hint, eval = FALSE}
 lm(formula = rate ~ temp + ..., data = crickets)
 ```
 
 ```{r include=FALSE}
-lm(formula = rate ~ temp + time, data = crickets)
+lm(formula = rate ~ temp + species, data = crickets)
 ```
 
 ### 
