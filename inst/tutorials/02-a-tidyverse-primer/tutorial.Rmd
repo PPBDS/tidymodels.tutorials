@@ -25,6 +25,10 @@ options(tutorial.exercise.timelimit = 600,
 df <- data.frame("column 1" = 1:3, `two` = 4:6, check.names = FALSE)
 tbl <- tibble(`column 1` = 1:3, `two` = 4:6)
 url <- "https://data.cityofchicago.org/api/views/5neh-572f/rows.csv?accessType=DOWNLOAD&bom=true&format=true"
+
+compute_log_ratio <- function(mpg, wt, log_base = exp(1)){
+  return(log(mpg/wt), base = log_base)
+}
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -515,6 +519,153 @@ ggplot(mtcars, aes(x = wt, y = mpg)) +
 ```
 
 ### 
+
+In many real-world cases, the element-wise operation of interest is too complex for a vectorized solution. In such a case, a good approach is to write a function to do the computations.
+
+###
+
+The *strucutre* of a function is as follows: 
+
+function_name <- function(arg1, arg2, ...){
+  return("something")
+}
+
+*Example function*:
+
+add_numbers <- function(num1, num2){
+  sum <- num1 + num2
+  return(sum)
+}
+
+result <- add_numbers(5, 3)
+print(result)
+
+Expected Printed Result: `#[1] 8`
+
+### Exercise 8
+
+We will be computing the log ratio of  the mpg vs weight from the cars in them `mtcars` data set. Make the function for the `compute_log_ratio` and set it equal to a function with arguments `mpg` and `wt`. Remember to follow this expression with `{}`.
+
+```{r design-for-the-pipe--8, exercise = TRUE}
+
+```
+
+
+```{r design-for-the-pipe--8-hint, eval = FALSE}
+compute_log_ratio <- ...(mpg, wt){
+  
+}
+```
+
+```{r include = FALSE}
+compute_log_ratio <- function(mpg, wt){
+  
+}
+```
+
+###
+
+We can also have parameters of functions that are set to certain values within in function(). An example would be fctn_name <- function(..., log_base = exp(1)). You should not use this as a argument, however, you *call* the function.
+
+### Exercise 9
+
+Since we are computing the log ratio, we need to set the base of the log to 1. Copy the previous code and add the parameter `log_base = exp(1)`.
+
+```{r design-for-the-pipe--9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r design-for-the-pipe--9-hint, eval = FALSE}
+...<- function(..., ..., log_base = exp(...)){
+  
+}
+```
+
+```{r include = FALSE}
+compute_log_ratio <- function(mpg, wt, log_base = exp(1)){
+  
+}
+```
+
+###
+
+There are certain functions were you do not have to necessarily have a return() statement. Rather you can have the function print a desired value based on the arguments. However, it is best practice to have the function return some value.
+
+### Exercise 10
+
+It is crucial to have the return statement in the function. Copy the previous code and add the `return()` statement within the `{}` brackets.
+
+```{r design-for-the-pipe--10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r design-for-the-pipe--10-hint, eval = FALSE}
+...{
+  ...()
+}
+```
+
+```{r include = FALSE}
+compute_log_ratio <- function(mpg, wt, log_base = exp(1)){
+  return()
+}
+```
+
+###
+
+The return() statement exits the function and returns the value you desire. It can be any R object, such as a number, character, vector, list, or even NULL.
+
+### Exercise 11
+
+The log() function, in this case, will take the ratio between `mpg/wt` and take a log base, which was set to exp(1). First, copy the previous code and within the return statement, return log() with the first argument being `mpg/wt`.
+
+```{r design-for-the-pipe--11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r design-for-the-pipe--11-hint, eval = FALSE}
+...{
+  return(...(mpg/wt))
+}
+```
+
+```{r include = FALSE}
+compute_log_ratio <- function(mpg, wt, log_base = exp(1)){
+  return(log(mpg/wt))
+}
+```
+
+### Exercise 12
+
+Copy the previous code and add the base as a parameter for `log()`, which is equal to the log_base argument set in the function parameters for `compute_log_ratio`.
+
+```{r design-for-the-pipe--12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r design-for-the-pipe--12-hint, eval = FALSE}
+...{
+  return(log(mpg/wt, base = ...))
+}
+```
+
+```{r include = FALSE}
+compute_log_ratio <- function(mpg, wt, log_base = exp(1)){
+  return(log(mpg/wt), base = log_base)
+}
+```
+
+###
+
+
 
 ## Tidyverse Syntax
 ### 
