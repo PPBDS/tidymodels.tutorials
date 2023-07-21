@@ -17,6 +17,7 @@ library(tutorial.helpers)
 library(tidyverse)
 library(modeldata)
 library(lattice)
+library(broom)
 
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
@@ -36,6 +37,13 @@ interaction_fit <- lm(formula = rate ~ (temp + species)^2, data = crickets)
 main_effect_fit <-  lm(rate ~ temp + species, data = crickets) 
 new_values <- data.frame(species = "O. exclamationis", temp = 15:20)
 corr_res <- map(mtcars %>% select(-mpg), cor.test, y = mtcars$mpg)
+
+plot2 <- corr_res |>
+  map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(x = fct_reorder(predictor, estimate))) + 
+      geom_point(aes(y = estimate)) + 
+      geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .1) +
+        labs(x = NULL, y = "Correlation with mpg")
 
 ```
 
@@ -1114,14 +1122,22 @@ As you can see, the data has been turned into a tibble. This allows us to displa
 
 ### Exercise 19
 
-Lets “stack” these results and add it to a `ggplot()`. In the code, pipe `corr_res` to the `map_dfr()` funciton. Inside `map_dfr(), type in `tidy` and set the `.id` argument to `"predictor"`.
+Lets “stack” these results and add it to a `ggplot()`. Here's what the final product will look like:
+
+```{r}
+plot2
+```
+
+
+In the code, pipe `corr_res` to the `map_dfr()` funciton. Inside `map_dfr(), type in `tidy` and set the `.id` argument to `"predictor"`.
 
 ```{r model-implementation-19, exercise = TRUE}
 
 ```
 
 ```{r model-implementation-19-hint-1, eval = FALSE}
-corr_res |> ...(tidy, ... = "...")
+corr_res |> 
+  ...(tidy, ... = "...")
 ```
 
 ```{r include = FALSE}
@@ -1132,6 +1148,214 @@ corr_res |> map_dfr(tidy, .id = "predictor")
 
 The `map_dfr()` function converts each value in `corr_res` to a tidy format and stacks the data frames.
 
+### Exercise 20
+
+Copy the previous code and pipe it to `ggplot()`. Inside the parenthesis, add the `aes()` function.
+
+```{r model-implementation-20, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-20-hint, eval = FALSE}
+corr_res |>
+  map_dfr(tidy, .id = "predictor") |>
+    ggplot(...())
+```
+
+```{r include=FALSE}
+corr_res |>
+  map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes())
+
+```
+
+###
+
+Before starting a data analysis process, there should be clear expectations of the model’s goal and how performance (and success) will be judged. At least one performance metric should be identified with realistic goals of what can be achieved. Common statistical metrics are classification accuracy, true and false positive rates, root mean squared error, and so on. The relative benefits and drawbacks of these metrics should be weighed. It is also important that the metric be germane; alignment with the broader data analysis goals is critical.
+
+### Exercise 21
+
+Copy the previous code. Inside `aes()` set `x` to `fct_reorder()`. Inside `fct_reorder()`, type in `predictor, estimate`.
+
+```{r model-implementation-21, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-21-hint, eval = FALSE}
+corr_res |>
+  map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(... = fct_reorder(..., ...)))
+```
+
+```{r include=FALSE}
+corr_res |>
+  map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(x = fct_reorder(predictor, estimate)))
+```
+
+###
+
+The `fct_reorder()` function helps reorder the factor levels by sorting them along with another variable. In this case, the `predictor` is the factor level and it is being reordered by the `estimate`.
+
+### Exercise 22
+
+Next, lets add the data points on the graph. Since we provided the `x` axis variable in `ggplot(aes())`, we need to add a `y` axis variable inside `geom_point()`.
+
+Copy the previous code and add `geom_point()`. Inside this function, type in `aes()`. Inside `aes()`, set `y` to `estimate`.
+
+```{r model-implementation-22, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-22-hint, eval = FALSE}
+corr_res |>
+  map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(x = fct_reorder(predictor, estimate)))  + 
+      geom_point(...(y = ...))
+```
+
+```{r include=FALSE}
+corr_res |>
+  map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(x = fct_reorder(predictor, estimate))) + 
+      geom_point(aes(y = estimate))
+```
+
+###
+
+Remember that when adding functions to a `ggplot()`, you need to use the `+` operator and not the `|>` operator.
+
+### Exercise 23
+
+Now, lets use `geom_errorbar()` to display error bars, which are defined by an upper and lower value.
+
+Copy the previous code and add `geom_errorbar()` to the plot and press "Run code". (Note: This will produce an error).
+
+```{r model-implementation-23, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-23-hint, eval = FALSE}
+corr_res |>
+  map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(x = fct_reorder(predictor, estimate))) + 
+      geom_point(aes(y = estimate)) + 
+        ...()
+       
+```
+
+```{r include=FALSE}
+# corr_res |>
+#     map_dfr(tidy, .id = "predictor") |>
+#     ggplot(aes(x = fct_reorder(predictor, estimate))) + 
+#     geom_point(aes(y = estimate)) + 
+#     geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .1) +
+#     labs(x = NULL, y = "Correlation with mpg")
+```
+
+###
+
+The reason this code throws an error is because we haven't defined the upper and lower values, which is required in order to use `geom_errorbar()`.
+
+### Exercise 24
+
+Lets add the upper and lower values. Copy the previous code. Inside `geom_errorbar()`, type in `aes()`. Inside `aes()`, set `ymin` to `conf.low` and `ymax` to `conf.high`.
+
+```{r model-implementation-24, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-24-hint, eval = FALSE}
+corr_res |>
+    map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(x = fct_reorder(predictor, estimate))) + 
+    geom_point(aes(y = estimate)) + 
+    geom_errorbar(...(ymin = ..., ymax = ...))
+```
+
+```{r include=FALSE}
+corr_res |>
+    map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(x = fct_reorder(predictor, estimate))) + 
+    geom_point(aes(y = estimate)) + 
+    geom_errorbar(aes(ymin = conf.low, ymax = conf.high))
+```
+
+###
+
+`conf.low` stands for the lower bound of the confidence interval and `conf.high` stands for the upper bound of the confidence interval. These values are represented by the lines on each data point on the graph. 
+
+### Exercise 25
+
+Lets change the thickness of the lines. Copy the previous code, and outside of `aes()`, but inside `geom_errorbar()`, set `width` to `.1`.
+
+```{r model-implementation-25, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-25-hint, eval = FALSE}
+corr_res |>
+  map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(x = fct_reorder(predictor, estimate))) + 
+      geom_point(aes(y = estimate)) + 
+        geom_errorbar(aes(ymin = conf.low, ymax = conf.high), ... = ...)
+```
+
+```{r include=FALSE}
+corr_res |>
+    map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(x = fct_reorder(predictor, estimate))) + 
+    geom_point(aes(y = estimate)) + 
+    geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .1)
+```
+
+###
+
+These two aspects of model development – ease of proper use and good methodological practice – are crucial. Since tools for creating models are easily accessible and models can have such a profound impact, many more people are creating them. In terms of technical expertise and training, creators’ backgrounds will vary. It is important that their tools be robust to the user’s experience. Tools should be powerful enough to create high-performance models, but, on the other hand, should be easy to use appropriately. 
+
+### Exercise 26
+
+Finally, copy the previous code and add your `labs()`. Note that the final product should look similar to this:
+
+```{r}
+plot2
+```
+
+
+```{r model-implementation-26, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-26-hint, eval = FALSE}
+corr_res |>
+  map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(x = fct_reorder(predictor, estimate))) + 
+      geom_point(aes(y = estimate)) + 
+      geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .1) +
+        labs(... = NULL, 
+             ... = "...")
+```
+
+###
+
+Creating such a plot is possible using core R language functions, but automatically reformatting the results makes for more concise code with less potential for errors.
+
+## New section here
+###
 
 ## Summary
 ### 
