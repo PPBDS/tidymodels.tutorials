@@ -35,6 +35,7 @@ crickets_plot <- crickets |>
 interaction_fit <- lm(formula = rate ~ (temp + species)^2, data = crickets)
 main_effect_fit <-  lm(rate ~ temp + species, data = crickets) 
 new_values <- data.frame(species = "O. exclamationis", temp = 15:20)
+corr_res <- map(mtcars %>% select(-mpg), cor.test, y = mtcars$mpg)
 
 ```
 
@@ -968,6 +969,168 @@ mtcars
 
 <!-- AK: Add Knowledge Drop -->
 
+
+
+
+### Exercise 13
+
+The functions we will be using are `map()` and `cor.test()`. Type in `?map()` to the Console and read the title of the first link. CP/CR. 
+
+```{r model-implementation-13}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+As mentioned in the help section, the `map()` function applies a function to each element of a vector. Note that the `map()` function will always return a list. 
+
+
+### Exercise 14
+
+Next, type in `?cor.test()` in the Console and look at the *Description* tab. CP/CR.
+
+```{r model-implementation-14}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+The `cor.test()` has many arguments, including `formula`, `subset`, and `conf.level`. Take a look at all the arguments of this function in the *Arguments* section. 
+
+
+### Exercise 15
+
+Suppose that predictors are being screened based on their correlation to the outcome column. We can use the `cor.test()` and `map()` functions to make this happen.
+
+In the code chunk below, type `map()`. Inside this function, pipe **mtcars** to `select()`, but use the `%>%` pipe. Inside `select()`, type in `-mpg`. (Note: This will return an error)
+
+```{r model-implementation-15, exercise = TRUE}
+
+```
+
+```{r model-implementation-15-hint-1, eval = FALSE}
+map(... %>% select(...)
+```
+
+```{r include = FALSE}
+# map(mtcars %>% select(-mpg))
+```
+
+### 
+
+This code returns an error because we haven't defined all of the variables needed.
+
+Code breakdown:
+
+The `%>%` is another kind of pipe that is used in R. Click [here](https://www.tidyverse.org/blog/2023/04/base-vs-magrittr-pipe/) to learn more about its differences with the `|>` pipe.
+
+By placing the `-` sign in front of `mpg`, the `select()` will go ahead and ignore that column when selecting columns from **mtcars**.
+
+### Exercise 16
+
+Copy the previous code. After `select(-mpg)`, add `cor.test`. Then set the argument `y` to `mtcars$mpg`. Finally, save the code to the variable `corr_res`.
+
+```{r model-implementation-16, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-16-hint-1, eval = FALSE}
+corr_res <- map(mtcars %>% select(-mpg), ... , y = mtcars$...)
+```
+
+```{r include = FALSE}
+corr_res <- map(mtcars %>% select(-mpg), cor.test, y = mtcars$mpg)
+```
+
+### 
+
+The results from `cor.test` can be returned in a list for each predictor.
+
+### Exercise 17
+
+Let's extract the first ten results in the `corr_res` vector. In the code chunk below, type in `corr_res`. Right next to it, type in `[[1]]` and press "Run Code".
+
+```{r model-implementation-17, exercise = TRUE}
+
+```
+
+```{r model-implementation-17-hint-1, eval = FALSE}
+...[[1]]
+```
+
+```{r include = FALSE}
+corr_res[[1]]
+```
+
+### 
+
+In the result above:
+
+`t` stands for the t-test statistic value,
+
+`df` stands for the *degrees of freedom*,
+
+`p-value` represents the statistical significance of the data,
+
+`95 percent confidence interval` is the confidence interval of the correlation coefficient at 95%,
+
+`cor` is the correlation coefficient
+
+### Exercise 18
+
+If we want to use these results in a plot, the standard format of hypothesis test results are not very useful. The `tidy()` method from the **broom** package can return this as a tibble with standardized names.
+
+Copy the previous code and pass it into the `tidy()` function.
+
+```{r model-implementation-18, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-18-hint-1, eval = FALSE}
+tidy(...)
+```
+
+```{r include = FALSE}
+tidy(corr_res[[1]])
+```
+
+### 
+
+As you can see, the data has been turned into a tibble. This allows us to display this data in a plot.
+
+### Exercise 19
+
+Lets “stack” these results and add it to a `ggplot()`. In the code, pipe `corr_res` to the `map_dfr()` funciton. Inside `map_dfr(), type in `tidy` and set the `.id` argument to `"predictor"`.
+
+```{r model-implementation-19, exercise = TRUE}
+
+```
+
+```{r model-implementation-19-hint-1, eval = FALSE}
+corr_res |> ...(tidy, ... = "...")
+```
+
+```{r include = FALSE}
+corr_res |> map_dfr(tidy, .id = "predictor")
+```
+
+### 
+
+The `map_dfr()` function converts each value in `corr_res` to a tidy format and stacks the data frames.
 
 
 ## Summary
