@@ -16,13 +16,37 @@ library(learnr)
 library(tutorial.helpers)
 library(tidyverse)
 library(modeldata)
+library(lattice)
+library(broom)
+
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
         tutorial.storage = "local")
 
+crickets_plot <- crickets |>
+  ggplot(aes(x = temp, y = rate, color = species, pch = species, lty = species)) +
+    geom_point(size = 2) + 
+      geom_smooth(method = lm, se = FALSE, alpha = 0.5) + 
+         scale_color_brewer(palette = "Paired") +
+            labs(
+              x = "Temperature (C)", 
+              y = "Chirp Rate (per minute)"
+            )
+
 interaction_fit <- lm(formula = rate ~ (temp + species)^2, data = crickets)
 main_effect_fit <-  lm(rate ~ temp + species, data = crickets) 
 new_values <- data.frame(species = "O. exclamationis", temp = 15:20)
+corr_res <- map(mtcars %>% select(-mpg), cor.test, y = mtcars$mpg)
+
+plot2 <- corr_res |>
+  map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(x = fct_reorder(predictor, estimate))) + 
+      geom_point(aes(y = estimate)) + 
+      geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .1) +
+        labs(x = NULL, y = "Correlation with mpg")
+
+split_by_species <- crickets |>
+  group_nest(species)
 
 ```
 
@@ -32,33 +56,30 @@ new_values <- data.frame(species = "O. exclamationis", temp = 15:20)
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
-
 ## Introduction
 ### 
 
-This tutorial covers [Chapter 3: A Review of R Modeling Fundamentals](https://www.tmwr.org/base-r.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This chapter is a brief illustration of core language conventions that are important to be aware of even if you never use base R for models at all. This chapter is not exhaustive, but it provides readers (especially those new to R) the basic, most commonly used motifs.
+This tutorial covers [Chapter 3: A Review of R Modeling Fundamentals](https://www.tmwr.org/base-r.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This chapter will cover the creation of fitted linear & predictive models, with the use of the `lm()` and `predict()` functions, as well as the [*Tidyverse*](https://www.tidyverse.org) and [*Modeldata*](https://cran.r-project.org/web/packages/modeldata/index.html) packages.
 
-## Fundamentals for Modeling in Base R
+## Modeling in Base R
 ### 
 
-To demonstrate some fundamentals for modeling in base R, let's use experimental data from McDonald (2009), by way of Mangiafico (2015), on the relationship between the ambient temperature and the rate of cricket chirps per minute. Data were collected for two species: O. exclamationis and O. niveus. The data are contained in a data frame called crickets with a total of 31 data points.
+Let's use experimental data on the relationship between the ambient temperature and the rate of cricket chirps per minute. Data were collected for two species: `O. exclamationis` and `O. niveus`. The data is contained in a data frame called crickets, with a total of 31 data points.
 
 ### Exercise 1
 
-Load the **tidyverse** and **modeldata** libraries using `library()`.
+Load the **tidyverse** library using `library()`.
 
-```{r fundamentals-for-mod-1, exercise = TRUE}
+```{r modeling-in-base-r-1, exercise = TRUE}
 
 ```
 
-```{r fundamentals-for-mod-1-hint-1, eval = FALSE}
-library(...)
+```{r modeling-in-base-r-1-hint-1, eval = FALSE}
 library(...)
 ```
 
 ```{r include = FALSE}
 library(tidyverse)
-library(modeldata)
 ```
 
 ### 
@@ -67,38 +88,56 @@ The core **tidyverse** library includes the following packages: **ggplot2**, **d
 
 ### Exercise 2
 
-The `data()` function is used to load specified data sets. Lets use `data()` to load the **modeldata** package and the `crickets` dataframe. In the code chunk below, type in `data()`. Set the first argument to `crickets`. The second argument, called `package`, should be set to `"modeldata"`, which is the package where the `crickets` dataframe is from.
+Now, load the **modeldata** package.
 
-```{r fundamentals-for-mod-2, exercise = TRUE}
+```{r modeling-in-base-r-2, exercise = TRUE}
 
 ```
 
-```{r fundamentals-for-mod-2-hint-1, eval = FALSE}
-data(..., package = ...)
+```{r modeling-in-base-r-2-hint-1, eval = FALSE}
+library(...)
 ```
 
 ```{r include = FALSE}
-data(crickets, package = "modeldata")
+library(modeldata)
 ```
 
 ### 
 
-Here's another way to load the **modeldata** package and `crickets` tibble:
-
-```         
-library(modeldata)
-crickets
-```
+The S language, on which R is based, introduced standard infrastructure components familiar to R users today, such as symbolic model formulae, model matrices, and data frames, as well as standard object-oriented programming methods for data analysis. 
 
 ### Exercise 3
 
-The `names()` function can be used to get the column names of `crickets`. In the code chunk below, type in `names()`, passing in `crickets`.
+We will be using the `crickets` tibble from the **modeldata** package. Type in `crickets` and press "Run Code".
 
-```{r fundamentals-for-mod-3, exercise = TRUE}
+```{r modeling-in-base-r-3, exercise = TRUE}
 
 ```
 
-```{r fundamentals-for-mod-3-hint-1, eval = FALSE}
+```{r modeling-in-base-r-3-hint-1, eval = FALSE}
+...
+```
+
+```{r include = FALSE}
+crickets
+```
+
+### 
+
+Another way to load **modeldata** and `crickets` would be to use the `data()` function:
+```         
+data(crickets, package = "modeldata")
+```
+
+### Exercise 4
+
+The `names()` function can be used to get the column names of `crickets`. In the code chunk below, type in `names()`, passing in `crickets`.
+
+```{r modeling-in-base-r-4, exercise = TRUE}
+
+```
+
+```{r modeling-in-base-r-4-hint-1, eval = FALSE}
 ...(...)
 ```
 
@@ -108,43 +147,113 @@ names(crickets)
 
 ### 
 
-As you can see, the column names of the `crickets` dataframe are `species, temp` and `rate`. The `rate` column refers to the crickets chirping rate.
+As you can see, the column names of the `crickets` dataframe are `species, temp` and `rate`. The `rate` column refers to the crickets chirping rate, the `temp` column refers to the temperature (in Celsius) the crickets were in, and the `species` column refers to the species of the cricket.
 
-### Exercise 4
+### Exercise 5
 
-<!-- DK: Insert code here creating cricket plot, and assigning it to an object. Then, print the object. Then print the object again at the end. -->
+<!-- DK: Insert code here creating cricket plot, and assigning it to an object. Then, print the object. Then print the object again at the end. Done -->
 
-Lets plot this data. In the code chunk below, type in `crickets` and pipe it to `ggplot()`. Inside ggplot, type in `aes()`. Inside `aes()`, set `x` to `temp`, `y` to `rate`, `color` to `species`, `pch` to `species`, `lty` to `species`.
+Using the data from the `crickets` tibble, lets make this plot:
 
-```{r fundamentals-for-mod-4, exercise = TRUE}
+```{r}
+crickets_plot
+```
+
+In the code chunk below, type in `crickets` and pipe it to `ggplot()`.
+
+```{r modeling-in-base-r-5, exercise = TRUE}
 
 ```
 
-```{r fundamentals-for-mod-4-hint-1, eval = FALSE}
-... |>
-  ...(aes(x = ..., y = ..., color = ..., pch = ..., lty = ...))
+```{r modeling-in-base-r-5-hint-1, eval = FALSE}
+crickets |>
+  ...()
 ```
 
 ```{r include = FALSE}
 crickets |>
-  ggplot(aes(x = temp, y = rate, color = species, pch = species, lty = species))
+    ggplot()
 ```
 
 ### 
 
-The plot elements will be colored differently for each species.
+`ggplot()` comes from the **ggplot2** package, which is included in the **tidyverse** package. `ggplot()` is used to create graphs from data.
 
-### Exercise 5
+### Exercise 6
 
-Copy the previous code. Add a layer with `geom_point()` and pass in `size = 2`.
+Copy the previous code. Inside `ggplot()`, type in `aes()`. Inside `aes()`, set `x` to `temp` and y to `rate`.
 
-```{r fundamentals-for-mod-5, exercise = TRUE}
+```{r modeling-in-base-r-6, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r fundamentals-for-mod-5-hint-1, eval = FALSE}
+```{r modeling-in-base-r-6-hint-1, eval = FALSE}
+crickets |>
+    ggplot(...(
+      x = ..., 
+      y = ...)
+      )
+      
+```
+
+```{r include = FALSE}
+crickets |>
+    ggplot(aes(
+      x = temp, 
+      y = rate)
+      )
+```
+
+### 
+
+The `aes()` is used to specify the desired *aesthetics* of a graph (hence the name "aes"). As you can see, with the use of the `aes()` function, the graph now has an x-axis and y-axis label.
+
+### Exercise 7
+
+Copy the previous code. Inside `aes()`, set arguments `color`, `pch`, and `lty` to `species`. 
+
+```{r modeling-in-base-r-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-in-base-r-7-hint-1, eval = FALSE}
+crickets |>
+    ggplot(aes(x = temp, 
+               y = rate, 
+               ... = species, 
+               pch = ..., 
+               ... = species)
+           )
+```
+
+```{r include = FALSE}
+crickets |>
+    ggplot(aes(x = temp, 
+               y = rate, 
+               color = species, 
+               pch = species, 
+               lty = species))
+```
+
+### 
+
+By setting `color`, `pch`, and `lty` to `species`, the graph will plot points for each data point and set the color of them by species.
+
+### Exercise 8
+
+Copy the previous code. Add `geom_point()` and pass in `size = 2`.
+
+```{r modeling-in-base-r-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-in-base-r-8-hint-1, eval = FALSE}
 ... + 
   geom_point(... = ...)
 ```
@@ -161,54 +270,94 @@ crickets |>
 
 ### 
 
-<!-- DK: Drop some knowledge. -->
+The `geom_point()` function adds data points (each as an individual dot) to the graph. By setting the `size` parameter to `2`, each point on the graph will have the size of `2`, instead of the default size. 
 
-### Exercise 6
+### Exercise 9
 
-Now, lets create a linear model. Copy the previous code and add `geom_smooth()`. Inside `geom_smooth()`, set `method` to `lm`, `se` to `FALSE`, and `alpha` to `0.5`.
+Copy the previous code. Now, add `geom_smooth()` to your code and set `method` to `"lm"`.
 
-```{r fundamentals-for-mod-6, exercise = TRUE}
+```{r modeling-in-base-r-9, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r fundamentals-for-mod-6-hint-1, eval = FALSE}
-... +
-  geom_smooth(method = ..., se = ..., ... = ... )
+```{r modeling-in-base-r-9-hint-1, eval = FALSE}
+... + 
+  geom_smooth(... = "...")
 ```
 
 ```{r include = FALSE}
 crickets |>
-  ggplot(aes(x = temp, y = rate, color = species, pch = species, lty = species)) +
+  ggplot(aes(x = temp, 
+             y = rate, 
+             color = species, 
+             pch = species, 
+             lty = species)) +
     geom_point(size = 2) + 
-      geom_smooth(method = lm, se = FALSE, alpha = 0.5)
+      geom_smooth(method = "lm")
 ```
 
 ### 
 
-As you can see, this code shows a simple linear model fit created separately for each species.
+`geom_smooth()` creates a "smooth line" to the data points. This function is often used to display trend lines. By setting the `method` argument to `lm`, `geom_smooth()` fits the data to a straight line, with the use of linear regression. 
 
-### Exercise 7
 
-Next, lets change the color scheme using `scale_colour_brewer()`. Copy the the previous code and add `scale_colour_brewer()`. Inside this function, set `palette` to `"Paired"`.
+### Exercise 10
 
-```{r fundamentals-for-mod-7, exercise = TRUE}
+Coy the previous code. Inside `geom_smooth()`, set `se` to `FALSE` and `alpha` to `0.5`.
+
+```{r modeling-in-base-r-10, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r fundamentals-for-mod-7-hint-1, eval = FALSE}
+```{r modeling-in-base-r-10-hint-1, eval = FALSE}
+geom_smooth(method = "lm", se = ..., alpha = ... )
+```
+
+```{r include = FALSE}
+crickets |>
+  ggplot(aes(x = temp, 
+             y = rate, 
+             color = species, 
+             pch = species, 
+             lty = species)) +
+    geom_point(size = 2) + 
+      geom_smooth(method = "lm", se = FALSE, alpha = 0.5)
+```
+
+### 
+
+The `se` argument stands for  "standard error," and it controls the display of the confidence interval, which is the uncertainty range of the relationship of the data, around the fitted line or curve. `se` is represented by the gray tint on the line. By setting `se` to `FALSE`, that gray tint goes away.
+
+The `alpha` argument controls the opacity of the line on the graph. 
+
+### Exercise 11
+
+Next, lets change the color scheme of the graph using `scale_colour_brewer()`. Copy the the previous code and add `scale_colour_brewer()`. Inside this function, set `palette` to `"Paired"`.
+
+```{r modeling-in-base-r-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-in-base-r-11-hint-1, eval = FALSE}
 ... +
   scale_colour_brewer(... = "...")
 ```
 
 ```{r include = FALSE}
 crickets |>
-  ggplot(aes(x = temp, y = rate, color = species, pch = species, lty = species)) +
+  ggplot(aes(x = temp, 
+             y = rate, 
+             color = species, 
+             pch = species, 
+             lty = species)) +
     geom_point(size = 2) + 
-      geom_smooth(method = lm, se = FALSE, alpha = 0.5) + 
+      geom_smooth(method = "lm") + 
          scale_color_brewer(palette = "Paired")
 ```
 
@@ -216,29 +365,21 @@ crickets |>
 
 As you can see, the colors have been changed to a lighter and darker blue. Click [here](https://ggplot2.tidyverse.org/reference/scale_brewer.html) to learn more about the ColorBrewer.
 
-### Exercise 8
+### Exercise 12
 
 Copy the previous code and add your `labs()`. The final graph should look like this:
 
 ```{r}
-crickets |>
-  ggplot(aes(x = temp, y = rate, color = species, pch = species, lty = species)) +
-    geom_point(size = 2) + 
-      geom_smooth(method = lm, se = FALSE, alpha = 0.5) + 
-         scale_color_brewer(palette = "Paired") +
-            labs(
-              x = "Temperature (C)", 
-              y = "Chirp Rate (per minute)"
-            )
+crickets_plot
 ```
 
-```{r fundamentals-for-mod-8, exercise = TRUE}
+```{r modeling-in-base-r-12, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r fundamentals-for-mod-8-hint-1, eval = FALSE}
+```{r modeling-in-base-r-12-hint-1, eval = FALSE}
 ... + 
   labs(
     x = "...",
@@ -248,7 +389,7 @@ crickets |>
 
 ### 
 
-The data exhibit fairly linear trends for each species. For a given temperature, *O*. *exclamationis* appears to chirp more per minute than the other species. For an inferential model, the researchers might have specified the following null hypotheses prior to seeing the data:
+The data exhibit fairly linear trends for each species. For a given temperature, *O. exclamationis* appears to chirp more per minute than the other species. For an inferential model, the researchers might have specified the following null hypotheses prior to seeing the data:
 
 -   Temperature has no effect on the chirp rate.
 
@@ -256,17 +397,17 @@ The data exhibit fairly linear trends for each species. For a given temperature,
 
 There may be some scientific or practical value in predicting the chirp rate but in this example we will focus on inference.
 
-### Exercise 9
+### Exercise 13
 
 To fit an ordinary linear model in R, the `lm()` function is commonly used. The important arguments to this function are a model formula and a data frame that contains the data (and note that the formula is *symbolic*.)
 
 Lets create a fitted linear model using the `crickets` data frame. In the code chunk below, type in `lm()`. Set `formula` to `rate ~ temp` and `data` to `crickets`.
 
-```{r fundamentals-for-mod-9, exercise = TRUE}
+```{r modeling-in-base-r-13, exercise = TRUE}
 
 ```
 
-```{r fundamentals-for-mod-9-hint-1, eval = FALSE}
+```{r modeling-in-base-r-13-hint-1, eval = FALSE}
 ...(formula = ... ~ ..., data = ...)
 ```
 
@@ -278,7 +419,7 @@ lm(formula = rate ~ temp, data = crickets)
 
 The `rate ~ temp` specifies that the chirp rate is the outcome (since it is on the left-hand side of the tilde `~`) and that the temperature value is the predictor.
 
-### Exercise 10
+### Exercise 14
 
 Suppose the data contained the time of day in which the measurements were obtained in a column called `time`.
 
@@ -294,15 +435,15 @@ A common misunderstanding is that this formula would add the time and temperatur
 
 A *main effect* is a model term that contains a single predictor variable.
 
-### Exercise 11
+### Exercise 15
 
-Lets add `species` to our fitted model. Copy the code from Exercise 9 and add `speices` after `temp`.
+Lets add `species` to our fitted model. Copy the code from Exercise 13 and add `speices` after `temp`.
 
-```{r fundamentals-for-mod-11, exercise = TRUE}
+```{r modeling-in-base-r-15, exercise = TRUE}
 
 ```
 
-```{r fundamentals-for-mod-11-hint-1, eval = FALSE}
+```{r modeling-in-base-r-15-hint-1, eval = FALSE}
 lm(formula = rate ~ temp + ..., data = crickets)
 ```
 
@@ -316,19 +457,19 @@ Note that the vast majority of model functions cannot operate on non-numeric dat
 
 The most common approach is to use indicator variables (a.k.a. dummy variables) in place of the original qualitative values. In this instance, since species has two possible values, the model formula will [automatically encode]{.underline} this column as numeric by adding a new column that has a value of zero when the species is `"O. exclamationis"` and a value of one when the data correspond to `"O. niveus"`.
 
-### Exercise 12
+### Exercise 16
 
 When creating this fitted linear model, the slopes of the regression lines could be different for each species. To accomodate for this, we can add an interaction term.
 
 Copy paste the code from above. After `species`, type in `+ temp:species`.
 
-```{r fundamentals-for-mod-12, exercise = TRUE}
+```{r modeling-in-base-r-16, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r fundamentals-for-mod-12-hint-1, eval = FALSE}
+```{r modeling-in-base-r-16-hint-1, eval = FALSE}
 lm(formula = rate ~ temp + species + ... : ..., data = crickets)
 ```
 
@@ -340,19 +481,23 @@ lm(formula = rate ~ temp + species + temp:species, data = crickets)
 
 An interaction term is where two (or more) variables interact to affect a third variable.
 
-### Exercise 13
+### Exercise 17
 
-<!-- DK: These should be two exercises, with instructions. Students should type. -->
+<!-- DK: These should be two exercises, with instructions. Students should type. Done -->
 
-There are some shortcuts to achieve what was done in the previous exercise. Press "Run Code".
+There are some shortcuts to achieve what was done in the previous exercise. Copy the code from the previous exercise and change `rate ~ temp + species + temp:species` to `rate ~ temp * species`.
 
-```{r fundamentals-for-mod-13, exercise = TRUE}
-lm(formula = rate ~ temp * species, data = crickets)
-lm(formula = rate ~ (temp + species)^2, data = crickets)
+```{r modeling-in-base-r-17, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-in-base-r-17-hint-1, eval = FALSE}
+lm(formula = rate ~ ... * ..., data = crickets)
 ```
 
 ```{r include = FALSE}
-lm(formula = rate ~ (temp + species)^2, data = crickets)
 lm(formula = rate ~ temp * species, data = crickets)
 ```
 
@@ -360,17 +505,40 @@ lm(formula = rate ~ temp * species, data = crickets)
 
 In addition to the convenience of automatically creating indicator variables, the formula offers a few other niceties, such as using other functions in the formula argument (ex: `log()` and `poly()`) and using the period shortcut (`~ (.)^3`).
 
-### Exercise 14
+### Exercise 18
 
-Now, lets use our fitted model to make plots. Copy the previous code and delete the first line. Save the second line to the variable `interaction_fit`.
+Lets look at another shortcut we can use. Copy the previous code and change `rate ~ temp * species` to `rate ~ (temp + species)^2`.
 
-```{r fundamentals-for-mod-14, exercise = TRUE}
+```{r modeling-in-base-r-18, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r fundamentals-for-mod-14-hint-1, eval = FALSE}
+```{r modeling-in-base-r-18-hint-1, eval = FALSE}
+lm(formula = rate ~ (... + ...)^2, data = crickets)
+```
+
+```{r include = FALSE}
+lm(formula = rate ~ (temp + species)^2, data = crickets)
+```
+
+### 
+
+the `lm()` function can be passed in with multiple arguments, such as `offset` and `method`. Check out the `lm()` help page to learn more. 
+
+
+### Exercise 19
+
+Now, lets use our fitted model to make plots. Copy the previous code and  save it to the variable `interaction_fit`.
+
+```{r modeling-in-base-r-19, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-in-base-r-19-hint-1, eval = FALSE}
 ... <- lm(formula = rate ~ (temp + species)^2, data = crickets)
 ```
 
@@ -380,15 +548,17 @@ interaction_fit <- lm(formula = rate ~ (temp + species)^2, data = crickets)
 
 ### 
 
-### Exercise 15
+In this tutorial, the suffix `_fit` will be used for R objects that are fitted models.
+
+### Exercise 20
 
 Type in `plot()` and pass in `interaction_fit`.
 
-```{r fundamentals-for-mod-15, exercise = TRUE}
+```{r modeling-in-base-r-20, exercise = TRUE}
 
 ```
 
-```{r fundamentals-for-mod-15-hint-1, eval = FALSE}
+```{r modeling-in-base-r-20-hint-1, eval = FALSE}
 plot(...)
 ```
 
@@ -400,17 +570,17 @@ plot(interaction_fit)
 
 This method produces a set of four plots for the object, each showing different aspects of the fitted object.
 
-### Exercise 16
+### Exercise 21
 
 Our next order of business with the crickets is to assess if the inclusion of the interaction term is necessary. The most appropriate approach for this model is to recompute the model without the interaction term and use the `anova()` method.
 
 Copy the model from Exercise 11 and save it to the variable `main_effect_fit`.
 
-```{r fundamentals-for-mod-16, exercise = TRUE}
+```{r modeling-in-base-r-21, exercise = TRUE}
 
 ```
 
-```{r fundamentals-for-mod-16-hint-1, eval = FALSE}
+```{r modeling-in-base-r-21-hint-1, eval = FALSE}
 ... <- lm(...)
 ```
 
@@ -420,11 +590,13 @@ main_effect_fit <-  lm(rate ~ temp + species, data = crickets)
 
 ### 
 
-### Exercise 17
+When it comes to the technical details of evaluating expressions, R is lazy (as opposed to eager). This means that model fitting functions typically compute the minimum possible quantities at the last possible moment. For example, if you are interested in the coefficient table for each model term, this is not automatically computed with the model but is instead computed via the `summary()` method.
+
+### Exercise 22
 
 In order to assess the necessity of the interaction variable, we need to use the `anova()` function. Type in `?anova()` to the Console and look at the Description section. CP/CR.
 
-```{r fundamentals-for-mod-17}
+```{r modeling-in-base-r-22}
 question_text(NULL,
 	answer(NULL, correct = TRUE),
 	allow_retry = TRUE,
@@ -437,15 +609,15 @@ question_text(NULL,
 
 The `anova()` function takes in fitted objects as arguments, like the `main_effect_fit` and `interactive_fit` objects we created earlier.
 
-### Exercise 18
+### Exercise 23
 
 Pass in `main_effect_fit` and `interactive_fit` to the `anova()` function. Press "Run Code" when done. 
 
-```{r fundamentals-for-mod-18, exercise = TRUE}
+```{r modeling-in-base-r-23, exercise = TRUE}
 
 ```
 
-```{r fundamentals-for-mod-18-hint-1, eval = FALSE}
+```{r modeling-in-base-r-23-hint-1, eval = FALSE}
 anova(..., ...)
 ```
 
@@ -455,17 +627,17 @@ This function displays a series of statistical information. Looking towards the 
 
 The p-value determines the statistical significance of the data; a p-value of < 0.05 means that the data *is* statistically significant. However, this data produced a p-value of `0.25`, implying a lack of evidence against the null hypothesis that the interaction term is not needed by the model.
 
-### Exercise 19
+### Exercise 24
 
 Because of the p-value, we need to conduct further analysis on the model without the use of the interaction variable (which is `species`).
 
 Using the `summary()` will help. In the code chunk below, type in `summary()`, passing in `main_effect_fit`.
 
-```{r fundamentals-for-mod-19, exercise = TRUE}
+```{r modeling-in-base-r-24, exercise = TRUE}
 
 ```
 
-```{r fundamentals-for-mod-19-hint-1, eval = FALSE}
+```{r modeling-in-base-r-24-hint-1, eval = FALSE}
 summary(...)
 ```
 
@@ -477,11 +649,11 @@ summary(main_effect_fit)
 
 The chirp rate for each species increases by 3.6 chirps as the temperature increases by a single degree. This term shows strong statistical significance as evidenced by the p-value. The species term has a value of -10.07. This indicates that, across all temperature values, `O. niveus` has a chirp rate that is about 10 fewer chirps per minute than `O. exclamationis`. Similar to the temperature term, the species effect is associated with a very small p-value.
 
-### Exercise 20
+### Exercise 25
 
 If we want to calculate the chirp rate at a temperature that was not observed in the experiment, we can use the `predict()` method. Run `?predict()` in the Console and look at the Description section. CP/CR
 
-```{r fundamentals-for-mod-20}
+```{r modeling-in-base-r-25}
 question_text(NULL,
 	answer(NULL, correct = TRUE),
 	allow_retry = TRUE,
@@ -494,15 +666,15 @@ question_text(NULL,
 
 The `predict()` function the model object and a data frame of new values in order to make predictions.
 
-### Exercise 21
+### Exercise 26
 
 Lets make the data frame of new values, which we need in order to use `predict()`. In the code chunk below, type in `data.frame()`. Set `species` to `"O. exclamationis"` and `temp` to `15:20`. Save the code to the variable `new_values`.
 
-```{r fundamentals-for-mod-21, exercise = TRUE}
+```{r modeling-in-base-r-26, exercise = TRUE}
 
 ```
 
-```{r fundamentals-for-mod-21-hint-1, eval = FALSE}
+```{r modeling-in-base-r-26-hint-1, eval = FALSE}
 ... <- ...(... = "O. exclamationis", temp = ...)
 ```
 
@@ -514,15 +686,15 @@ new_values <- data.frame(species = "O. exclamationis", temp = 15:20)
 
 This model will estimate the chirp rate for `O. exclamationis` for temperatures between 15° C and 20° C.
 
-### Exercise 22
+### Exercise 27
 
 Now lets estimate the predicted values. Type in `predict()`, passing in `main_effect_fit` and `new_values`. 
 
-```{r fundamentals-for-mod-22, exercise = TRUE}
+```{r modeling-in-base-r-27, exercise = TRUE}
 
 ```
 
-```{r fundamentals-for-mod-22-hint-1, eval = FALSE}
+```{r modeling-in-base-r-27-hint-1, eval = FALSE}
 predict(..., ...)
 ```
 
@@ -534,9 +706,740 @@ predict(main_effect_fit, new_values)
 
 All the displayed numbers are predicted chirp rates of the `O. exclamationis` species for temperatures between 15° C and 20° C.
 
-
-## R Formula
 ### 
+
+If you are confused about the R model formula and its functionality, visit [this link](https://www.tmwr.org/base-r.html#formula).
+
+
+## Model Implementation
+### 
+
+One of the strengths of R is that it encourages developers to create a user interface that fits their needs. 
+
+### Exercise 1
+
+Let's use one of the three common methods for creating a scatter plot, using the `crickets` tibble. In the code chunk below, type in `crickets` and pipe it to `ggplot()`.
+
+```{r model-implementation-1, exercise = TRUE}
+
+```
+
+```{r model-implementation-1-hint-1, eval = FALSE}
+... |>
+  ggplot()
+```
+
+```{r include = FALSE}
+crickets |>
+  ggplot()
+```
+
+### 
+
+Instead of piping the `crickets` tibble to `ggplot()`, you can also set the `data` argument inside `ggplot()` to `crickets`.
+
+### Exercise 2
+
+Copy the previous code.Inside `ggplot()`, type in `aes()`. Set `x` to `temp` and `y` to `rate`.
+
+```{r model-implementation-2, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-2-hint-1, eval = FALSE}
+crickets |>
+  ggplot(aes(... = temp, y = ...))
+```
+
+```{r include = FALSE}
+crickets |>
+  ggplot(aes(x = temp, y = rate))
+```
+
+### 
+
+The 3 most common types of models are descriptive models, predictive models, and inferential models. Descriptive models describe or illustrate characteristics of data, predictive models predicts new data, and inferential models produce a decision for a research question or to explore a specific hypothesis.
+
+### Exercise 3
+
+Copy the previous code and add `geom_point()`.
+
+```{r model-implementation-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-3-hint-1, eval = FALSE}
+... + 
+  geom_point()
+```
+
+```{r include = FALSE}
+crickets |>
+  ggplot(aes(x = temp, y = rate)) + 
+    geom_point()
+```
+
+### 
+
+As you can see, this code creates a simple scatter plot of the crickets` chirp rate and temperature.
+
+### Exercise 4
+
+Let's look another common method of creating a scatter plot, this time using the base R function, `plot()`. In the code chunk below, type in `plot()`. Pass in `crickets$temp` and `crickets$rate`.
+
+```{r model-implementation-4, exercise = TRUE}
+
+```
+
+```{r model-implementation-4-hint-1, eval = FALSE}
+plot(... , ...)
+```
+
+```{r include = FALSE}
+plot(crickets$temp, crickets$rate)
+```
+
+### 
+
+The `$` operator is can be used to extract a specific column from a dataframe. In this case, `crickets$temp` extracts the temperature column and `crickets$rate` extracts the cricket chirp rate column.
+
+### Exercise 5
+
+We can also use the **lattice** library to create a scatterplot of the `crickets` tibble. In the code chunk below, load the **lattice** package using `library()`.
+
+```{r model-implementation-5, exercise = TRUE}
+
+```
+
+```{r model-implementation-5-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(lattice)
+```
+
+### 
+
+The **lattice** library utilizes a formula based interface in order to create graphs and plots. 
+
+### Exercise 6
+
+We will be using the `xyplot()` function from the **lattice** package in order to make this graph. In the code chunk below, type in `xyplot()`. Type in `rate` ~ temp`. Then, set the `data` argument to `crickets`. 
+
+```{r model-implementation-6, exercise = TRUE}
+
+```
+
+```{r model-implementation-6-hint-1, eval = FALSE}
+xyplot(... ~ ..., data = ...)
+```
+
+```{r include = FALSE}
+xyplot(rate ~ temp, data = crickets)
+```
+
+### 
+
+An advantage of R’s diversity of interfaces is that it can evolve over time and fit different needs for different users. As you can see from the previous exercise, each of these distinct plotting methods all display the same result: a scatterplot of a crickets temperature and chirp rate.
+
+Unfortunately, some of the syntactical diversity is due to a focus on the needs of the person *developing* the code instead of the needs of the person *using* the code. Inconsistencies among packages can be a stumbling block for R users.
+
+### Exercise 7
+
+A disadvantage to the R language is its lack of consistency. For example, R has many different ways of handling missing values. Lets observe these different methods, using the models we created in the previous section.
+
+In the code chunk below, type in `NA` and set it to `new_values$temp[1]` using the `<-` operator.
+
+```{r model-implementation-7, exercise = TRUE}
+
+```
+
+```{r model-implementation-7-hint-1, eval = FALSE}
+... <- NA
+```
+
+```{r include = FALSE}
+new_values$temp[1] <- NA
+```
+
+### 
+
+The single bracket operator, `[`, is used for indexing into a vector, matrix, list, dataframe, etc. 
+
+This code adds an `NA` value in the first index of `new_values`. `NA` represents a missing value. 
+
+### Exercise 8
+
+Copy the previous code. On a new line, type `predict()` and pass in `main_effect_fit` and `new_values`.
+
+```{r model-implementation-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-8-hint-1, eval = FALSE}
+predict(... , ...)
+```
+
+```{r include = FALSE}
+predict(main_effect_fit, new_values)
+```
+
+### 
+
+As you can see, the `predict()` function takes in the `NA` value without throwing any error. This is because for linear models, the `predict()` function has a default parameter, called `na.action`, that is set to `na.pass` by default. This means that the `predict()` function, by default, accepts the missing values. 
+
+### Exercise 9
+
+We can edit the `na.action` parameter to handle missing values in different ways. Copy the previous code and set the `na.action` parameter to `na.fail` (Note: This is intended to throw an error).
+
+```{r model-implementation-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-9-hint-1, eval = FALSE}
+predict(main_effect_fit, new_values, ... = ...)
+```
+
+```{r include = FALSE}
+# predict(main_effect_fit, new_values, na.action = na.fail)
+```
+
+### 
+
+The purpose of `na.fail` is to throw an error if the data contains any missing (`NA`) values.
+
+### Exercise 10
+
+Another way to use `na.action` to handle missing values is to not include them at all. Copy the previous code and change `na.fail` to `na.omit`.
+
+```{r model-implementation-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-10-hint-1, eval = FALSE}
+predict(main_effect_fit, new_values, na.action = ...)
+```
+
+```{r include = FALSE}
+predict(main_effect_fit, new_values, na.action = na.omit)
+```
+
+### 
+
+Note that the 1st index is not included in the output. From a user’s point of view, `na.omit` can be problematic. In our example, `new_values` has 6 rows but only 5 would be returned with `na.omit`. To adjust for this, the user would have to determine which row had the missing value and interleave a missing value in the appropriate place if the predictions were merged into `new_values`.
+
+### 
+
+To resolve this issue, the tidymodels packages have created a set of design goals. Many of their ideas are described in the tidymodels guidelines for [model implementation](https://tidymodels.github.io/model-implementation-principles/index.html).
+
+### Exercise 11
+
+Lets explore another tool for standardizing the structure of R objects: the **broom** library and `tidy()` function. Load the **broom** library below.
+
+
+```{r model-implementation-11, exercise = TRUE}
+
+```
+
+```{r model-implementation-11-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(broom)
+```
+
+### 
+
+The `tidy()` function, which comes from the **broom** package, can return many types of R objects in a more usable format.
+
+### Exercise 12
+
+We will be using the `mtcars` dataset from the **dplyr** package. In the code chunk below, type `mtcars` and press "Run Code".
+
+```{r model-implementation-12, exercise = TRUE}
+
+```
+
+```{r include = FALSE}
+mtcars
+```
+
+### 
+
+<!-- AK: Add Knowledge Drop -->
+
+
+
+
+### Exercise 13
+
+The functions we will be using are `map()` and `cor.test()`. Type in `?map()` to the Console and read the title of the first link. CP/CR. 
+
+```{r model-implementation-13}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+As mentioned in the help section, the `map()` function applies a function to each element of a vector. Note that the `map()` function will always return a list. 
+
+
+### Exercise 14
+
+Next, type in `?cor.test()` in the Console and look at the *Description* tab. CP/CR.
+
+```{r model-implementation-14}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+The `cor.test()` has many arguments, including `formula`, `subset`, and `conf.level`. Take a look at all the arguments of this function in the *Arguments* section. 
+
+
+### Exercise 15
+
+Suppose that predictors are being screened based on their correlation to the outcome column. We can use the `cor.test()` and `map()` functions to make this happen.
+
+In the code chunk below, type `map()`. Inside this function, pipe **mtcars** to `select()`, but use the `%>%` pipe. Inside `select()`, type in `-mpg`. (Note: This will return an error)
+
+```{r model-implementation-15, exercise = TRUE}
+
+```
+
+```{r model-implementation-15-hint-1, eval = FALSE}
+map(... %>% select(...)
+```
+
+```{r include = FALSE}
+# map(mtcars %>% select(-mpg))
+```
+
+### 
+
+This code returns an error because we haven't defined all of the variables needed.
+
+Code breakdown:
+
+The `%>%` is another kind of pipe that is used in R. Click [here](https://www.tidyverse.org/blog/2023/04/base-vs-magrittr-pipe/) to learn more about its differences with the `|>` pipe.
+
+By placing the `-` sign in front of `mpg`, the `select()` will go ahead and ignore that column when selecting columns from **mtcars**.
+
+### Exercise 16
+
+Copy the previous code. After `select(-mpg)`, add `cor.test`. Then set the argument `y` to `mtcars$mpg`. Finally, save the code to the variable `corr_res`.
+
+```{r model-implementation-16, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-16-hint-1, eval = FALSE}
+corr_res <- map(mtcars %>% select(-mpg), ... , y = mtcars$...)
+```
+
+```{r include = FALSE}
+corr_res <- map(mtcars %>% select(-mpg), cor.test, y = mtcars$mpg)
+```
+
+### 
+
+The results from `cor.test` can be returned in a list for each predictor.
+
+### Exercise 17
+
+Let's extract the first ten results in the `corr_res` vector. In the code chunk below, type in `corr_res`. Right next to it, type in `[[1]]` and press "Run Code".
+
+```{r model-implementation-17, exercise = TRUE}
+
+```
+
+```{r model-implementation-17-hint-1, eval = FALSE}
+...[[1]]
+```
+
+```{r include = FALSE}
+corr_res[[1]]
+```
+
+### 
+
+In the result above:
+
+`t` stands for the t-test statistic value,
+
+`df` stands for the *degrees of freedom*,
+
+`p-value` represents the statistical significance of the data,
+
+`95 percent confidence interval` is the confidence interval of the correlation coefficient at 95%,
+
+`cor` is the correlation coefficient
+
+### Exercise 18
+
+If we want to use these results in a plot, the standard format of hypothesis test results are not very useful. The `tidy()` method from the **broom** package can return this as a tibble with standardized names.
+
+Copy the previous code and pass it into the `tidy()` function.
+
+```{r model-implementation-18, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-18-hint-1, eval = FALSE}
+tidy(...)
+```
+
+```{r include = FALSE}
+tidy(corr_res[[1]])
+```
+
+### 
+
+As you can see, the data has been turned into a tibble. This allows us to display this data in a plot.
+
+### Exercise 19
+
+Lets “stack” these results and add it to a `ggplot()`. Here's what the final product will look like:
+
+```{r}
+plot2
+```
+
+In the code, pipe `corr_res` to the `map_dfr()` funciton. Inside `map_dfr(), type in `tidy` and set the `.id` argument to `"predictor"`.
+
+```{r model-implementation-19, exercise = TRUE}
+
+```
+
+```{r model-implementation-19-hint-1, eval = FALSE}
+corr_res |> 
+  ...(tidy, ... = "...")
+```
+
+```{r include = FALSE}
+corr_res |> map_dfr(tidy, .id = "predictor")
+```
+
+### 
+
+The `map_dfr()` function converts each value in `corr_res` to a tidy format and stacks the data frames.
+
+### Exercise 20
+
+Copy the previous code and pipe it to `ggplot()`. Inside the parenthesis, add the `aes()` function.
+
+```{r model-implementation-20, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-20-hint-1, eval = FALSE}
+corr_res |>
+  map_dfr(tidy, .id = "predictor") |>
+    ggplot(...())
+```
+
+```{r include = FALSE}
+corr_res |>
+  map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes())
+
+```
+
+### 
+
+Before starting a data analysis process, there should be clear expectations of the model’s goal and how performance (and success) will be judged. At least one performance metric should be identified with realistic goals of what can be achieved. Common statistical metrics are classification accuracy, true and false positive rates, root mean squared error, and so on. The relative benefits and drawbacks of these metrics should be weighed. It is also important that the metric be germane; alignment with the broader data analysis goals is critical.
+
+### Exercise 21
+
+Copy the previous code. Inside `aes()` set `x` to `fct_reorder()`. Inside `fct_reorder()`, type in `predictor, estimate`.
+
+```{r model-implementation-21, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-21-hint-1, eval = FALSE}
+corr_res |>
+  map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(... = fct_reorder(..., ...)))
+```
+
+```{r include = FALSE}
+corr_res |>
+  map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(x = fct_reorder(predictor, estimate)))
+```
+
+### 
+
+The `fct_reorder()` function helps reorder the factor levels by sorting them along with another variable. In this case, the `predictor` is the factor level and it is being reordered by the `estimate`.
+
+### Exercise 22
+
+Next, lets add the data points on the graph. Since we provided the `x` axis variable in `ggplot(aes())`, we need to add a `y` axis variable inside `geom_point()`.
+
+Copy the previous code and add `geom_point()`. Inside this function, type in `aes()`. Inside `aes()`, set `y` to `estimate`.
+
+```{r model-implementation-22, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-22-hint-1, eval = FALSE}
+corr_res |>
+  map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(x = fct_reorder(predictor, estimate)))  + 
+      geom_point(...(y = ...))
+```
+
+```{r include = FALSE}
+corr_res |>
+  map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(x = fct_reorder(predictor, estimate))) + 
+      geom_point(aes(y = estimate))
+```
+
+### 
+
+Remember that when adding functions to a `ggplot()`, you need to use the `+` operator and not the `|>` operator.
+
+### Exercise 23
+
+Now, lets use `geom_errorbar()` to display error bars, which are defined by an upper and lower value.
+
+Copy the previous code and add `geom_errorbar()` to the plot and press "Run code". (Note: This will produce an error).
+
+```{r model-implementation-23, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-23-hint-1, eval = FALSE}
+corr_res |>
+  map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(x = fct_reorder(predictor, estimate))) + 
+      geom_point(aes(y = estimate)) + 
+        ...()
+       
+```
+
+```{r include = FALSE}
+# corr_res |>
+#     map_dfr(tidy, .id = "predictor") |>
+#     ggplot(aes(x = fct_reorder(predictor, estimate))) + 
+#     geom_point(aes(y = estimate)) + 
+#     geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .1) +
+#     labs(x = NULL, y = "Correlation with mpg")
+```
+
+### 
+
+The reason this code throws an error is because we haven't defined the upper and lower values, which is required in order to use `geom_errorbar()`.
+
+### Exercise 24
+
+Lets add the upper and lower values. Copy the previous code. Inside `geom_errorbar()`, type in `aes()`. Inside `aes()`, set `ymin` to `conf.low` and `ymax` to `conf.high`.
+
+```{r model-implementation-24, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-24-hint-1, eval = FALSE}
+corr_res |>
+    map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(x = fct_reorder(predictor, estimate))) + 
+    geom_point(aes(y = estimate)) + 
+    geom_errorbar(...(ymin = ..., ymax = ...))
+```
+
+```{r include = FALSE}
+corr_res |>
+    map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(x = fct_reorder(predictor, estimate))) + 
+    geom_point(aes(y = estimate)) + 
+    geom_errorbar(aes(ymin = conf.low, ymax = conf.high))
+```
+
+### 
+
+`conf.low` stands for the lower bound of the confidence interval and `conf.high` stands for the upper bound of the confidence interval. These values are represented by the lines on each data point on the graph. 
+
+### Exercise 25
+
+Lets change the thickness of the lines. Copy the previous code, and outside of `aes()`, but inside `geom_errorbar()`, set `width` to `.1`.
+
+```{r model-implementation-25, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-25-hint-1, eval = FALSE}
+corr_res |>
+  map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(x = fct_reorder(predictor, estimate))) + 
+      geom_point(aes(y = estimate)) + 
+        geom_errorbar(aes(ymin = conf.low, ymax = conf.high), ... = ...)
+```
+
+```{r include = FALSE}
+corr_res |>
+    map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(x = fct_reorder(predictor, estimate))) + 
+    geom_point(aes(y = estimate)) + 
+    geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .1)
+```
+
+### 
+
+These two aspects of model development – ease of proper use and good methodological practice – are crucial. Since tools for creating models are easily accessible and models can have such a profound impact, many more people are creating them. In terms of technical expertise and training, creators’ backgrounds will vary. It is important that their tools be robust to the user’s experience. Tools should be powerful enough to create high-performance models, but, on the other hand, should be easy to use appropriately. 
+
+### Exercise 26
+
+Finally, copy the previous code and add your `labs()`. Note that the final product should look similar to this:
+
+```{r}
+plot2
+```
+
+```{r model-implementation-26, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-implementation-26-hint-1, eval = FALSE}
+corr_res |>
+  map_dfr(tidy, .id = "predictor") |>
+    ggplot(aes(x = fct_reorder(predictor, estimate))) + 
+      geom_point(aes(y = estimate)) + 
+      geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .1) +
+        labs(... = NULL, 
+             ... = "...")
+```
+
+### 
+
+Creating such a plot is possible using core R language functions, but automatically reformatting the results makes for more concise code with less potential for errors.
+
+## Combining Base R Models and the Tidyverse
+### 
+
+R modeling functions from the core language or other R packages can be used in conjunction with the tidyverse, especially with the **dplyr**, **purrr**, and **tidyr** packages.
+
+### Exercise 1
+
+Lets combine base R models and packages from the **tidyverse**. We are going to use the `group_nest()` function from the **dplyr** package. Type in `?group_nest()` in the Console and look at the Description section. CP/CR. 
+
+```{r combining-base-r-mod-1}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+We can use this function to fit separate models for each of the species in the `cricket` tibble.
+
+### Exercise 2
+
+First, lets split the data by species. Pipe `crickets` to `group_nest()`, passing in `species`. 
+
+```{r combining-base-r-mod-2, exercise = TRUE}
+
+```
+
+```{r combining-base-r-mod-2-hint, eval = FALSE}
+... |>
+  group_nest(...)
+```
+
+```{r include=FALSE}
+crickets |>
+  group_nest(species)
+```
+
+###
+
+Looking at the output for this code, you can see that the `data` column contains the `rate` and `temp` columns from `crickets` in a *list* column.
+
+
+### Exercise 3
+
+Copy the previous code and assign it to the variable `split_by_species`.
+
+```{r combining-base-r-mod-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r combining-base-r-mod-3-hint, eval = FALSE}
+... <- crickets |>
+  group_nest(species)
+```
+
+```{r include=FALSE}
+split_by_species <- crickets |>
+  group_nest(species)
+```
+
+###
+
+<!-- AK: Knowledge Drop -->
+
+### Exercise 4
+
+
+```{r combining-base-r-mod-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r combining-base-r-mod-4-hint, eval = FALSE}
+
+```
+
+###
+
+
 
 ## Summary
 ### 
