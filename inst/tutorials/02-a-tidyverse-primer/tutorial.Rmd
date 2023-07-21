@@ -28,6 +28,11 @@ url <- "https://data.cityofchicago.org/api/views/5neh-572f/rows.csv?accessType=D
 
 chicago <- read_csv(url)
 
+add_numbers <- function(num1, num2){
+  sum <- num1 + num2
+  return(sum)
+}
+
 compute_log_ratio <- function(mpg, wt, log_base = exp(1)) {
   (log(mpg/wt, base = log_base))
 }
@@ -39,12 +44,6 @@ result <- compute_log_ratio(mtcars$mpg, mtcars$wt)
 
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
-
-<!-- DK: Spaces around |> always. -->
-
-<!-- DK: Figure out which tests are taking so long. -->
-
-<!-- DK: Change read_csv(url) as the beginng of the pipe. Instead, download the data once, then build the pipe starting from that data set. -->
 
 ## Introduction
 ### 
@@ -108,7 +107,7 @@ We can now see that every column of the first row in `mtcars` is printed.
 
 ### Exercise 4
 
-Next, we will try extracting the second and fourth row. Copy the previous code from before and inside the brackets, select the rows `2,4` using `c()`. Remember to use a `,` after you put the vector in the bracket.
+Next, we will try extracting the second and fourth row. Copy the previous code from before and inside the brackets, remove `1,` and select the rows `2,4` using `c()`. Remember to use a `,` after you put the vector in the bracket.
 
 ```{r tidyverse-principles-4, exercise = TRUE}
 
@@ -186,7 +185,6 @@ order(mtcars$...)
 order(mtcars$gear)
 ```
 
-
 ### 
 
 The `order()` sorts a string vector by looking at the first letter of each string and sorting it in alphabetical order, returning the indexes of the words in the vector.
@@ -198,6 +196,8 @@ Copy the previous code. In `mtcars[]`, pass in the previous code in the brackets
 ```{r tidyverse-principles-8, exercise = TRUE}
 
 ```
+
+<button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-principles-8-hint-1, eval = FALSE}
 mtcars[order(...$gear), ]
@@ -277,8 +277,6 @@ library(...)
 library(rsample)
 ```
 
-### 
-
 ### Exercise 2
 
 Get a better understanding of the **rsample** library by typing in `?rsample` into the console. Look at the description in the help tab. CP/CR.
@@ -313,7 +311,6 @@ question_text(NULL,
 	rows = 3)
 ```
 
-### 
 
 ### Exercise 4
 
@@ -423,7 +420,7 @@ slice(arrange(mtcars, gear))
 
 ### 
 
-As you can see, only the row of all the column names was printed out. This is because the number of rows to be extracted was never specified.
+As you can see, an empty tibble was printed out. This is because the number of rows to be extracted was never specified.
 
 ### Exercise 3
 
@@ -471,7 +468,7 @@ This way of slicing a data set can be hard to read and might confuse the audienc
 
 ### Exercise 5
 
-We will continue to use the `mtcars` data set, as we are quite comfortable with it up to this point. Pipe `arrange(gear)` after typing mtcars on the first line with the use of the `|>` operator.
+We will continue to use the `mtcars` data set, as we are quite comfortable with it up to this point. Pipe `arrange(gear)` after typing `mtcars` on the first line with the use of the `|>` operator.
 
 ```{r design-for-the-pipe--5, exercise = TRUE}
 
@@ -487,12 +484,9 @@ mtcars |>
   arrange(gear)
 ```
 
-###
-<!-- DK: Drop some knowledge. -->
-
 ### Exercise 6
 
-Copy the previous. Extract the first 10 rows of the ordered data set by adding `slice()` to the pipe.
+Copy the previous. Extract the first 10 rows using `:` of the ordered data set by adding `slice()` to the pipe.
 
 ```{r design-for-the-pipe--6, exercise = TRUE}
 
@@ -530,25 +524,22 @@ ggplot(mtcars, aes(x = wt, y = mpg)) +
 
 In many real-world cases, the element-wise operation of interest is too complex for a vectorized solution. In such a case, a good approach is to write a function to do the computations.
 
-###
+### 
 
-The *strucutre* of a function is as follows: 
+The *structure* of a function is as follows: 
 
-function_name <- function(arg1, arg2, ...){
-  return("something")
-}
+function_name <- function(arg1, arg2, ...){                             return("something")                                             }
 
 *Example function*:
 
-add_numbers <- function(num1, num2){
-  sum <- num1 + num2
-  return(sum)
-}
+add_numbers <- function(num1, num2){                                  sum <- num1 + num2                                                  return(sum)                                                       }
 
+result <- add_numbers(5, 3)                             print(result)
+
+```{r}
 result <- add_numbers(5, 3)
 print(result)
-
-Expected Printed Result: `#[1] 8`
+```
 
 ### Exercise 8
 
@@ -558,8 +549,7 @@ We will be computing the log ratio of  the mpg vs weight from the cars in them `
 
 ```
 
-
-```{r design-for-the-pipe--8-hint, eval = FALSE}
+```{r design-for-the-pipe--8-hint-1, eval = FALSE}
 compute_log_ratio <- ...(mpg, wt){
   
 }
@@ -571,7 +561,7 @@ compute_log_ratio <- function(mpg, wt){
 }
 ```
 
-###
+### 
 
 We can also have parameters of functions that are set to certain values within in function(). An example would be fctn_name <- function(..., log_base = exp(1)). You should not use this as a argument, however, you *call* the function.
 
@@ -585,7 +575,7 @@ Since we are computing the log ratio, we need to set the base of the log to 1. C
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r design-for-the-pipe--9-hint, eval = FALSE}
+```{r design-for-the-pipe--9-hint-1, eval = FALSE}
 ...<- function(..., ..., log_base = exp(...)){
   
 }
@@ -597,7 +587,7 @@ compute_log_ratio <- function(mpg, wt, log_base = exp(1)){
 }
 ```
 
-###
+### 
 
 There are certain functions were you do not have to necessarily have a return() statement. Rather you can have the function print a desired value based on the arguments. However, it is best practice to have the function return some value.
 
@@ -611,7 +601,7 @@ It is crucial to have the return statement in the function. Copy the previous co
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r design-for-the-pipe--10-hint, eval = FALSE}
+```{r design-for-the-pipe--10-hint-1, eval = FALSE}
 ...{
   ...()
 }
@@ -623,7 +613,7 @@ compute_log_ratio <- function(mpg, wt, log_base = exp(1)){
 }
 ```
 
-###
+### 
 
 The return() statement exits the function and returns the value you desire. It can be any R object, such as a number, character, vector, list, or even NULL.
 
@@ -637,7 +627,7 @@ The log() function, in this case, will take the ratio between `mpg/wt` and take 
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r design-for-the-pipe--11-hint, eval = FALSE}
+```{r design-for-the-pipe--11-hint-1, eval = FALSE}
 ...{
   return(...(mpg/wt))
 }
@@ -651,7 +641,7 @@ compute_log_ratio <- function(mpg, wt, log_base = exp(1)){
 
 ### Exercise 12
 
-Copy the previous code and add the base as a parameter for `log()`, which is equal to the log_base argument set in the function parameters for `compute_log_ratio`.
+Copy the previous code and add `base` as a parameter for `log()`, which is equal to the log_base argument set in the function parameters for `compute_log_ratio`.
 
 ```{r design-for-the-pipe--12, exercise = TRUE}
 
@@ -659,7 +649,7 @@ Copy the previous code and add the base as a parameter for `log()`, which is equ
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r design-for-the-pipe--12-hint, eval = FALSE}
+```{r design-for-the-pipe--12-hint-1, eval = FALSE}
 ...{
   return(log(mpg/wt, base = ...))
 }
@@ -671,20 +661,19 @@ compute_log_ratio <- function(mpg, wt, log_base = exp(1)){
 }
 ```
 
-###
+### 
 
 To access any function that we have created, we must call this function in order to use it and give it the right number of parameters.
 
 ### Exercise 13
 
-We must call the function outside of the function. Set `result` to `compute_log_ratio()`.
+We must call the function outside of the function. Set `result` to `compute_log_ratio()`. This might throw an error, but that will be fixed later.
 
 ```{r design-for-the-pipe--13, exercise = TRUE}
 
 ```
 
-
-```{r design-for-the-pipe--13-hint, eval = FALSE}
+```{r design-for-the-pipe--13-hint-1, eval = FALSE}
 result <- ...()
 ```
 
@@ -702,17 +691,17 @@ Set the arguments of the function to the columns `mpg` and `wt` from `mtcars` us
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r design-for-the-pipe--14-hint, eval = FALSE}
+```{r design-for-the-pipe--14-hint-1, eval = FALSE}
 result <- compute_log_ratio(mtcars$..., mtcars$...)
 ```
-<!-- PK: Throwing an error here -->
+
 ```{r include = FALSE}
 #result <- compute_log_ratio(mtcars$mpg, mtcars$wt)
 ```
 
 ### Exercise 15
 
-Finally, print this value. You should get a series of values with the compute log ratios between `mpg` and `wt`.
+Finally, copy the previous code and print this value on the next line using `print()`. You should get a series of values with the compute log ratios between `mpg` and `wt`.
 
 ```{r design-for-the-pipe--15, exercise = TRUE}
 
@@ -720,17 +709,17 @@ Finally, print this value. You should get a series of values with the compute lo
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r design-for-the-pipe--15-hint, eval = FALSE}
+```{r design-for-the-pipe--15-hint-1, eval = FALSE}
 print(...)
 ```
 
-```{r}
+```{r include = FALSE}
 print(result)
 ```
 
-###
+### 
 
-In R, the head() function views first few rows of a data frame or a vector without displaying the entire data set. 
+When we design for functional programming, it is important that the output depends only on the inputs and that the function has no side effects. 
 
 ### Exercise 16
 
@@ -742,9 +731,7 @@ First, within the function head(), add the parameter `mtcars$mpg` and `3`, since
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
-
-```{r design-for-the-pipe--16-hint, eval = FALSE}
+```{r design-for-the-pipe--16-hint-1, eval = FALSE}
 head(mtcars$mpg, ...)
 ```
 
@@ -752,7 +739,7 @@ head(mtcars$mpg, ...)
 head(mtcars$mpg, 3)
 ```
 
-###
+### 
 
 There are many types of map function in the **purr** package, such as `map_dbl()`, `map2_dbl()`, etc.
 
@@ -766,23 +753,23 @@ Copy the previous code. Pipe the code to `map()` and add the parameter `sqrt`, a
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r design-for-the-pipe--17-hint, eval = FALSE}
+```{r design-for-the-pipe--17-hint-1, eval = FALSE}
 ...|>
   map(sqrt)
 ```
 
 ```{r include = FALSE}
-head(mtcars$mpg, 3)|>
+head(mtcars$mpg, 3) |>
   map(sqrt)
 ```
 
-###
+### 
 
 As you can see, `map()` returned the list of the `mpg`  of the first 3 rows of `mtcars` square rooted.
 
 ### Exercise 18
 
-map_dbl() returns the a vector compared to a list returned when map() is called. Copy the previous code and change map() to map_dlb().
+`map_dbl()` returns the a vector compared to a list returned when `map()` is called. Copy the previous code and change map() to `map_dbl()`.
 
 ```{r design-for-the-pipe--18, exercise = TRUE}
 
@@ -790,25 +777,17 @@ map_dbl() returns the a vector compared to a list returned when map() is called.
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r design-for-the-pipe--18-hint, eval = FALSE}
-head(mtcars$mpg, 3)|>
+```{r design-for-the-pipe--18-hint-1, eval = FALSE}
+head(mtcars$mpg, 3) |>
+  map_dbl(...)
+```
+
+```{r include = FALSE}
+head(mtcars$mpg, 3) |>
   map_dbl(sqrt)
 ```
 
-### Exercise 19
-
-map2_dbl() operates across multiple vectors. Within the function, there are three parameters, in this case: two vectors and the function that must be used on those two vectors. Within map2_dbl(), enter the `mpg` and `wt` columns from mtcars, with the third function parameter being `compute_log_ratio()`.
-
-```{r design-for-the-pipe--19, exercise = TRUE}
-mtcars
-```
-
-
-```{r design-for-the-pipe--19-hint, eval = FALSE}
-map2_dbl(mtcars$mpg, mtcars$wt, compute_log_ratio)
-```
-
-###
+### 
 
 Great Job! You now have a better understanding of how the pipe operator `|>` works and how functional programming can help create a more understandable solution to complex problems.
 
@@ -1053,8 +1032,6 @@ We will also need the **readr** package to use functions that deal with csv file
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
-
 ```{r tidyverse-syntax-11-hint-1, eval = FALSE}
 library(...)
 ```
@@ -1073,7 +1050,7 @@ url <- "https://data.cityofchicago.org/api/views/5neh-572f/rows.csv?accessType=D
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+This pipeline of operations illustrates why the tidyverse is popular. A series of data manipulations is used that have simple and easy to understand functions for each transformation; the series is bundled in a streamlined, readable way. 
 
 ### Exercise 13
 
@@ -1082,8 +1059,6 @@ Now that the data set is assigned to `url`, we will now read the data using the 
 ```{r tidyverse-syntax-13, exercise = TRUE}
 
 ```
-
-<button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-13-hint-1, eval = FALSE}
 chicago <- read_csv(...)
@@ -1095,17 +1070,15 @@ chicago <- read_csv(url)
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+In R, the head() function views first few rows of a data frame or a vector without displaying the entire data set.
 
 ### Exercise 14
 
-Copy the previous code. Select the columns `stationname, date, rides` using select(). 
+Select the columns `stationname, date, rides` by piping select() to `chicago`. 
 
 ```{r tidyverse-syntax-14, exercise = TRUE}
 
 ```
-
-<button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-syntax-14-hint-1, eval = FALSE}
 chicago |>
@@ -1119,7 +1092,7 @@ chicago |>
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+Pipelines are incredibly useful in modeling workflows but modeling pipelines can return, instead of a data frame, objects such as model components.
 
 ### Exercise 15
 
@@ -1143,7 +1116,7 @@ chicago |>
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+There are specialized variants of map() that return values when we know or expect that the function will generate one of the basic vector types.
 
 ### Exercise 16
 
@@ -1168,7 +1141,7 @@ chicago |>
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+For this reason, it is critical that R code be easy to work with to accomplish your goals. Documentation, training, accessibility, and other factors play an important part in achieving this. 
 
 ### Exercise 17
 
@@ -1193,7 +1166,7 @@ chicago |>
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+The tidyverse focuses on designing R packages and functions that can be easily understood and used by a broad range of people. Both historically and today, a substantial percentage of R users are not people who create software or tools but instead people who create analyses or models. 
  
 ### Exercise 18
 
@@ -1219,7 +1192,9 @@ chicago |>
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+From Wickham et al. (2019):
+
+“At a high level, the tidyverse is a language for solving data science challenges with R code. Its primary goal is to facilitate a conversation between a human and a computer about data. Less abstractly, the tidyverse is a collection of R packages that share a high-level design philosophy and low-level grammar and data structures, so that learning one package makes it easier to learn the next.”
 
 ### Exercise 19
 
@@ -1237,7 +1212,7 @@ Now that we have grouped the data set by date and station, we will now summarize
 ```
 
 ```{r include = FALSE}
-chicago|>
+chicago |>
   select(station = stationname, date, rides) |>
   mutate(date = mdy(date), rides = rides/1000) |>
   group_by(date, station) |>
@@ -1246,7 +1221,7 @@ chicago|>
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+This approach enables more people to learn R and achieve their analysis goals, and adopting these same principles for modeling in R has the same benefits.
 
 ### Exercise 20
 
@@ -1264,14 +1239,20 @@ Finally, we do not want the grouped structure to remain after summarizing the da
 ```
 
 ```{r include = FALSE}
-chicago|>
-  select(station = stationname, date, rides)|>
-  mutate(date = mdy(date), rides = rides/1000)|>
-  group_by(date, station)|>
+chicago |>
+  select(station = stationname, date, rides) |>
+  mutate(date = mdy(date), rides = rides/1000) |>
+  group_by(date, station) |>
   summarize(rides = max(rides), .groups = "drop")
 ```
 
 ### 
+
+As such, R users do not typically have (or need) computer science backgrounds, and many are not interested in writing their own R packages.
+
+### 
+
+Great work! You now should have a greater understanding of the tidyverse syntax such as data frames, tibbles, and functions such as mutate(), summarize(), etc.
 
 ## Summary
 ### 
