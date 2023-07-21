@@ -45,6 +45,9 @@ plot2 <- corr_res |>
       geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .1) +
         labs(x = NULL, y = "Correlation with mpg")
 
+split_by_species <- crickets |>
+  group_nest(species)
+
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -1128,7 +1131,6 @@ Lets “stack” these results and add it to a `ggplot()`. Here's what the final
 plot2
 ```
 
-
 In the code, pipe `corr_res` to the `map_dfr()` funciton. Inside `map_dfr(), type in `tidy` and set the `.id` argument to `"predictor"`.
 
 ```{r model-implementation-19, exercise = TRUE}
@@ -1158,20 +1160,20 @@ Copy the previous code and pipe it to `ggplot()`. Inside the parenthesis, add th
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r model-implementation-20-hint, eval = FALSE}
+```{r model-implementation-20-hint-1, eval = FALSE}
 corr_res |>
   map_dfr(tidy, .id = "predictor") |>
     ggplot(...())
 ```
 
-```{r include=FALSE}
+```{r include = FALSE}
 corr_res |>
   map_dfr(tidy, .id = "predictor") |>
     ggplot(aes())
 
 ```
 
-###
+### 
 
 Before starting a data analysis process, there should be clear expectations of the model’s goal and how performance (and success) will be judged. At least one performance metric should be identified with realistic goals of what can be achieved. Common statistical metrics are classification accuracy, true and false positive rates, root mean squared error, and so on. The relative benefits and drawbacks of these metrics should be weighed. It is also important that the metric be germane; alignment with the broader data analysis goals is critical.
 
@@ -1185,19 +1187,19 @@ Copy the previous code. Inside `aes()` set `x` to `fct_reorder()`. Inside `fct_r
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r model-implementation-21-hint, eval = FALSE}
+```{r model-implementation-21-hint-1, eval = FALSE}
 corr_res |>
   map_dfr(tidy, .id = "predictor") |>
     ggplot(aes(... = fct_reorder(..., ...)))
 ```
 
-```{r include=FALSE}
+```{r include = FALSE}
 corr_res |>
   map_dfr(tidy, .id = "predictor") |>
     ggplot(aes(x = fct_reorder(predictor, estimate)))
 ```
 
-###
+### 
 
 The `fct_reorder()` function helps reorder the factor levels by sorting them along with another variable. In this case, the `predictor` is the factor level and it is being reordered by the `estimate`.
 
@@ -1213,21 +1215,21 @@ Copy the previous code and add `geom_point()`. Inside this function, type in `ae
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r model-implementation-22-hint, eval = FALSE}
+```{r model-implementation-22-hint-1, eval = FALSE}
 corr_res |>
   map_dfr(tidy, .id = "predictor") |>
     ggplot(aes(x = fct_reorder(predictor, estimate)))  + 
       geom_point(...(y = ...))
 ```
 
-```{r include=FALSE}
+```{r include = FALSE}
 corr_res |>
   map_dfr(tidy, .id = "predictor") |>
     ggplot(aes(x = fct_reorder(predictor, estimate))) + 
       geom_point(aes(y = estimate))
 ```
 
-###
+### 
 
 Remember that when adding functions to a `ggplot()`, you need to use the `+` operator and not the `|>` operator.
 
@@ -1243,7 +1245,7 @@ Copy the previous code and add `geom_errorbar()` to the plot and press "Run code
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r model-implementation-23-hint, eval = FALSE}
+```{r model-implementation-23-hint-1, eval = FALSE}
 corr_res |>
   map_dfr(tidy, .id = "predictor") |>
     ggplot(aes(x = fct_reorder(predictor, estimate))) + 
@@ -1252,7 +1254,7 @@ corr_res |>
        
 ```
 
-```{r include=FALSE}
+```{r include = FALSE}
 # corr_res |>
 #     map_dfr(tidy, .id = "predictor") |>
 #     ggplot(aes(x = fct_reorder(predictor, estimate))) + 
@@ -1261,7 +1263,7 @@ corr_res |>
 #     labs(x = NULL, y = "Correlation with mpg")
 ```
 
-###
+### 
 
 The reason this code throws an error is because we haven't defined the upper and lower values, which is required in order to use `geom_errorbar()`.
 
@@ -1275,7 +1277,7 @@ Lets add the upper and lower values. Copy the previous code. Inside `geom_errorb
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r model-implementation-24-hint, eval = FALSE}
+```{r model-implementation-24-hint-1, eval = FALSE}
 corr_res |>
     map_dfr(tidy, .id = "predictor") |>
     ggplot(aes(x = fct_reorder(predictor, estimate))) + 
@@ -1283,7 +1285,7 @@ corr_res |>
     geom_errorbar(...(ymin = ..., ymax = ...))
 ```
 
-```{r include=FALSE}
+```{r include = FALSE}
 corr_res |>
     map_dfr(tidy, .id = "predictor") |>
     ggplot(aes(x = fct_reorder(predictor, estimate))) + 
@@ -1291,7 +1293,7 @@ corr_res |>
     geom_errorbar(aes(ymin = conf.low, ymax = conf.high))
 ```
 
-###
+### 
 
 `conf.low` stands for the lower bound of the confidence interval and `conf.high` stands for the upper bound of the confidence interval. These values are represented by the lines on each data point on the graph. 
 
@@ -1305,7 +1307,7 @@ Lets change the thickness of the lines. Copy the previous code, and outside of `
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r model-implementation-25-hint, eval = FALSE}
+```{r model-implementation-25-hint-1, eval = FALSE}
 corr_res |>
   map_dfr(tidy, .id = "predictor") |>
     ggplot(aes(x = fct_reorder(predictor, estimate))) + 
@@ -1313,7 +1315,7 @@ corr_res |>
         geom_errorbar(aes(ymin = conf.low, ymax = conf.high), ... = ...)
 ```
 
-```{r include=FALSE}
+```{r include = FALSE}
 corr_res |>
     map_dfr(tidy, .id = "predictor") |>
     ggplot(aes(x = fct_reorder(predictor, estimate))) + 
@@ -1321,7 +1323,7 @@ corr_res |>
     geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .1)
 ```
 
-###
+### 
 
 These two aspects of model development – ease of proper use and good methodological practice – are crucial. Since tools for creating models are easily accessible and models can have such a profound impact, many more people are creating them. In terms of technical expertise and training, creators’ backgrounds will vary. It is important that their tools be robust to the user’s experience. Tools should be powerful enough to create high-performance models, but, on the other hand, should be easy to use appropriately. 
 
@@ -1333,14 +1335,13 @@ Finally, copy the previous code and add your `labs()`. Note that the final produ
 plot2
 ```
 
-
 ```{r model-implementation-26, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r model-implementation-26-hint, eval = FALSE}
+```{r model-implementation-26-hint-1, eval = FALSE}
 corr_res |>
   map_dfr(tidy, .id = "predictor") |>
     ggplot(aes(x = fct_reorder(predictor, estimate))) + 
@@ -1350,12 +1351,95 @@ corr_res |>
              ... = "...")
 ```
 
-###
+### 
 
 Creating such a plot is possible using core R language functions, but automatically reformatting the results makes for more concise code with less potential for errors.
 
-## New section here
+## Combining Base R Models and the Tidyverse
+### 
+
+R modeling functions from the core language or other R packages can be used in conjunction with the tidyverse, especially with the **dplyr**, **purrr**, and **tidyr** packages.
+
+### Exercise 1
+
+Lets combine base R models and packages from the **tidyverse**. We are going to use the `group_nest()` function from the **dplyr** package. Type in `?group_nest()` in the Console and look at the Description section. CP/CR. 
+
+```{r combining-base-r-mod-1}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+We can use this function to fit separate models for each of the species in the `cricket` tibble.
+
+### Exercise 2
+
+First, lets split the data by species. Pipe `crickets` to `group_nest()`, passing in `species`. 
+
+```{r combining-base-r-mod-2, exercise = TRUE}
+
+```
+
+```{r combining-base-r-mod-2-hint, eval = FALSE}
+... |>
+  group_nest(...)
+```
+
+```{r include=FALSE}
+crickets |>
+  group_nest(species)
+```
+
 ###
+
+Looking at the output for this code, you can see that the `data` column contains the `rate` and `temp` columns from `crickets` in a *list* column.
+
+
+### Exercise 3
+
+Copy the previous code and assign it to the variable `split_by_species`.
+
+```{r combining-base-r-mod-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r combining-base-r-mod-3-hint, eval = FALSE}
+... <- crickets |>
+  group_nest(species)
+```
+
+```{r include=FALSE}
+split_by_species <- crickets |>
+  group_nest(species)
+```
+
+###
+
+<!-- AK: Knowledge Drop -->
+
+### Exercise 4
+
+
+```{r combining-base-r-mod-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r combining-base-r-mod-4-hint, eval = FALSE}
+
+```
+
+###
+
+
 
 ## Summary
 ### 
