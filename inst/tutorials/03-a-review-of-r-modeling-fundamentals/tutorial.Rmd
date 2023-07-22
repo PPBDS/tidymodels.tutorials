@@ -18,6 +18,8 @@ library(tidyverse)
 library(modeldata)
 library(lattice)
 library(broom)
+library(tidymodels)
+library(conflicted)
 
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
@@ -64,7 +66,7 @@ model_by_species <- split_by_species |>
 
 This tutorial covers [Chapter 3: A Review of R Modeling Fundamentals](https://www.tmwr.org/base-r.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This chapter will cover the creation of fitted linear & predictive models, with the use of the `lm()` and `predict()` functions, as well as the [*Tidyverse*](https://www.tidyverse.org) and [*Modeldata*](https://cran.r-project.org/web/packages/modeldata/index.html) packages.
 
-## Modeling in Base R
+## Modeling in R
 ### 
 
 Let's use experimental data on the relationship between the ambient temperature and the rate of cricket chirps per minute. Data were collected for two species: `O. exclamationis` and `O. niveus`. The data is contained in a data frame called crickets, with a total of 31 data points.
@@ -440,7 +442,7 @@ A *main effect* is a model term that contains a single predictor variable.
 
 ### Exercise 15
 
-Lets add `species` to our fitted model. Copy the code from Exercise 13 and add `speices` after `temp`.
+Lets add `species` to our fitted model. Copy the code from Exercise 13 and type `+ speices` after `temp`.
 
 ```{r modeling-in-base-r-15, exercise = TRUE}
 
@@ -577,7 +579,7 @@ This method produces a set of four plots for the object, each showing different 
 
 Our next order of business with the crickets is to assess if the inclusion of the interaction term is necessary. The most appropriate approach for this model is to recompute the model without the interaction term and use the `anova()` method.
 
-Copy the model from Exercise 11 and save it to the variable `main_effect_fit`.
+Copy the model from Exercise 15 and save it to the variable `main_effect_fit`.
 
 ```{r modeling-in-base-r-21, exercise = TRUE}
 
@@ -610,11 +612,11 @@ question_text(NULL,
 
 ### 
 
-The `anova()` function takes in fitted objects as arguments, like the `main_effect_fit` and `interactive_fit` objects we created earlier.
+The `anova()` function takes in fitted objects as arguments, like the `main_effect_fit` and `interaction_fit` objects we created earlier.
 
 ### Exercise 23
 
-Pass in `main_effect_fit` and `interactive_fit` to the `anova()` function. Press "Run Code" when done. 
+Pass in `main_effect_fit` and `interaction_fit` to the `anova()` function. Press "Run Code" when done. 
 
 ```{r modeling-in-base-r-23, exercise = TRUE}
 
@@ -671,7 +673,7 @@ The `predict()` function the model object and a data frame of new values in orde
 
 ### Exercise 26
 
-Lets make the data frame of new values, which we need in order to use `predict()`. In the code chunk below, type in `data.frame()`. Set `species` to `"O. exclamationis"` and `temp` to `15:20`. Save the code to the variable `new_values`.
+Lets make the data frame of new values, which we need in order to use `predict()`. In the code chunk below, type in `data.frame()`. Set `species` to `"O. exclamationis"` and `temp` to `15:20`. Save the code to the variable `new_values`. Then, on a new line, type in `new_values`.
 
 ```{r modeling-in-base-r-26, exercise = TRUE}
 
@@ -832,7 +834,7 @@ The **lattice** library utilizes a formula based interface in order to create gr
 
 ### Exercise 6
 
-We will be using the `xyplot()` function from the **lattice** package in order to make this graph. In the code chunk below, type in `xyplot()`. Type in `rate` ~ temp`. Then, set the `data` argument to `crickets`. 
+We will be using the `xyplot()` function from the **lattice** package in order to make this graph. In the code chunk below, type in `xyplot()`. Type in `rate ~ temp`. Then, set the `data` argument to `crickets`. 
 
 ```{r model-implementation-6, exercise = TRUE}
 
@@ -981,9 +983,7 @@ mtcars
 
 ### 
 
-<!-- AK: Add Knowledge Drop -->
-
-
+This [link](https://cran.r-project.org/web/packages/dplyr/vignettes/dplyr.html) provides a large amount of information regarding the **dplyr** package.
 
 
 ### Exercise 13
@@ -1134,7 +1134,7 @@ Lets “stack” these results and add it to a `ggplot()`. Here's what the final
 plot2
 ```
 
-In the code, pipe `corr_res` to the `map_dfr()` funciton. Inside `map_dfr(), type in `tidy` and set the `.id` argument to `"predictor"`.
+In the code chunk below, pipe `corr_res` to the `map_dfr()` funciton. Inside `map_dfr()`, type in `tidy` and set the `.id` argument to `"predictor"`.
 
 ```{r model-implementation-19, exercise = TRUE}
 
@@ -1635,6 +1635,96 @@ Congrats! You have broke up the data of the `crickets` tibble by species, create
 
 ## The tidymodels Metapackage
 ### 
+
+The **tidyverse** is designed as a set of modular R packages, each with a fairly narrow scope. The **tidymodels** framework follows a similar design. For example, the **rsample** package focuses on data splitting and resampling. Although resampling me    thods are critical to other activities of modeling (e.g., measuring performance), they reside in a single package, and performance metrics are contained in a different, separate package, **yardstick**. There are many benefits to adopting this philosophy of modular packages, from less bloated model deployment to smoother package maintenance.
+
+### Exercise 1
+
+The downside to this philosophy is that there are a lot of packages in the **tidymodels** framework. To compensate for this, the **tidymodels** package (which you can think of as a metapackage like the **tidyverse** package) loads a core set of **tidymodels** and **tidyverse** packages.
+
+Load the **tidymodels** package using `library()`.
+
+```{r the-tidymodels-metap-1, exercise = TRUE}
+
+```
+
+```{r the-tidymodels-metap-1-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(tidymodels)
+```
+
+### 
+
+If you look closely, you’ll notice some familiar names as a few tidyverse packages, such as **dplyr** and **ggplot2**, which are loaded together with the **tidymodels** package.
+
+However, there are some conflicts present between the tidyverse and tidymodels. For example, before loading **tidymodels**, invoking the `filter()` function will execute the function in the **stats** package. After loading **tidymodels**, it will execute the **dplyr** function of the same name.
+
+### Exercise 2
+
+In order to address this issue, we can use the **conflicted** package. Load this package in the code chunk below.
+
+```{r the-tidymodels-metap-2, exercise = TRUE}
+
+```
+
+```{r the-tidymodels-metap-2-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(conflicted)
+```
+
+### 
+
+Using this package, we can set a rule that remains in effect until the end of the R session to ensure that one specific function will always run if no namespace is given in the code. 
+
+### Exercise 3
+
+We can use the `conflict_prefer()` function to handle the naming conflicts. Type in `conflict_prefer()`. Set the first parameter to `"filter" and the second parameter, called `winner`, to "dplyr".
+
+```{r the-tidymodels-metap-3, exercise = TRUE}
+
+```
+
+```{r the-tidymodels-metap-3-hint-1, eval = FALSE}
+conflict_prefer("...", winner = "...")
+```
+
+```{r include = FALSE}
+conflict_prefer("filter", winner = "dplyr")
+```
+
+### 
+
+This will prefer the **dplyr** version of the functions that have naming conflicts. 
+
+Another way to handle naming conflicts is to call functions with their namespace (e.g. `dplyr::filter()`). This is not bad practice, but it does make the code less readable.
+
+### Exercise 4
+
+For convenience, **tidymodels** contains a function called `tidymodels_prefer()` that captures most of the common naming conflicts that we might encounter.
+
+In the code chunk below, type in `tidymodels_prefer()`. Inside this function, set `quiet` to `FALSE`.
+
+```{r the-tidymodels-metap-4, exercise = TRUE}
+
+```
+
+```{r the-tidymodels-metap-4-hint-1, eval = FALSE}
+
+```
+
+```{r include = FALSE}
+tidymodels_prefer(quiet = FALSE)
+```
+
+### 
+
+Be aware that using this function opts you in to using     `conflicted::conflict_prefer()` for all namespace conflicts, making every conflict an error and forcing you to choose which function to use. The function `tidymodels::tidymodels_prefer()` handles the most common conflicts from tidymodels functions, but you will need to handle other conflicts in your R session yourself.
 
 ## Summary
 ### 
