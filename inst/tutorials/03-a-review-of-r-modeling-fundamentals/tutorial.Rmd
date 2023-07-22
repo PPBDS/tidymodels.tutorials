@@ -48,6 +48,9 @@ plot2 <- corr_res |>
 split_by_species <- crickets |>
   group_nest(species)
 
+model_by_species <- split_by_species |>
+  mutate(model = map(data, ~ lm(rate ~ temp, data = .x)))
+
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -1375,7 +1378,7 @@ question_text(NULL,
 
 ### 
 
-We can use this function to fit separate models for each of the species in the `cricket` tibble.
+We can use this function to fit separate models for each of the species in the `crickets` tibble.
 
 ### Exercise 2
 
@@ -1385,17 +1388,17 @@ First, lets split the data by species. Pipe `crickets` to `group_nest()`, passin
 
 ```
 
-```{r combining-base-r-mod-2-hint, eval = FALSE}
+```{r combining-base-r-mod-2-hint-1, eval = FALSE}
 ... |>
   group_nest(...)
 ```
 
-```{r include=FALSE}
+```{r include = FALSE}
 crickets |>
   group_nest(species)
 ```
 
-###
+### 
 
 Looking at the output for this code, you can see that the `data` column contains the `rate` and `temp` columns from `crickets` in a *list* column.
 
@@ -1410,36 +1413,228 @@ Copy the previous code and assign it to the variable `split_by_species`.
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r combining-base-r-mod-3-hint, eval = FALSE}
+```{r combining-base-r-mod-3-hint-1, eval = FALSE}
 ... <- crickets |>
   group_nest(species)
 ```
 
-```{r include=FALSE}
+```{r include = FALSE}
 split_by_species <- crickets |>
   group_nest(species)
 ```
 
-###
+### 
 
-<!-- AK: Knowledge Drop -->
+List columns can be very powerful in modeling projects. List columns provide containers for any type of R objects, from a fitted model itself to the important data frame structure.
 
 ### Exercise 4
 
+Now, lets create a model from the data we generated from the previous exercise. In the code chunk below, pipe `split_by_species` to the `mutate()` function using `|>`.
 
 ```{r combining-base-r-mod-4, exercise = TRUE}
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
+```{r combining-base-r-mod-4-hint-1, eval = FALSE}
+... |>
+  mutate()
+```
 
-```{r combining-base-r-mod-4-hint, eval = FALSE}
+```{r include = FALSE}
+split_by_species |>
+  mutate()
+```
+
+### 
+
+The `mutate()` function is used to change columns in a data frame, including creating, modifying, and deleting columns.
+
+### Exercise 5
+
+Copy the previous code. Inside `mutate()`, set `model` to the `map()` function. Inside the `map()` function, type in `crickets`. (Note: This will throw an error).
+
+```{r combining-base-r-mod-5, exercise = TRUE}
 
 ```
 
-###
+<button onclick = "transfer_code(this)">Copy previous code</button>
 
+```{r combining-base-r-mod-5-hint-1, eval = FALSE}
+split_by_species |> 
+  mutate(... = map(...))
+```
 
+```{r include = FALSE}
+# split_by_species |> 
+#   mutate(model = map(crickets))
+```
+
+### 
+
+The reason this code throws an error is because we haven't specified all the arguments necessary for the `map()` function.
+
+### Exercise 6
+
+Copy the previous code. After `crickets`, type a comma `,`, and type `~ lm()`. Inside `lm()`, the first argument should be `rate ~ temp` and the second argument should be `data`, which is set to `.x`.
+
+```{r combining-base-r-mod-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r combining-base-r-mod-6-hint-1, eval = FALSE}
+split_by_species |>
+  mutate(model = map(data, ~ lm(... ~ ..., data = ...)))
+```
+
+```{r include = FALSE}
+split_by_species |>
+  mutate(model = map(data, ~ lm(rate ~ temp, data = .x)))
+```
+
+### 
+
+The tidyverse is an opinionated collection of R packages designed for data science. All packages share an underlying design philosophy, grammar, and data structures. Within the tidyverse, the subset of packages specifically focused on modeling are referred to as the *tidymodels* packages.
+
+### Exercise 7
+
+Copy the previous code and assign it to the variable `model_by_species`.
+
+```{r combining-base-r-mod-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r combining-base-r-mod-7-hint-1, eval = FALSE}
+... <- split_by_species |>
+  mutate(model = map(data, ~ lm(rate ~ temp, data = .x)))
+```
+
+```{r include = FALSE}
+model_by_species <- split_by_species |>
+  mutate(model = map(data, ~ lm(rate ~ temp, data = .x)))
+```
+
+### 
+
+An ordinary linear regression model might fall into any of these three classes of model, depending on how it is used:
+
+- A descriptive smoother, similar to LOESS, called *restricted smoothing splines* can be used to describe trends in data using ordinary linear regression with specialized terms.
+
+- An *analysis of variance* (ANOVA) model is a popular method for producing the p-values used for inference. ANOVA models are a special case of linear regression.
+
+- If a simple linear regression model produces accurate predictions, it can be used as a predictive model.
+
+### Exercise 8
+
+To collect the coefficients for each of these models, we can use the `tidy()` function from the **broom** library to convert them to a consistent data frame format so that they can be unnested.
+
+In the code chunk below, pipe `model_by_species` to `mutate()`.
+
+```{r combining-base-r-mod-8, exercise = TRUE}
+
+```
+
+```{r combining-base-r-mod-8-hint-1, eval = FALSE}
+model_by_species |>
+  ...()
+```
+
+```{r include = FALSE}
+model_by_species |>
+  mutate()
+```
+
+### 
+
+Many models can be categorized as being *supervised* or *unsupervised*. 
+
+*Unsupervised models* are those that learn patterns, clusters, or other characteristics of the data but lack an outcome, i.e., a dependent variable.
+
+*Supervised models* are those that have an outcome variable. Linear regression, neural networks, and numerous other methodologies fall into this category.
+
+### Exercise 9
+
+Copy the previous code. Inside `mutate()`, set `coef` to `map(model, tidy)`.
+
+```{r combining-base-r-mod-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r combining-base-r-mod-9-hint-1, eval = FALSE}
+model_by_species |>
+  mutate(coef = map(..., ...))
+```
+
+```{r include = FALSE}
+model_by_species |>
+  mutate(coef = map(model, tidy))
+```
+
+### 
+
+One of the main sub-categories of supervised models are regression models. *Regression* models predict a numeric outcome. 
+
+### Exercise 10
+
+Copy the previous code, piping it to the `select()` function. Inside `select()`, type in `species, coef`.
+
+```{r combining-base-r-mod-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r combining-base-r-mod-10-hint-1, eval = FALSE}
+model_by_species |>
+  mutate(coef = map(model, tidy)) |>
+    select(..., ...)
+```
+
+```{r include = FALSE}
+model_by_species |>
+  mutate(coef = map(model, tidy)) |>
+    select(species, coef)
+```
+
+### 
+
+Another main sub-category of supervised models are classification models. *Classification* models predict an outcome that is an ordered or unordered set of qualitative values.
+
+### Exercise 11
+
+Finally we'll use the `unnest()` function. Copy the previous code and pipe it to `unnest()`. Inside this function, set `cols` to `c(coef)`.
+
+```{r combining-base-r-mod-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r combining-base-r-mod-11-hint-1, eval = FALSE}
+model_by_species |>
+  mutate(coef = map(model, tidy)) |>
+    select(species, coef) |>
+      unnest(... = c(...))
+```
+
+```{r include = FALSE}
+model_by_species |>
+  mutate(coef = map(model, tidy)) |>
+    select(species, coef) |>
+      unnest(cols = c(coef))
+```
+
+### 
+
+Congrats! You have broke up the data of the `crickets` tibble by species, created individual models for each species, and collected the coefficients for each of the models.
+
+## The tidymodels Metapackage
+### 
 
 ## Summary
 ### 
