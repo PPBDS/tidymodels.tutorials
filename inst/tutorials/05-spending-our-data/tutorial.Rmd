@@ -1,0 +1,403 @@
+---
+title: Spending our Data
+author: David Kane and Aryan Kancherla
+tutorial:
+  id: spending-our-data
+output:
+  learnr::tutorial:
+    progressive: yes
+    allow_skip: yes
+runtime: shiny_prerendered
+description: 'Tutorial for Chapter 5: Spending our Data'
+---
+
+```{r setup, include = FALSE}
+library(learnr)
+library(tutorial.helpers)
+library(tidymodels)
+knitr::opts_chunk$set(echo = FALSE)
+options(tutorial.exercise.timelimit = 60, 
+        tutorial.storage = "local") 
+
+set.seed(501)
+ames_split <- initial_split(ames, prop = 0.80)
+
+ames_update <- ames |>
+  mutate(Sale_Price = log10(Sale_Price))
+
+ames_plot <- ames_update |> 
+  ggplot(aes(x = Sale_Price)) + 
+    geom_density() + theme_classic() + 
+      labs(x = "Sale Price (log-10 USD)")
+
+
+
+```
+
+```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
+```
+
+```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
+```
+
+## Introduction
+### 
+
+This tutorial covers [Chapter 5: Spending our Data](https://www.tmwr.org/splitting.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. In this tutorial, you will learn how to partition data into distinct groups for modeling and evaluation. The functions that will be used to do this are `initial_split()`, `training()`, and `testing()` from the [**tidymodels**](https://www.tidymodels.org/packages/) package.
+
+
+## Common Method for Splitting Data
+### 
+
+There are several steps to creating a useful model, including parameter estimation, model selection and tuning, and performance assessment. At the start of a new project, there is usually an initial finite pool of data available for all these tasks, which we can think of as an available data budget. How should the data be applied to different steps or tasks? The idea of data spending is an important first consideration when modeling, especially as it relates to empirical validation.
+
+### Exercise 1
+
+Load the *tidymodels* package below, using `library()`.
+
+```{r common-methods-for-s-1, exercise = TRUE}
+
+```
+
+```{r common-methods-for-s-1-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(tidymodels)
+```
+
+### 
+
+When there are copious amounts of data available, a smart strategy is to allocate specific subsets of data for different tasks, as opposed to allocating the largest possible amount (or even all) to the model parameter estimation only. For example, one possible strategy (when both data and predictors are abundant) is to spend a specific subset of data to determine which predictors are informative, before considering parameter estimation at all.
+
+
+
+### Exercise 2
+
+To combat the function naming conflicts, type in `tidymodels_prefer()`.
+
+```{r common-methods-for-s-2, exercise = TRUE}
+
+```
+
+```{r common-methods-for-s-2-hint-1, eval = FALSE}
+...()
+```
+
+```{r include = FALSE}
+tidymodels_prefer()
+```
+
+### 
+
+The primary approach for empirical model validation is to split the existing pool of data into two distinct sets: the training set and the test set. One portion of the data is used to develop and optimize the model. This *training set* is usually the majority of the data. These data are a sandbox for model building where different models can be fit, feature engineering strategies are investigated, and so on. As modeling practitioners, we spend the vast majority of the modeling process using the training set as the substrate to develop the model.
+
+
+### Exercise 3
+
+In order to split data, we will need to use the `initial_split()` function from the *rsample* package. Type in `?initial_split()` in the Console and look at the Description section. CP/CR.
+
+```{r common-methods-for-s-3}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+Since one portion of the data is placeed in the training set, the other portion of the data is placed into the *test set*. This is held in reserve until one or two models are chosen as the methods most likely to succeed. The test set is then used as the final arbiter to determine the efficacy of the model. It is critical to look at the test set only once; otherwise, it becomes part of the modeling process.
+
+
+### Exercise 4
+
+The data we will be splitting is the `ames` data set. Type in `ames` and press "Run Code".
+
+```{r common-methods-for-s-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r common-methods-for-s-4-hint-1, eval = FALSE}
+...
+```
+
+```{r include = FALSE}
+ames
+```
+
+### 
+
+The `ames` data set contains information on 2,930 properties in Ames, Iowa, including columns related to:
+
+- house characteristics (bedrooms, garage, fireplace, pool, porch, etc.)
+- location (neighborhood)
+- lot information (zoning, shape, size, etc.)
+- ratings of condition and quality
+- sale price
+
+### Exercise 5
+
+In order to make sure the results can be produced later, we are going to use the `set.seed()` function. In the code chunk below, type in `set.seed()` and pass in `501`. 
+
+```{r common-methods-for-s-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r common-methods-for-s-5-hint-1, eval = FALSE}
+set.seed(...)
+```
+
+```{r include = FALSE}
+set.seed(501)
+```
+
+### 
+
+<!-- AK: Knowledge Drop -->
+
+
+### Exercise 6
+
+Lets allocate 80% of the data to the training set and the remaining 20% for the testing set. In the code chunk below, type in `initial_split()` passing in the `ames` data set.
+
+```{r common-methods-for-s-6, exercise = TRUE}
+
+```
+
+```{r common-methods-for-s-6-hint-1, eval = FALSE}
+initial_split(...)
+```
+
+```{r include = FALSE}
+initial_split(ames)
+```
+
+### 
+
+As you can see, the data spits out a training number, testing number, and total number. The *Total* stands for the total amount of data in the data set. The *Training* number stands for the amount of data placed in the training set and the *Testing* number stands for the amount of data placed in the testing set. 
+
+### Exercise 7
+
+By doing the math, you can see that the data allocated to the training and testing sets are not what we wanted. The training set contains 75% of the data and the testing set contains 25% percent of the data. However, we want the training set to have 80% of the data and the testing set to have 20% of the data.
+
+To fix this, copy the previous code and inside `initial_split()`, set the `prop` argument to `0.80`.
+
+```{r common-methods-for-s-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r common-methods-for-s-7-hint-1, eval = FALSE}
+initial_split(ames, prop = ...)
+```
+
+```{r include = FALSE}
+initial_split(ames, prop = 0.80)
+```
+
+### 
+
+Doing the math, we can now see that 80% of the data (n = 2,344) is in the training set and 20% (n = 586) is in the testing set. 
+
+### Exercise 8
+
+Copy the previous code and set it to the variable `ames_split`.
+
+```{r common-methods-for-s-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r common-methods-for-s-8-hint-1, eval = FALSE}
+... <- initial_split(ames, prop = 0.80)
+```
+
+```{r include = FALSE}
+ames_split <- initial_split(ames, prop = 0.80)
+
+```
+
+### 
+
+The *rsample* package also provides a `group_initial_split()` function for splitting data. Click [here](https://rsample.tidymodels.org/reference/initial_split.html) to learn more. 
+
+### Exercise 9
+
+The object `ames_split` is an `rsplit` object and contains only the partitioning information; to get the resulting data sets, we need apply two more functions: `training()` and `testing()`. In the code below, type `training()` and passing in `ames_split`.
+
+```{r common-methods-for-s-9, exercise = TRUE}
+
+```
+
+```{r common-methods-for-s-9-hint-1, eval = FALSE}
+training(...)
+```
+
+```{r include = FALSE}
+training(ames_split)
+```
+
+### 
+
+As you can see, the `training()` function gets the tibble that contains all of the training data. The training tibble contains 2,930 rows, with 74 columns. 
+
+### Exercise 10
+
+Now, lets extract the testing data. Copy the code above and change `training` to `testing`.
+
+```{r common-methods-for-s-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r common-methods-for-s-10-hint-1, eval = FALSE}
+...(ames_split)
+```
+
+```{r include = FALSE}
+testing(ames_split)
+```
+
+### 
+
+As you can see, the `testing()` function returned all of the testing data, which contains 586 rows. 
+
+
+## Stratified Sampling
+Simple random sampling is appropriate in many cases but there are exceptions. When there is a dramatic class imbalance in classification problems, one class occurs much less frequently than another. Using a simple random sample may haphazardly allocate these infrequent samples disproportionately into the training or test set.
+
+To avoid this, *stratified sampling* can be used. The training/test split is conducted separately within each class and then these subsamples are combined into the overall training and test set. For regression problems, the outcome data can be artificially binned into quartiles and then stratified sampling can be conducted four separate times. This is an effective method for keeping the distributions of the outcome similar between the training and test set. 
+
+
+### Exercise 1
+
+Let's create the following graph, which shows the distribution of sales prices from the `ames` data set. 
+
+```{r}
+ames_plot
+```
+
+Before we start however, we need to modify the `ames` data set so that it is on a logarithmic scale. Start by piping `ames` to `mutate()`.
+
+```{r stratified-sampling-1, exercise = TRUE}
+
+```
+
+```{r stratified-sampling-1-hint-1, eval = FALSE}
+ames |>
+  ...()
+```
+
+```{r include = FALSE}
+ames |> 
+  mutate()
+```
+
+### 
+
+The `log10()` function to modify the data so that it is on a logarithmic scale.
+
+### Exercise 2
+
+Copy the previous code. Inside `mutate()`, set `Sale_Price` to `log10(Sale_Price)`.
+
+```{r stratified-sampling-2, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r stratified-sampling-2-hint-1, eval = FALSE}
+
+```
+
+```{r include = FALSE}
+ames |>
+  mutate(Sale_Price = log10(Sale_Price))
+```
+
+### 
+
+The root mean squared error (RMSE) is a common performance metric used in regression models. It uses the difference between the observed and predicted values in its calculations. If the sale price is on the log scale, these differences (i.e., the residuals) are also on the log scale.
+
+### Exercise 3
+
+Copy the previous code and save it to the variable `ames_update`.
+
+```{r stratified-sampling-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r stratified-sampling-3-hint-1, eval = FALSE}
+... <- ames |>
+  mutate(Sale_Price = log10(Sale_Price))
+```
+
+```{r include = FALSE}
+ames_update <- ames |>
+  mutate(Sale_Price = log10(Sale_Price))
+```
+
+### 
+
+When data are reused for multiple tasks, instead of carefully “spent” from the finite data budget, certain risks increase, such as the risk of accentuating bias or compounding effects from methodological errors.
+
+
+
+### Exercise 4
+
+Now, lets start creating the graph. Start by piping `ames_update` to `ggplot()`.
+
+```{r stratified-sampling-4, exercise = TRUE}
+
+```
+
+```{r stratified-sampling-4-hint-1, eval = FALSE}
+... |> 
+  ggplot()
+```
+
+### 
+
+As a reminder, the `ggplot()` function, which comes from the **ggplot2** library, is used to create data visualizations.
+
+### Exercise 5
+
+Copy the previous code. Inside `ggplot()` type in `aes()`. Inside `aes()` set `x` to `Sale_Price`.
+
+```{r stratified-sampling-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r stratified-sampling-5-hint-1, eval = FALSE}
+ames_update |> 
+  ggplot(...(x = ...))
+```
+
+```{r include = FALSE}
+ames_update |> 
+  ggplot(aes(x = Sale_Price))
+```
+
+### 
+
+## Summary
+### 
+
+
+```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
+```
