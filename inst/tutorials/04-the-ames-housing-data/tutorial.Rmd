@@ -1,0 +1,271 @@
+---
+title: The Ames Housing Data
+author: David Kane and Pratham Kancherla
+tutorial:
+  id: the-ames-housing-data
+output:
+  learnr::tutorial:
+    progressive: yes
+    allow_skip: yes
+runtime: shiny_prerendered
+description: 'Tutorial for Chapter 4: The Ames Housing Data'
+---
+
+```{r setup, include = FALSE}
+library(learnr)
+library(tidymodels)
+library(tidyverse)
+library(tutorial.helpers)
+knitr::opts_chunk$set(echo = FALSE)
+options(tutorial.exercise.timelimit = 60, 
+        tutorial.storage = "local") 
+
+gg_hist <- ggplot(ames, aes(x = Sale_Price)) + 
+  geom_histogram(bins = 50, col= "white")
+```
+
+```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
+```
+
+```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
+```
+
+## Introduction
+### 
+
+<!-- Two to four sentence about the main topics covered in this tutorial. Why are we here? What will students get out of giving you 90 minutes of their lives? How does this tutorial connect to other tutorials? -->
+
+This tutorial covers [Chapter 4: The Ames Housing Data](https://www.tmwr.org/ames.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We will introduce the Ames housing data set [(De Cock 2011)](https://www.tmwr.org/ames.html#ref-ames), which we will use in modeling examples in later tutorials. Exploratory data analysis, like what we walk through in this tutorial, is an important first step in building a reliable model.
+
+## Exploring Features of Homes in Ames
+### 
+
+The data set contains information on 2,930 properties in Ames, Iowa, including columns related to:
+
+-   house characteristics (bedrooms, garage, fireplace, pool, porch, etc.)
+
+-   location (neighborhood)
+
+-   lot information (zoning, shape, size, etc.)
+
+-   ratings of condition and quality
+
+-   sale price
+
+### Exercise 1
+
+The Ames data has been made available through the **modeldata** package, which is a built in **tidymodels** package.
+
+Load the library **tidymodels** using `library()`.
+
+```{r exploring-features-o-1, exercise = TRUE}
+
+```
+
+
+```{r exploring-features-o-1-hint, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(tidymodels)
+```
+
+###
+The core **tidymodels** packages: [**rsample**](https://rsample.tidymodels.org/), [**parsnip**](https://parsnip.tidymodels.org/), [**recipes**](https://recipes.tidymodels.org/), [**workflows**](https://workflows.tidymodels.org/), [**tune**](https://tune.tidymodels.org/), [**yardstick**](https://yardstick.tidymodels.org/), [**broom**](https://broom.tidymodels.org/), [**dials**](https://dials.tidymodels.org/)
+
+### Exercise 2
+
+Now load the data `ames` from the package using the `data()` function.
+
+```{r exploring-features-o-2, exercise = TRUE}
+
+```
+
+
+```{r exploring-features-o-2-hint, eval = FALSE}
+data(...)
+```
+
+```{r include = FALSE}
+data(ames)
+```
+
+###
+
+In R, the dim() function is used to retrieve or set the dimensions of an object, such as a matrix, array, or data frame. The dim() function returns a vector with two elements representing the number of rows and columns (dimensions) of the object.
+
+### Exercise 3
+
+We want to look at how many rows and columns are in `ames`. Use `dim()` with `ames` as the parameter to retrieve a vector of (# of rows, # of columns).
+
+```{r exploring-features-o-3, exercise = TRUE}
+
+```
+
+
+```{r exploring-features-o-3-hint, eval = FALSE}
+dim(...)
+```
+
+```{r include = FALSE}
+dim(ames)
+```
+
+###
+
+Changes made to the data in the `modeldata` package:
+
+-   In the raw data, if a house did not have a particular feature, it was implicitly encoded as missing. For example, 2,732 properties did not have an alleyway. Instead of leaving these as missing, they were relabeled in the transformed version to indicate that no alley was available.
+
+-   The categorical predictors were converted to R’s factor data type. While both the tidyverse and base R have moved away from importing data as factors by default, this data type is a better approach for storing qualitative data for modeling than simple strings.
+
+-   We removed a set of quality descriptors for each house since they are more like outcomes than predictors.
+### Exercise 4
+
+Let’s start our exploratory data analysis by focusing on the outcome we want to predict: the last sale price of the house (in USD). We can create a histogram to see the distribution of sale prices.
+
+Type in ames to see the data that we are looking at.
+
+```{r exploring-features-o-4, exercise = TRUE}
+
+```
+
+
+```{r exploring-features-o-4-hint, eval = FALSE}
+ames
+```
+
+### Exercise 5
+
+Copy the previous code and pipe it to ggplot() to start creating a histogram.
+
+```{r exploring-features-o-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r exploring-features-o-5-hint, eval = FALSE}
+ames |>
+  ...()
+```
+
+```{r include = FALSE}
+ames |>
+  ggplot()
+```
+
+###
+
+In R, ggplot() is a function from the **ggplot2** package, which is a powerful and widely-used package for creating visualizations. 
+
+### Exercise 6
+
+We need to establish the x-axis on the graph. Copy the previous code and, using `aes()` within in `ggplot()`, set `x` equal to `Sale_Price`.
+
+```{r exploring-features-o-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r exploring-features-o-6-hint, eval = FALSE}
+... |>
+  ggplot(aes(x = ...))
+```
+
+```{r include = FALSE}
+ames |>
+  ggplot(aes(x = Sale_Price))
+```
+
+###
+
+The disadvantages of transforming the outcome mostly relate to interpretation of model results.
+
+### Exercise 7
+
+Now we will created the histogram. Copy the previous code and add the geom_hist() function to ggplot() using the `+` symbol.
+
+```{r exploring-features-o-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r exploring-features-o-7-hint, eval = FALSE}
+... +
+  geom_histogram()
+```
+
+```{r include = FALSE}
+ames |>
+  ggplot(aes(x = Sale_Price)) +
+    geom_histogram()
+```
+
+###
+
+In **ggplot2**, geom_histogram() is a function used to create a histogram, which is a graphical representation of the distribution of a continuous variable. A histogram divides the data into intervals (bins) and displays the frequency or count of data points falling into each bin.
+
+### Exercise 8
+
+Lets add `bins` and `col` (color) to the histogram. Copy the previous code and in geom_histogram(), add the parameter `bins`, setting it equal to `50` and add `col`, setting it equal to `"white"`.
+
+```{r exploring-features-o-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r exploring-features-o-8-hint, eval = FALSE}
+... +
+  geom_histogram(bins = ..., col = "...")
+```
+
+```{r include = FALSE}
+ames |>
+  ggplot(aes(x = Sale_Price)) +
+    geom_histogram(bins = 50, col = "white")
+```
+
+###
+
+This plot shows us that the data are right-skewed; there are more inexpensive houses than expensive ones. The median sale price was $160,000, and the most expensive house was $755,000. When modeling this outcome, a strong argument can be made that the price should be log-transformed. The advantages of this type of transformation are that no houses would be predicted with negative sale prices and that errors in predicting expensive houses will not have an undue influence on the model. 
+
+### Exercise 9
+
+Copy the previous code and add `scale_x_log10()`.
+
+```{r exploring-features-o-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r exploring-features-o-9-hint, eval = FALSE}
+... +
+  scale_x_...()
+```
+
+```{r include = FALSE}
+ames |>
+  ggplot(aes(x = Sale_Price)) +
+    geom_histogram(bins = 50, col = "white") +
+    scale_x_log10()
+```
+
+###
+
+The root mean squared error (RMSE) is a common performance metric used in regression models. It uses the difference between the observed and predicted values in its calculations.
+
+<!-- DK: leave comments about decision to not do all graphics. -->
+
+## Summary
+### 
+
+<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+
+```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
+```

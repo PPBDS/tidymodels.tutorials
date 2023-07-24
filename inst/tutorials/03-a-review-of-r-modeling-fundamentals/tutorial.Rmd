@@ -156,8 +156,6 @@ As you can see, the column names of the `crickets` dataframe are `species, temp`
 
 ### Exercise 5
 
-<!-- DK: Insert code here creating cricket plot, and assigning it to an object. Then, print the object. Then print the object again at the end. Done -->
-
 Using the data from the `crickets` tibble, lets make this plot:
 
 ```{r}
@@ -487,8 +485,6 @@ lm(formula = rate ~ temp + species + temp:species, data = crickets)
 An interaction term is where two (or more) variables interact to affect a third variable.
 
 ### Exercise 17
-
-<!-- DK: These should be two exercises, with instructions. Students should type. Done -->
 
 There are some shortcuts to achieve what was done in the previous exercise. Copy the code from the previous exercise and change `rate ~ temp + species + temp:species` to `rate ~ temp * species`.
 
