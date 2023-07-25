@@ -26,10 +26,14 @@ options(tutorial.exercise.timelimit = 60,
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
+<!-- DK: Remove links to rdocumentation and other garbage sites. -->
+
 ## Introduction
 ###
 
 This tutorial covers [Chapter 6: Fitting Models with parsnip](https://www.tmwr.org/models.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This chapter will cover the usage of the [**parsnip**](https://parsnip.tidymodels.org/) package for a fluent and standardized interface of a variety of different models. You will learn how to use the `fit()` and `predict()` functions on a **parsnip** object.
+
+<!-- $$y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \ldots + \beta_n x_n + \varepsilon$$ -->
 
 
 ## Model Creation
@@ -83,7 +87,7 @@ In R, there are many different function we can use for various models, such as `
 
 ### Exercise 3
 
-In order to estimate with *ordinary linear regression*, the `lm()` function from the **stats** package can be used. Click on this [link](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/lm) and copy/paste the code under the *Usage* section.
+In order to estimate with *ordinary linear regression*, the `lm()` function from the **stats** package can be used. Click on this [link](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/lm.html) and copy/paste the code under the *Usage* section.
 
 ```{r model-creation-3}
 question_text(NULL,
@@ -96,7 +100,7 @@ question_text(NULL,
 
 ###
 
-Going back to [Chapter 3](https://www.tmwr.org/base-r.html) of the *Tidymodels* textbook, we have used the `lm()` function before, specifically using the `formula`, `data`, and `na.action` parameters.
+Going back to [Chapter 3](https://www.tmwr.org/base-r.html) of the [*Tidy Modeling with R*](https://www.tmwr.org/), we have used the `lm()` function before, specifically using the `formula`, `data`, and `na.action` parameters.
 
 ### Exercise 4
 
@@ -113,7 +117,7 @@ question_text(NULL,
 
 ###
 
-[Preceptor’s Primer for Bayesian Data Science](https://ppbds.github.io/primer/) is a textbook that heavily uses Bayesian models.
+[*Preceptor’s Primer for Bayesian Data Science: Using the Cardinal Virtues for Inference*](https://ppbds.github.io/primer/) is a textbook that heavily uses Bayesian models.
 
 
 ### Exercise 5
@@ -143,6 +147,7 @@ In order to unify the approach to specifying a model, we need to:
 
 
 To showcase this, pipe `linear_reg()` to `set_engine()` (Note: This will throw an error).
+
 ```{r model-creation-6, exercise = TRUE}
 
 ```
