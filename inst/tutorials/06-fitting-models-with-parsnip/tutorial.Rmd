@@ -15,7 +15,6 @@ description: 'Tutorial for Chapter 6: Fitting Models with parsnip'
 library(learnr)
 library(tutorial.helpers)
 library(tidymodels)
-library(glmnet)
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
         tutorial.storage = "local") 
