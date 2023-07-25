@@ -31,9 +31,8 @@ gg_hist <- ggplot(ames, aes(x = Sale_Price)) +
 ```
 
 ## Introduction
-### 
 
-<!-- Two to four sentence about the main topics covered in this tutorial. Why are we here? What will students get out of giving you 90 minutes of their lives? How does this tutorial connect to other tutorials? -->
+### 
 
 This tutorial covers [Chapter 4: The Ames Housing Data](https://www.tmwr.org/ames.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We will introduce the Ames housing data set [(De Cock 2011)](https://www.tmwr.org/ames.html#ref-ames), which we will use in modeling examples in later tutorials. Exploratory data analysis, like what we walk through in this tutorial, is an important first step in building a reliable model.
 
@@ -260,7 +259,6 @@ ames |>
 
 The root mean squared error (RMSE) is a common performance metric used in regression models. It uses the difference between the observed and predicted values in its calculations.
 
-<!-- PK: Questions on graphing mentioned in textbook. -->
 
 ## Summary
 ### 
