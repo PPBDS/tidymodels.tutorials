@@ -1,0 +1,186 @@
+---
+title: A Model Workflow
+author: David Kane and Pratham Kancherla
+tutorial:
+  id: a-model-workflow
+output: 
+  learnr::tutorial:
+    progressive: true
+    allow_skip: true
+runtime: shiny_prerendered
+description: 'Tutorial for Chapter 4: The Ames Housing Data'
+---
+
+```{r setup, include = FALSE}
+library(learnr)
+library(tutorial.helpers)
+library(tidyverse)
+library(tidymodels)
+library(png)
+knitr::opts_chunk$set(echo = FALSE)
+options(tutorial.exercise.timelimit = 60, 
+        tutorial.storage = "local") 
+lm_model <- 
+  linear_reg() |>
+  set_engine("lm")
+
+lm_wflow <- 
+  workflow() |>
+  add_model(lm_model)
+```
+
+```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
+```
+
+```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
+```
+
+## Introduction
+###
+
+This tutorial covers [Chapter 7: A Model Workflow](https://www.tmwr.org/workflows.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. In the previous chapter, we discussed the [**parsnip**](https://parsnip.tidymodels.org/) package, which can be used to define and fit the model. This chapter introduces a new concept called a model workflow. The purpose of this concept (and the corresponding **tidymodels** `workflow()` object) is to encapsulate the major pieces of the modeling process. 
+
+## Workflow Basics
+###
+
+The workflows package allows the user to bind modeling and preprocessing objects together. Let’s start again with the Ames data and a simple linear model.
+
+### Exercise 1
+
+Load the library **tidymodels** using `library()`.
+
+```{r workflow-basics-1, exercise = TRUE}
+
+```
+
+```{r workflow-basics-1-hint, eval = FALSE}
+library(...)
+```
+
+```{r, include = FALSE}
+library(tidymodels)
+```
+
+###
+
+The core **tidymodels** packages: [**rsample**](https://rsample.tidymodels.org/), [**parsnip**](https://parsnip.tidymodels.org/), [**recipes**](https://recipes.tidymodels.org/), [**workflows**](https://workflows.tidymodels.org/), [**tune**](https://tune.tidymodels.org/), [**yardstick**](https://yardstick.tidymodels.org/), [**broom**](https://broom.tidymodels.org/), [**dials**](https://dials.tidymodels.org/)
+
+### Exercise 2
+
+The **workflows** package allows the user to bind modeling and pre-processing objects together. Let’s start again with the Ames data. Enter `linear_reg()` and hit "Run Code".
+
+```{r workflow-basics-2, exercise = TRUE}
+
+```
+
+```{r workflow-basics-2-hint, eval = FALSE}
+linear_reg()
+```
+
+```{r, include = FALSE}
+linear_reg()
+```
+
+###
+
+`linear_reg()` is used to specify and fit a linear regression model in the **tidymodels** framework. It is similar to other model functions in **parsnip** and follows the same pattern.
+
+### Exercise 3
+
+Copy the previous code and pipe `set_engine()`, with the parameter being `"lm"`, by using the pipe operator. Set this equal to `lm_model`.
+
+```{r workflow-basics-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r workflow-basics-3-hint, eval = FALSE}
+lm_model <- 
+  ... |>
+  set_engine("...")
+```
+
+```{r, include = FALSE}
+lm_model <- 
+  linear_reg() |>
+  set_engine("lm")
+```
+
+###
+
+It is important to focus on the broader modeling process, instead of only fitting the specific model used to estimate parameters. This broader process includes any pre-processing steps, the model fit itself, as well as potential post-processing activities.
+
+### Exercise 4
+
+A workflow always requires a parsnip model object. Type in `workflow()` and hit "Run Code".
+
+```{r workflow-basics-4, exercise = TRUE}
+
+```
+
+
+```{r workflow-basics-4-hint, eval = FALSE}
+workflow()
+```
+
+```{r, include = FALSE}
+workflow()
+```
+
+###
+
+A workflow object can include steps such as data pre-processing, feature engineering, model specification, model fitting, and evaluation. Each step is represented by a modeling object or a function.
+
+### Exercise 5
+
+Copy the previous code and pipe `add_model()`, with the parameter being `lm_model`, by using the pipe operator. Set this equal to `lm_wflow`.
+
+```{r workflow-basics-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r workflow-basics-5-hint, eval = FALSE}
+... |>
+  add_model(...)
+```
+
+```{r, include = FALSE}
+lm_wflow <- 
+  workflow() |>
+  add_model(lm_model)
+```
+
+###
+
+
+### Exercise 6
+
+
+```{r workflow-basics-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r workflow-basics-6-hint, eval = FALSE}
+
+```
+
+```{r, include = FALSE}
+
+```
+
+###
+
+
+
+## Summary
+###
+
+<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+
+```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
+```
