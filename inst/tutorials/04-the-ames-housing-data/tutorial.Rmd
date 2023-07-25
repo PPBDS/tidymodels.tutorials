@@ -260,7 +260,7 @@ ames |>
 
 The root mean squared error (RMSE) is a common performance metric used in regression models. It uses the difference between the observed and predicted values in its calculations.
 
-<!-- PK: Questions on graphing mentioned in textbook. -->
+<!-- DK: leave comments about decision to not do all graphics. -->
 
 ## Summary
 ### 

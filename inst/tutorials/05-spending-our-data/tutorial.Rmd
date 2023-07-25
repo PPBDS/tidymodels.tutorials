@@ -15,6 +15,7 @@ description: 'Tutorial for Chapter 5: Spending our Data'
 library(learnr)
 library(tutorial.helpers)
 library(tidymodels)
+tidymodels_prefer()
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
         tutorial.storage = "local") 
@@ -30,6 +31,9 @@ ames_plot <- ames_update |>
     geom_density() + theme_classic() + 
       labs(x = "Sale Price (log-10 USD)")
 
+set.seed(502)
+
+ames_strata_split <- initial_split(ames, prop = 0.80, strata = Sale_Price)
 
 
 ```
@@ -43,7 +47,7 @@ ames_plot <- ames_update |>
 ## Introduction
 ### 
 
-This tutorial covers [Chapter 5: Spending our Data](https://www.tmwr.org/splitting.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. In this tutorial, you will learn how to partition data into distinct groups for modeling and evaluation. The functions that will be used to do this are `initial_split()`, `training()`, and `testing()` from the [**tidymodels**](https://www.tidymodels.org/packages/) package.
+This tutorial covers [Chapter 5: Spending our Data](https://www.tmwr.org/splitting.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. In this tutorial, you will learn how to partition data into distinct groups for modeling and evaluation. The functions that will be used to do this are `initial_split()`, `training()`, and `testing()` from the [**tidymodels**](https://www.tidymodels.org/packages/) and [**rsample**](https://rsample.tidymodels.org/) packages.
 
 
 ## Common Method for Splitting Data
@@ -53,13 +57,13 @@ There are several steps to creating a useful model, including parameter estimati
 
 ### Exercise 1
 
-Load the *tidymodels* package below, using `library()`.
+Load the **tidymodels** package below, using `library()`.
 
-```{r common-methods-for-s-1, exercise = TRUE}
+```{r common-method-for-sp-1, exercise = TRUE}
 
 ```
 
-```{r common-methods-for-s-1-hint-1, eval = FALSE}
+```{r common-method-for-sp-1-hint-1, eval = FALSE}
 library(...)
 ```
 
@@ -77,11 +81,11 @@ When there are copious amounts of data available, a smart strategy is to allocat
 
 To combat the function naming conflicts, type in `tidymodels_prefer()`.
 
-```{r common-methods-for-s-2, exercise = TRUE}
+```{r common-method-for-sp-2, exercise = TRUE}
 
 ```
 
-```{r common-methods-for-s-2-hint-1, eval = FALSE}
+```{r common-method-for-sp-2-hint-1, eval = FALSE}
 ...()
 ```
 
@@ -98,7 +102,7 @@ The primary approach for empirical model validation is to split the existing poo
 
 In order to split data, we will need to use the `initial_split()` function from the *rsample* package. Type in `?initial_split()` in the Console and look at the Description section. CP/CR.
 
-```{r common-methods-for-s-3}
+```{r common-method-for-sp-3}
 question_text(NULL,
 	answer(NULL, correct = TRUE),
 	allow_retry = TRUE,
@@ -116,13 +120,13 @@ Since one portion of the data is placeed in the training set, the other portion 
 
 The data we will be splitting is the `ames` data set. Type in `ames` and press "Run Code".
 
-```{r common-methods-for-s-4, exercise = TRUE}
+```{r common-method-for-sp-4, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r common-methods-for-s-4-hint-1, eval = FALSE}
+```{r common-method-for-sp-4-hint-1, eval = FALSE}
 ...
 ```
 
@@ -144,13 +148,13 @@ The `ames` data set contains information on 2,930 properties in Ames, Iowa, incl
 
 In order to make sure the results can be produced later, we are going to use the `set.seed()` function. In the code chunk below, type in `set.seed()` and pass in `501`. 
 
-```{r common-methods-for-s-5, exercise = TRUE}
+```{r common-method-for-sp-5, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r common-methods-for-s-5-hint-1, eval = FALSE}
+```{r common-method-for-sp-5-hint-1, eval = FALSE}
 set.seed(...)
 ```
 
@@ -160,18 +164,17 @@ set.seed(501)
 
 ### 
 
-<!-- AK: Knowledge Drop -->
-
+Note that the method for conducting the splitting of data depends on the context. 
 
 ### Exercise 6
 
 Lets allocate 80% of the data to the training set and the remaining 20% for the testing set. In the code chunk below, type in `initial_split()` passing in the `ames` data set.
 
-```{r common-methods-for-s-6, exercise = TRUE}
+```{r common-method-for-sp-6, exercise = TRUE}
 
 ```
 
-```{r common-methods-for-s-6-hint-1, eval = FALSE}
+```{r common-method-for-sp-6-hint-1, eval = FALSE}
 initial_split(...)
 ```
 
@@ -189,13 +192,13 @@ By doing the math, you can see that the data allocated to the training and testi
 
 To fix this, copy the previous code and inside `initial_split()`, set the `prop` argument to `0.80`.
 
-```{r common-methods-for-s-7, exercise = TRUE}
+```{r common-method-for-sp-7, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r common-methods-for-s-7-hint-1, eval = FALSE}
+```{r common-method-for-sp-7-hint-1, eval = FALSE}
 initial_split(ames, prop = ...)
 ```
 
@@ -211,13 +214,13 @@ Doing the math, we can now see that 80% of the data (n = 2,344) is in the traini
 
 Copy the previous code and set it to the variable `ames_split`.
 
-```{r common-methods-for-s-8, exercise = TRUE}
+```{r common-method-for-sp-8, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r common-methods-for-s-8-hint-1, eval = FALSE}
+```{r common-method-for-sp-8-hint-1, eval = FALSE}
 ... <- initial_split(ames, prop = 0.80)
 ```
 
@@ -228,17 +231,17 @@ ames_split <- initial_split(ames, prop = 0.80)
 
 ### 
 
-The *rsample* package also provides a `group_initial_split()` function for splitting data. Click [here](https://rsample.tidymodels.org/reference/initial_split.html) to learn more. 
+The **rsample** package also provides a `group_initial_split()` function for splitting data. Click [here](https://rsample.tidymodels.org/reference/initial_split.html) to learn more. 
 
 ### Exercise 9
 
 The object `ames_split` is an `rsplit` object and contains only the partitioning information; to get the resulting data sets, we need apply two more functions: `training()` and `testing()`. In the code below, type `training()` and passing in `ames_split`.
 
-```{r common-methods-for-s-9, exercise = TRUE}
+```{r common-method-for-sp-9, exercise = TRUE}
 
 ```
 
-```{r common-methods-for-s-9-hint-1, eval = FALSE}
+```{r common-method-for-sp-9-hint-1, eval = FALSE}
 training(...)
 ```
 
@@ -248,32 +251,57 @@ training(ames_split)
 
 ### 
 
-As you can see, the `training()` function gets the tibble that contains all of the training data. The training tibble contains 2,930 rows, with 74 columns. 
+As you can see, the `training()` function gets the tibble that contains all of the training data.
 
 ### Exercise 10
 
-Now, lets extract the testing data. Copy the code above and change `training` to `testing`.
+Copy the previous code and pass it into the `dim()` function.
 
-```{r common-methods-for-s-10, exercise = TRUE}
+```{r common-method-for-sp-10, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r common-methods-for-s-10-hint-1, eval = FALSE}
-...(ames_split)
+```{r common-method-for-sp-10-hint-1, eval = FALSE}
+...(training(ames_split))
 ```
 
 ```{r include = FALSE}
-testing(ames_split)
+dim(training(ames_split))
+
 ```
 
 ### 
 
-As you can see, the `testing()` function returned all of the testing data, which contains 586 rows. 
+The `dim()` function is used to determine the dimensions of an object. It returns a numerical vector that contains the number of rows and columns in the object. As you can see, the training data contains 2344 rows and 74 columns. 
+
+### Exercise 11
+
+Now, lets extract the testing data. Copy the code above and change `training` to `testing`.
+
+```{r common-method-for-sp-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r common-method-for-sp-11-hint-1, eval = FALSE}
+dim(...(ames_split))
+```
+
+```{r include = FALSE}
+dim(testing(ames_split))
+```
+
+### 
+
+As you can see, the `dim()` and `testing()` functions returned all of the testing data, which contains 586 rows. 
 
 
 ## Stratified Sampling
+### 
+
 Simple random sampling is appropriate in many cases but there are exceptions. When there is a dramatic class imbalance in classification problems, one class occurs much less frequently than another. Using a simple random sample may haphazardly allocate these infrequent samples disproportionately into the training or test set.
 
 To avoid this, *stratified sampling* can be used. The training/test split is conducted separately within each class and then these subsamples are combined into the overall training and test set. For regression problems, the outcome data can be artificially binned into quartiles and then stratified sampling can be conducted four separate times. This is an effective method for keeping the distributions of the outcome similar between the training and test set. 
@@ -318,7 +346,8 @@ Copy the previous code. Inside `mutate()`, set `Sale_Price` to `log10(Sale_Price
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r stratified-sampling-2-hint-1, eval = FALSE}
-
+ames |>
+  mutate(... = log10(...))
 ```
 
 ```{r include = FALSE}
@@ -395,9 +424,228 @@ ames_update |>
 
 ### 
 
+If a model has limited fidelity to the data, the inferences generated by the model should be highly suspect. In other words, statistical significance may not be sufficient proof that a model is appropriate.
+
+### Exercise 6
+
+Copy the previous code and add `geom_density()` to the plot.
+
+```{r stratified-sampling-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r stratified-sampling-6-hint-1, eval = FALSE}
+ames_update |> 
+  ggplot(aes(x = Sale_Price)) + 
+    ...()
+```
+
+```{r include = FALSE}
+ames_update |> 
+  ggplot(aes(x = Sale_Price)) + 
+    geom_density()
+```
+
+### 
+
+`geom_density()` creates a density plot. A density plot is a graphical representation of the distribution of a numeric value (which in this case is `Sale_Price`).
+
+### Exercise 7
+
+Copy the previous code and add `theme_classic()` to make the graph look nicer.
+
+```{r stratified-sampling-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r stratified-sampling-7-hint-1, eval = FALSE}
+ames_update |> 
+  ggplot(aes(x = Sale_Price)) + 
+    geom_density() + 
+      ...()
+```
+
+```{r include = FALSE}
+ames_update |> 
+  ggplot(aes(x = Sale_Price)) + 
+    geom_density() + 
+      theme_classic()
+```
+
+### 
+
+`theme_classic()` is one of the various themes you can use for your graphs. This [link](https://ggplot2.tidyverse.org/reference/ggtheme.html) provides more themes.
+
+### Exercise 8
+
+Finally, copy the previous code and add your `labs()`. The final graph should look like this: 
+
+```{r}
+ames_plot
+```
+
+```{r stratified-sampling-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r stratified-sampling-8-hint-1, eval = FALSE}
+ames_update |> 
+  ggplot(aes(x = Sale_Price)) + 
+    geom_density() + 
+      theme_classic() + 
+        labs(
+          x = ...
+        )
+```
+
+### 
+
+As you can see, the sale price distribution is right-skewed, with proportionally more inexpensive houses than expensive houses on either side of the center of the distribution. The worry here with simple splitting is that the more expensive houses would not be well represented in the training set; this would increase the risk that our model would be ineffective at predicting the price for such properties. 
+
+### Exercise 9
+
+In order to fix this, We can use a stratified random sample. In the **rsample** package, we can use the `strata` argument in the `initial_split()` function.
+
+Before we do that, type in `set.seed()` and pass in `502`.
+
+```{r stratified-sampling-9, exercise = TRUE}
+
+```
+
+```{r stratified-sampling-9-hint-1, eval = FALSE}
+set.seed(...)
+```
+
+```{r include = FALSE}
+set.seed(502)
+```
+
+### 
+
+As a reminder, the `set.seed()` function is used in order to make sure the results can be produced later.
+
+### Exercise 10
+
+Take a look at the `initial_split()` code from the previous section.
+
+Now, lets add the `strata` argument. Inside `initial_split()`, set `strata` to `Sale_Price`.
+
+```{r stratified-sampling-10, exercise = TRUE}
+initial_split(ames, prop = 0.80)
+```
+
+```{r stratified-sampling-10-hint-1, eval = FALSE}
+initial_split(ames, prop = 0.80, ... = Sale_Price)
+```
+
+```{r include = FALSE}
+initial_split(ames, prop = 0.80, strata = Sale_Price)
+```
+
+### 
+
+Stratified sampling is a sampling technique where the data is divided into subgroups (strata) based on the levels of a categorical variable. The sampling is then performed independently within each stratum, ensuring that each stratum is represented proportionally in both the training and testing sets. This is particularly useful when you have imbalanced data or when you want to ensure that certain groups are well-represented in the training and testing sets.
+
+### Exercise 11
+
+Copy the previous code and save it to the variable `ames_strata_split`.
+
+```{r stratified-sampling-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r stratified-sampling-11-hint-1, eval = FALSE}
+... <- initial_split(ames, prop = 0.80, strata = Sale_Price)
+```
+
+```{r include = FALSE}
+ames_strata_split <- initial_split(ames, prop = 0.80, strata = Sale_Price)
+
+```
+
+### 
+
+The proportion of data that should be allocated for splitting is highly dependent on the context of the problem at hand. Too little data in the training set hampers the model’s ability to find appropriate parameter estimates. Conversely, too little data in the test set lowers the quality of the performance estimates
+
+### Exercise 12
+
+Now that we added the `strata` argument, we can reuse the `training()` and `testing()` functions. In the code chunk below, type in `dim()`. Inside `dim()`, type in `training()` and pass in `ames_strata_split`.
+
+```{r stratified-sampling-12, exercise = TRUE}
+
+```
+
+```{r stratified-sampling-12-hint-1, eval = FALSE}
+dim(...(ames_strata_split))
+```
+
+```{r include = FALSE}
+training(ames_strata_split)
+```
+
+### 
+
+As you can see, the training data now contains 2,342 rows.
+
+### Exercise 13
+
+Copy the previous code and change `training()` to `testing()`.
+
+```{r stratified-sampling-13, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r stratified-sampling-13-hint-1, eval = FALSE}
+dim(...(ames_strata_split))
+```
+
+```{r include = FALSE}
+dim(testing(ames_strata_split))
+```
+
+### 
+
+Are there situations when random sampling is not the best choice? One case is when the data have a significant time component, such as time series data. Here, it is more common to use the most recent data as the test set. The **rsample** package contains a function called `initial_time_split()` that is very similar to `initial_split()`. Instead of using random sampling, the prop argument denotes what proportion of the first part of the data should be used as the training set; the function assumes that the data have been pre-sorted in an appropriate order.
+
+### Exercise 14
+
+Chapter 5 of the *Tidy Modeling With R* textbook contains more information regarding how to spend data. Click on this [link](https://www.tmwr.org/splitting.html) and type in the names of sections 5.2 - 5.4.
+
+```{r stratified-sampling-14}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+As you can see, the chapter covers more information, such as validation sets, multilevel data, and data budgets.
+
 ## Summary
 ### 
 
+In this tutorial you have learned:
+
+- How to split data using `initial_split()`
+
+- How to allocate data towards the training and testing sets by using the `prop` argument inside `initial_split()`
+
+- How to train and test data, using `training()` and `testing()` respectively. 
+
+- How to conduct a stratified random sample by using the `strata` argument inside `initial_split()`
 
 ```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
 ```

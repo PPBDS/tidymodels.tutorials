@@ -5,3 +5,6 @@
 ^\.github$
 ^README\.Rmd$
 tutorials/[^/]*/(?!(data|images|.*Rmd))
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
