@@ -14,12 +14,14 @@ description: 'Tutorial for Chapter 4: The Ames Housing Data'
 ```{r setup, include = FALSE}
 library(learnr)
 library(tutorial.helpers)
+library(knitr)
 library(tidyverse)
 library(tidymodels)
-library(png)
+
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
         tutorial.storage = "local") 
+
 lm_model <- 
   linear_reg() |>
   set_engine("lm")
