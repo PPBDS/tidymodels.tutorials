@@ -21,7 +21,8 @@ options(tutorial.exercise.timelimit = 60,
         tutorial.storage = "local") 
 
 gg_hist <- ggplot(ames, aes(x = Sale_Price)) + 
-  geom_histogram(bins = 50, col= "white")
+  geom_histogram(bins = 50, col= "white") +
+  scale_x_log10()
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -32,8 +33,6 @@ gg_hist <- ggplot(ames, aes(x = Sale_Price)) +
 
 ## Introduction
 ### 
-
-<!-- Two to four sentence about the main topics covered in this tutorial. Why are we here? What will students get out of giving you 90 minutes of their lives? How does this tutorial connect to other tutorials? -->
 
 This tutorial covers [Chapter 4: The Ames Housing Data](https://www.tmwr.org/ames.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We will introduce the Ames housing data set [(De Cock 2011)](https://www.tmwr.org/ames.html#ref-ames), which we will use in modeling examples in later tutorials. Exploratory data analysis, like what we walk through in this tutorial, is an important first step in building a reliable model.
 
@@ -62,8 +61,7 @@ Load the library **tidymodels** using `library()`.
 
 ```
 
-
-```{r exploring-features-o-1-hint, eval = FALSE}
+```{r exploring-features-o-1-hint-1, eval = FALSE}
 library(...)
 ```
 
@@ -71,7 +69,8 @@ library(...)
 library(tidymodels)
 ```
 
-###
+### 
+
 The core **tidymodels** packages: [**rsample**](https://rsample.tidymodels.org/), [**parsnip**](https://parsnip.tidymodels.org/), [**recipes**](https://recipes.tidymodels.org/), [**workflows**](https://workflows.tidymodels.org/), [**tune**](https://tune.tidymodels.org/), [**yardstick**](https://yardstick.tidymodels.org/), [**broom**](https://broom.tidymodels.org/), [**dials**](https://dials.tidymodels.org/)
 
 ### Exercise 2
@@ -82,8 +81,7 @@ Now load the data `ames` from the package using the `data()` function.
 
 ```
 
-
-```{r exploring-features-o-2-hint, eval = FALSE}
+```{r exploring-features-o-2-hint-1, eval = FALSE}
 data(...)
 ```
 
@@ -91,7 +89,7 @@ data(...)
 data(ames)
 ```
 
-###
+### 
 
 In R, the dim() function is used to retrieve or set the dimensions of an object, such as a matrix, array, or data frame. The dim() function returns a vector with two elements representing the number of rows and columns (dimensions) of the object.
 
@@ -103,8 +101,7 @@ We want to look at how many rows and columns are in `ames`. Use `dim()` with `am
 
 ```
 
-
-```{r exploring-features-o-3-hint, eval = FALSE}
+```{r exploring-features-o-3-hint-1, eval = FALSE}
 dim(...)
 ```
 
@@ -112,15 +109,10 @@ dim(...)
 dim(ames)
 ```
 
-###
+### 
 
-Changes made to the data in the `modeldata` package:
+Changes made to the data in the `modeldata` package are such that in the raw data, if a house did not have a particular feature, it was implicitly encoded as missing, the categorical predictors were converted to R’s factor data type, and quality descriptors for each house were removed since they are more like outcomes than predictors.
 
--   In the raw data, if a house did not have a particular feature, it was implicitly encoded as missing. For example, 2,732 properties did not have an alleyway. Instead of leaving these as missing, they were relabeled in the transformed version to indicate that no alley was available.
-
--   The categorical predictors were converted to R’s factor data type. While both the tidyverse and base R have moved away from importing data as factors by default, this data type is a better approach for storing qualitative data for modeling than simple strings.
-
--   We removed a set of quality descriptors for each house since they are more like outcomes than predictors.
 ### Exercise 4
 
 Let’s start our exploratory data analysis by focusing on the outcome we want to predict: the last sale price of the house (in USD). We can create a histogram to see the distribution of sale prices.
@@ -131,10 +123,13 @@ Type in ames to see the data that we are looking at.
 
 ```
 
-
-```{r exploring-features-o-4-hint, eval = FALSE}
+```{r exploring-features-o-4-hint-1, eval = FALSE}
 ames
 ```
+
+### 
+
+The root mean squared error (RMSE) is a common performance metric used in regression models. It uses the difference between the observed and predicted values in its calculations.
 
 ### Exercise 5
 
@@ -146,7 +141,7 @@ Copy the previous code and pipe it to ggplot() to start creating a histogram.
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r exploring-features-o-5-hint, eval = FALSE}
+```{r exploring-features-o-5-hint-1, eval = FALSE}
 ames |>
   ...()
 ```
@@ -156,7 +151,7 @@ ames |>
   ggplot()
 ```
 
-###
+### 
 
 In R, ggplot() is a function from the **ggplot2** package, which is a powerful and widely-used package for creating visualizations. 
 
@@ -170,7 +165,7 @@ We need to establish the x-axis on the graph. Copy the previous code and, using 
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r exploring-features-o-6-hint, eval = FALSE}
+```{r exploring-features-o-6-hint-1, eval = FALSE}
 ... |>
   ggplot(aes(x = ...))
 ```
@@ -180,7 +175,7 @@ ames |>
   ggplot(aes(x = Sale_Price))
 ```
 
-###
+### 
 
 The disadvantages of transforming the outcome mostly relate to interpretation of model results.
 
@@ -194,7 +189,7 @@ Now we will created the histogram. Copy the previous code and add the geom_hist(
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r exploring-features-o-7-hint, eval = FALSE}
+```{r exploring-features-o-7-hint-1, eval = FALSE}
 ... +
   geom_histogram()
 ```
@@ -205,13 +200,13 @@ ames |>
     geom_histogram()
 ```
 
-###
+### 
 
 In **ggplot2**, geom_histogram() is a function used to create a histogram, which is a graphical representation of the distribution of a continuous variable. A histogram divides the data into intervals (bins) and displays the frequency or count of data points falling into each bin.
 
 ### Exercise 8
 
-Lets add `bins` and `col` (color) to the histogram. Copy the previous code and in geom_histogram(), add the parameter `bins`, setting it equal to `50` and add `col`, setting it equal to `"white"`.
+Lets add `bins` to the histogram. Copy the previous code and in geom_histogram(), add the parameter `bins`, setting it equal to `50`.
 
 ```{r exploring-features-o-8, exercise = TRUE}
 
@@ -219,9 +214,34 @@ Lets add `bins` and `col` (color) to the histogram. Copy the previous code and i
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r exploring-features-o-8-hint, eval = FALSE}
+```{r exploring-features-o-8-hint-1, eval = FALSE}
 ... +
-  geom_histogram(bins = ..., col = "...")
+  geom_histogram(bins = ...)
+```
+
+```{r include = FALSE}
+ames |>
+  ggplot(aes(x = Sale_Price)) +
+    geom_histogram(bins = 50)
+```
+
+### 
+
+This plot shows us that the data are right-skewed; there are more inexpensive houses than expensive ones. When modeling this outcome, a strong argument can be made that the price should be log-transformed.
+
+### Exercise 9
+
+Lets add `col` (color) to the histogram. Copy the previous code and in geom_histogram(), add the parameter `col`, setting it equal to `"white"`.
+
+```{r exploring-features-o-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r exploring-features-o-9-hint-1, eval = FALSE}
+... +
+  geom_histogram(bins = 50, col = "...")
 ```
 
 ```{r include = FALSE}
@@ -230,21 +250,21 @@ ames |>
     geom_histogram(bins = 50, col = "white")
 ```
 
-###
+### 
 
-This plot shows us that the data are right-skewed; there are more inexpensive houses than expensive ones. The median sale price was $160,000, and the most expensive house was $755,000. When modeling this outcome, a strong argument can be made that the price should be log-transformed. The advantages of this type of transformation are that no houses would be predicted with negative sale prices and that errors in predicting expensive houses will not have an undue influence on the model. 
+From a statistical perspective, a logarithmic transform may also stabilize the variance in a way that makes inference more legitimate. 
 
-### Exercise 9
+### Exercise 10
 
 Copy the previous code and add `scale_x_log10()`.
 
-```{r exploring-features-o-9, exercise = TRUE}
+```{r exploring-features-o-10, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r exploring-features-o-9-hint, eval = FALSE}
+```{r exploring-features-o-10-hint-1, eval = FALSE}
 ... +
   scale_x_...()
 ```
@@ -256,16 +276,20 @@ ames |>
     scale_x_log10()
 ```
 
+### 
+
+The advantages of this type of transformation are that no houses would be predicted with negative sale prices and that errors in predicting expensive houses will not have an undue influence on the model. 
+
 ###
 
-The root mean squared error (RMSE) is a common performance metric used in regression models. It uses the difference between the observed and predicted values in its calculations.
+Great Job! You now understood the basic concept of exploratory data analysis by analyzing the sale price of homes in Ames, Iowa. 
 
 <!-- DK: leave comments about decision to not do all graphics. -->
 
 ## Summary
 ### 
 
-<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+This tutorial covered [Chapter 4: The Ames Housing Data](https://www.tmwr.org/ames.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We introduced the Ames housing data set [(De Cock 2011)](https://www.tmwr.org/ames.html#ref-ames), which we will use in modeling examples in later tutorials. Exploratory data analysis, like what we walk through in this tutorial, is an important first step in building a reliable model and you now a basic understanding of this concept.
 
 ```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
 ```
