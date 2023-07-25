@@ -15,6 +15,7 @@ description: 'Tutorial for Chapter 6: Fitting Models with parsnip'
 library(learnr)
 library(tutorial.helpers)
 library(tidymodels)
+library(glmnet)
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
         tutorial.storage = "local") 
@@ -29,10 +30,163 @@ options(tutorial.exercise.timelimit = 60,
 ## Introduction
 ###
 
-<!-- Two to four sentence about the main topics covered in this tutorial. Why are we here? What will students get out of giving you 90 minutes of their lives? How does this tutorial connect to other tutorials? -->
+This tutorial covers [Chapter 6: Fitting Models with parsnip](https://www.tmwr.org/models.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This chapter will cover the usage of the [**parsnip**](https://parsnip.tidymodels.org/) package for a fluent and standardized interface of a variety of different models. You will learn how to use the `fit()` and `predict()` functions on a **parsnip** object.
 
-## First section (use sentence case)
+
+## Model Creation
 ###
+
+Suppose that a linear regression model was our initial choice. This is equivalent to specifying that the outcome data is numeric and that the predictors are related to the outcome in terms of simple slopes and intercepts.
+
+### Exercise 1
+
+Load the **tidymodels** package using `library()`.
+
+```{r model-creation-1, exercise = TRUE}
+
+```
+
+```{r model-creation-1-hint, eval = FALSE}
+library(...)
+```
+
+```{r, include = FALSE}
+library(tidymodels)
+```
+
+###
+
+A variety of methods can be used to estimate the model parameters:
+
+- *Ordinary linear regression* uses the traditional method of least squares to solve for the model parameters.
+
+- *Regularized linear regression* adds a penalty to the least squares method to encourage simplicity by removing predictors and/or shrinking their coefficients towards zero. This can be executed using Bayesian or non-Bayesian techniques.
+
+### Exercise 2
+
+Next, type in `tidymodels_prefer()` to get rid of the naming conflicts.
+
+```{r model-creation-2, exercise = TRUE}
+
+```
+
+```{r model-creation-2-hint, eval = FALSE}
+...()
+```
+
+```{r, include = FALSE}
+tidymodels_prefer()
+```
+
+###
+
+In R, there are many different function we can use for various models, such as `stan_glm()`, `lm()`, and `glmnet()`.
+
+### Exercise 3
+
+In order to estimate with *ordinary linear regression*, the `lm()` function from the **stats** package can be used. Click on this [link](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/lm) and copy/paste the code under the *Usage* section.
+
+```{r model-creation-3}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+###
+
+Going back to [Chapter 3](https://www.tmwr.org/base-r.html) of the *Tidymodels* textbook, we have used the `lm()` function before, specifically using the `formula`, `data`, and `na.action` parameters.
+
+### Exercise 4
+
+In order to estimate with regularization, a Bayesian model can be fit using the **rstanarm** package. Click this [link](https://www.rdocumentation.org/packages/rstanarm/versions/2.21.4/topics/stan_glm) and copy/paste the code for (*only*) `stan_glm()` under the *Usage* section.
+
+```{r model-creation-4}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+###
+
+[Preceptor’s Primer for Bayesian Data Science](https://ppbds.github.io/primer/) is a textbook that heavily uses Bayesian models.
+
+
+### Exercise 5
+
+A popular non-Bayesian approach to regularized regression is the **glmnet** model. Click this [link](https://www.rdocumentation.org/packages/glmnet/versions/4.1-7/topics/glmnet) and copy/paste the code under the *Usage* section. 
+
+```{r model-creation-5}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+###
+
+Note that these interfaces are heterogeneous in either how the data are passed to the model function or in terms of their arguments. The first issue is that, to fit models across different packages, the data must be formatted in different ways. `lm()` and `stan_glm()` only have formula interfaces while `glmnet()` does not. For other types of models, the interfaces may be even more disparate. For a person trying to do data analysis, these differences require the memorization of each package’s syntax and can be very frustrating.
+
+### Exercise 6
+
+In order to unify the approach to specifying a model, we need to:
+
+1: Specify the type of model based on its mathematical structure
+2: Specify the engine for fitting the model
+3: Declare the mode of the model (when required)
+
+
+To showcase this, pipe `linear_reg()` to `set_engine()` (Note: This will throw an error).
+```{r model-creation-6, exercise = TRUE}
+
+```
+
+```{r model-creation-6-hint, eval = FALSE}
+...() |>
+  set_engine()
+```
+
+```{r, include = FALSE}
+# linear_reg() |> 
+#  set_engine()
+```
+
+###
+
+`set_engine()` allows you to specify the package/system that will be used to fit your model. This code throws an error because we haven't specified which engine we want to use. 
+
+### Exercise 7
+
+Copy the previous code. Inside `set_engine()`, type in `"lm"`.
+
+```{r model-creation-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-creation-7-hint, eval = FALSE}
+linear_reg() |>
+  set_engine("...")
+```
+
+```{r, include = FALSE}
+linear_reg() |>
+  set_engine("lm")
+```
+
+###
+
+<!-- AK: Add Knowledge Drop  -->
+
+
 
 ## Summary
 ###
