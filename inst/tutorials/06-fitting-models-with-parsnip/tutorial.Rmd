@@ -1,6 +1,6 @@
 ---
 title: Fitting Models with parsnip
-author: David Kane and Aryan Kancherla
+author: Aryan Kancherla and David Kane
 tutorial:
   id: fitting-models-with-parsnip
 output: 
@@ -26,20 +26,21 @@ options(tutorial.exercise.timelimit = 60,
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
-<!-- DK: Remove links to rdocumentation and other garbage sites. -->
+<!-- DK: Remove links to rdocumentation and other garbage sites. Done. -->
 
 ## Introduction
 ###
 
 This tutorial covers [Chapter 6: Fitting Models with parsnip](https://www.tmwr.org/models.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This chapter will cover the usage of the [**parsnip**](https://parsnip.tidymodels.org/) package for a fluent and standardized interface of a variety of different models. You will learn how to use the `fit()` and `predict()` functions on a **parsnip** object.
 
-<!-- $$y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \ldots + \beta_n x_n + \varepsilon$$ -->
-
 
 ## Model Creation
 ###
 
-Suppose that a linear regression model was our initial choice. This is equivalent to specifying that the outcome data is numeric and that the predictors are related to the outcome in terms of simple slopes and intercepts.
+Suppose that a linear regression model was our initial choice. This is equivalent to specifying that the outcome data is numeric and that the predictors are related to the outcome in terms of simple slopes and intercepts:
+
+
+$$y = \beta_0 + \beta_1 x_1 +...+ \beta_n x_n$$
 
 ### Exercise 1
 
@@ -104,7 +105,7 @@ Going back to [Chapter 3](https://www.tmwr.org/base-r.html) of the [*Tidy Modeli
 
 ### Exercise 4
 
-In order to estimate with regularization, a Bayesian model can be fit using the **rstanarm** package. Click this [link](https://www.rdocumentation.org/packages/rstanarm/versions/2.21.4/topics/stan_glm) and copy/paste the code for (*only*) `stan_glm()` under the *Usage* section.
+In order to estimate with regularization, a Bayesian model can be fit using the **rstanarm** package. Click this [link](https://search.r-project.org/CRAN/refmans/rstanarm/html/stan_glm.html) and copy/paste the code for (*only*) the `stan_glm()` function under the *Usage* section.
 
 ```{r model-creation-4}
 question_text(NULL,
@@ -119,10 +120,14 @@ question_text(NULL,
 
 [*Preceptor’s Primer for Bayesian Data Science: Using the Cardinal Virtues for Inference*](https://ppbds.github.io/primer/) is a textbook that heavily uses Bayesian models.
 
+###
+
+The difference between the `lm()` and `stan_glm()` functions is that the `lm()` function doesn't have a `family` argument. With the `family` argument in `stan_glm()`, you can fit more complex models, such as Logistic and Poisson regression. 
+
 
 ### Exercise 5
 
-A popular non-Bayesian approach to regularized regression is the **glmnet** model. Click this [link](https://www.rdocumentation.org/packages/glmnet/versions/4.1-7/topics/glmnet) and copy/paste the code under the *Usage* section. 
+A popular non-Bayesian approach to regularized regression is the **glmnet** model. Click this [link](https://www.tmwr.org/models.html) and look for the 3rd set of code (should say `model <- glmnet(...)`). Copy/paste this code below.
 
 ```{r model-creation-5}
 question_text(NULL,
@@ -188,7 +193,53 @@ linear_reg() |>
 
 ###
 
-<!-- AK: Add Knowledge Drop  -->
+Once the details of the model have been specified, the model estimation can be done with either the `fit()` function (to use a formula) or the `fit_xy()` function (when your data are already pre-processed). The **parsnip** package allows the user to be indifferent to the interface of the underlying model; you can always use a formula even if the modeling package’s function only has the `x`/`y` interface.
+
+### Exercise 8
+
+We can use the `translate()` function can provide details on how **parsnip** converts the user’s code to the package’s syntax. Copy the prevoius code and pipe it to `translate()`.
+
+```{r model-creation-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-creation-8-hint, eval = FALSE}
+linear_reg() |>
+  set_engine("lm") |>
+    ...()
+```
+
+```{r, include = FALSE}
+linear_reg() |>
+  set_engine("lm") |>
+    translate()
+```
+
+###
+
+The `missing_arg()` function is just a placeholder for the data that has yet to be provided.
+
+### Exercise 9
+
+Let’s use a linear model to predict the sale price of houses in the `ames` data set as a function of only longitude and latitude. In the code below, type in `ames`.
+
+```{r model-creation-9, exercise = TRUE}
+
+```
+
+```{r model-creation-9-hint, eval = FALSE}
+...
+```
+
+```{r, include = FALSE}
+ames
+```
+
+###
+
+As a reminder, the `ames` data set contains housing data in Ames, Iowa. 
 
 
 
