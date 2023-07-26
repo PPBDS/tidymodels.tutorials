@@ -1,6 +1,6 @@
 ---
 title: A Review of R Modeling Fundamentals
-author: David Kane and Aryan Kancherla
+author: Aryan Kancherla and David Kane
 tutorial:
   id: a-review-of-r-modeling-fundamentals
 output:

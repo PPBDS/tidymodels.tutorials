@@ -1,12 +1,12 @@
 ---
 title: Fitting Models with parsnip
-author: David Kane and Aryan Kancherla
+author: Aryan Kancherla and David Kane
 tutorial:
   id: fitting-models-with-parsnip
-output: 
+output:
   learnr::tutorial:
-    progressive: true
-    allow_skip: true
+    progressive: yes
+    allow_skip: yes
 runtime: shiny_prerendered
 description: 'Tutorial for Chapter 6: Fitting Models with parsnip'
 ---
@@ -15,9 +15,22 @@ description: 'Tutorial for Chapter 6: Fitting Models with parsnip'
 library(learnr)
 library(tutorial.helpers)
 library(tidymodels)
+library(tidyverse)
+library(knitr)
+
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
         tutorial.storage = "local") 
+
+ames_update <- ames |>
+  mutate(Sale_Price = log10(Sale_Price))
+
+set.seed(502)
+ames_split <- initial_split(ames_update, prop = 0.80, strata = Sale_Price)
+ames_train <- training(ames_split)
+
+lm_model <- linear_reg() |>
+  set_engine("lm")
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -26,20 +39,21 @@ options(tutorial.exercise.timelimit = 60,
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
-<!-- DK: Remove links to rdocumentation and other garbage sites. -->
+<!-- DK: Remove links to rdocumentation and other garbage sites. Done. -->
 
 ## Introduction
-###
+### 
 
 This tutorial covers [Chapter 6: Fitting Models with parsnip](https://www.tmwr.org/models.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This chapter will cover the usage of the [**parsnip**](https://parsnip.tidymodels.org/) package for a fluent and standardized interface of a variety of different models. You will learn how to use the `fit()` and `predict()` functions on a **parsnip** object.
 
-<!-- $$y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \ldots + \beta_n x_n + \varepsilon$$ -->
-
 
 ## Model Creation
-###
+### 
 
-Suppose that a linear regression model was our initial choice. This is equivalent to specifying that the outcome data is numeric and that the predictors are related to the outcome in terms of simple slopes and intercepts.
+Suppose that a linear regression model was our initial choice. This is equivalent to specifying that the outcome data is numeric and that the predictors are related to the outcome in terms of simple slopes and intercepts:
+
+
+$$y_i = \beta_0 + \beta_1 x_{1i} + \ldots + \beta_p x_{pi}$$
 
 ### Exercise 1
 
@@ -49,15 +63,15 @@ Load the **tidymodels** package using `library()`.
 
 ```
 
-```{r model-creation-1-hint, eval = FALSE}
+```{r model-creation-1-hint-1, eval = FALSE}
 library(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 library(tidymodels)
 ```
 
-###
+### 
 
 A variety of methods can be used to estimate the model parameters:
 
@@ -73,15 +87,15 @@ Next, type in `tidymodels_prefer()` to get rid of the naming conflicts.
 
 ```
 
-```{r model-creation-2-hint, eval = FALSE}
+```{r model-creation-2-hint-1, eval = FALSE}
 ...()
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 tidymodels_prefer()
 ```
 
-###
+### 
 
 In R, there are many different function we can use for various models, such as `stan_glm()`, `lm()`, and `glmnet()`.
 
@@ -98,13 +112,13 @@ question_text(NULL,
 	rows = 3)
 ```
 
-###
+### 
 
 Going back to [Chapter 3](https://www.tmwr.org/base-r.html) of the [*Tidy Modeling with R*](https://www.tmwr.org/), we have used the `lm()` function before, specifically using the `formula`, `data`, and `na.action` parameters.
 
 ### Exercise 4
 
-In order to estimate with regularization, a Bayesian model can be fit using the **rstanarm** package. Click this [link](https://www.rdocumentation.org/packages/rstanarm/versions/2.21.4/topics/stan_glm) and copy/paste the code for (*only*) `stan_glm()` under the *Usage* section.
+In order to estimate with regularization, a Bayesian model can be fit using the **rstanarm** package. Click this [link](https://search.r-project.org/CRAN/refmans/rstanarm/html/stan_glm.html) and copy/paste the code for (*only*) the `stan_glm()` function under the *Usage* section.
 
 ```{r model-creation-4}
 question_text(NULL,
@@ -115,14 +129,18 @@ question_text(NULL,
 	rows = 3)
 ```
 
-###
+### 
 
 [*Preceptor’s Primer for Bayesian Data Science: Using the Cardinal Virtues for Inference*](https://ppbds.github.io/primer/) is a textbook that heavily uses Bayesian models.
+
+### 
+
+The difference between the `lm()` and `stan_glm()` functions is that the `lm()` function doesn't have a `family` argument. With the `family` argument in `stan_glm()`, you can fit more complex models, such as Logistic and Poisson regression. 
 
 
 ### Exercise 5
 
-A popular non-Bayesian approach to regularized regression is the **glmnet** model. Click this [link](https://www.rdocumentation.org/packages/glmnet/versions/4.1-7/topics/glmnet) and copy/paste the code under the *Usage* section. 
+A popular non-Bayesian approach to regularized regression is the **glmnet** model. Click this [link](https://www.tmwr.org/models.html) and look for the 3rd set of code (should say `model <- glmnet(...)`). Copy/paste this code below.
 
 ```{r model-creation-5}
 question_text(NULL,
@@ -133,7 +151,7 @@ question_text(NULL,
 	rows = 3)
 ```
 
-###
+### 
 
 Note that these interfaces are heterogeneous in either how the data are passed to the model function or in terms of their arguments. The first issue is that, to fit models across different packages, the data must be formatted in different ways. `lm()` and `stan_glm()` only have formula interfaces while `glmnet()` does not. For other types of models, the interfaces may be even more disparate. For a person trying to do data analysis, these differences require the memorization of each package’s syntax and can be very frustrating.
 
@@ -152,17 +170,17 @@ To showcase this, pipe `linear_reg()` to `set_engine()` (Note: This will throw a
 
 ```
 
-```{r model-creation-6-hint, eval = FALSE}
+```{r model-creation-6-hint-1, eval = FALSE}
 ...() |>
   set_engine()
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 # linear_reg() |> 
 #  set_engine()
 ```
 
-###
+### 
 
 `set_engine()` allows you to specify the package/system that will be used to fit your model. This code throws an error because we haven't specified which engine we want to use. 
 
@@ -176,24 +194,322 @@ Copy the previous code. Inside `set_engine()`, type in `"lm"`.
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r model-creation-7-hint, eval = FALSE}
+```{r model-creation-7-hint-1, eval = FALSE}
 linear_reg() |>
   set_engine("...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 linear_reg() |>
   set_engine("lm")
 ```
 
+### 
+
+Once the details of the model have been specified, the model estimation can be done with either the `fit()` function (to use a formula) or the `fit_xy()` function (when your data are already pre-processed). The **parsnip** package allows the user to be indifferent to the interface of the underlying model; you can always use a formula even if the modeling package’s function only has the `x`/`y` interface.
+
+### Exercise 8
+
+We can use the `translate()` function can provide details on how **parsnip** converts the user’s code to the package’s syntax. Copy the prevoius code and pipe it to `translate()`.
+
+```{r model-creation-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-creation-8-hint-1, eval = FALSE}
+linear_reg() |>
+  set_engine("lm") |>
+    ...()
+```
+
+```{r include = FALSE}
+linear_reg() |>
+  set_engine("lm") |>
+    translate()
+```
+
+### 
+
+The `missing_arg()` function is just a placeholder for the data that has yet to be provided.
+
+### Exercise 9
+
+Let’s use a linear model to predict the sale price of houses in the `ames` data set as a function of only longitude and latitude. In the code below, type in `ames_train`.
+
+```{r model-creation-9, exercise = TRUE}
+
+```
+
+```{r model-creation-9-hint-1, eval = FALSE}
+...
+```
+
+```{r include = FALSE}
+ames_update
+```
+
+### 
+
+As a reminder, we edited the `ames` data set in [Chapter 4](https://www.tmwr.org/ames.html) of *Tidy Modeling with R* so that the `Sale_Price` column was logged (meaning the `log10()` function has been applied to it). 
+
+Here is the code we used to do this:\
+
+````
+
+ames_update <- ames |>
+  mutate(Sale_Price = log10(Sale_Price))
+  
+````
+
+Also, in the "Spending our Data" tutorial, we created the `ames_train` variable, which contains the training data from the `ames` data set. As a reminder, here is the code we used to create this variable:
+
+````
+set.seed(502)
+ames_split <- initial_split(ames_update, prop = 0.80, strata = Sale_Price)
+ames_train <- training(ames_split)
+
+````
+
+
+### Exercise 10
+
+Lets start creating this model. In the code chunk below, pipe (`|>`) `linear_reg()` to `set_engine()`. Inside `set_engine()`, type in `"lm"`. 
+
+
+```{r model-creation-10, exercise = TRUE}
+
+```
+
+```{r model-creation-10-hint-1, eval = FALSE}
+linear_reg() |>
+  ...("lm")
+```
+
+```{r include = FALSE}
+linear_reg() |>
+  set_engine("lm")
+```
+
+### 
+
+The **parsnip** package itself contains interfaces to a number of models. However, for ease of package installation and maintenance, there are other **tidymodels** packages that have **parsnip** model definitions for other sets of models. The **discrim** package has model definitions for the set of classification techniques called discriminant analysis methods (such as linear or quadratic discriminant analysis). 
+
+### Exercise 11
+
+Copy the previous code and save it to the variable `lm_model`, using the `<-` operator.
+
+```{r model-creation-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-creation-11-hint-1, eval = FALSE}
+... <- linear_reg() |>
+  set_engine("lm")
+```
+
+```{r include = FALSE}
+ lm_model <- linear_reg() |>
+  set_engine("lm")
+```
+
+### 
+
+A list of all of the models that can be used with parsnip (across different packages that are on CRAN) can be found [here](https://www.tidymodels.org/find/).
+
+### Exercise 12
+
+Now, lets create the fitted object. Pipe `lm_model` to `fit()` and set `data` to `ames_train`. (Note: This will throw an error).
+
+```{r model-creation-12, exercise = TRUE}
+
+```
+
+```{r model-creation-12-hint-1, eval = FALSE}
+lm_model |>
+  ...(data = ...)
+```
+
+```{r include = FALSE}
+#lm_model |>
+#  fit(data = ames_train)
+```
+
+### 
+
+The reason this code throws an error is because the `fit()` function has a `formula` argument; we haven`t passed any formula in yet.
+
+### Exercise 13
+
+Since we are predicting the sales prices of homes in the `ames` data as a function of only *longitude* and *latitude*, we will need to include that in our `fit()` function. Copy the previous code. Inside `fit()`, set `formula` to `Sale_Price ~ Longitude + Latitude`. 
+
+```{r model-creation-13, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-creation-13-hint-1, eval = FALSE}
+lm_model |>
+  fit(... = Sale_Price ~ Longitude + ..., data = ames_train)
+```
+
+```{r include = FALSE}
+lm_model |>
+  fit(formula = Sale_Price ~ Longitude + Latitude, data = ames_train)
+```
+
+### 
+
+<!-- AK: Having trouble understanding the "Coefficients" section of the output.
+
+Here is the output:
+
+parsnip model object
+
+
+Call:
+stats::lm(formula = Sale_Price ~ Longitude + Latitude, data = data)
+
+Coefficients:
+(Intercept)    Longitude     Latitude  
+   -302.974       -2.075        2.710  
+
+-->
+
+### Exercise 14
+
+Copy the previous code and set it to the variable `lm_form_fit`. 
+
+
+```{r model-creation-14, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-creation-14-hint, eval = FALSE}
+... <- lm_model |>
+  fit(formula = Sale_Price ~ Longitude + Latitude, data = ames_train)
+```
+
+```{r, include = FALSE}
+lm_form_fit <- lm_model |>
+  fit(formula = Sale_Price ~ Longitude + Latitude, data = ames_train)
+```
+
 ###
 
-<!-- AK: Add Knowledge Drop  -->
+Not only does **parsnip** enable a consistent model interface for different packages, it also provides consistency in the model arguments. It is common for different functions that fit the same model to have different argument names. 
 
+### Exercise 15
+
+Random forest model functions are a good example. Three commonly used arguments are the number of trees in the ensemble, the number of predictors to randomly sample with each split within a tree, and the number of data points required to make a split. For three different R packages implementing this algorithm, those arguments are shown in the table below:
+
+```{r}
+knitr::include_graphics("images/TableOne.png")
+```
+
+###
+
+Some of the original argument names can be fairly jargon-y. For example, to specify the amount of regularization to use in a glmnet model, the Greek letter `lambda` is used. While this mathematical notation is commonly used in the statistics literature, it is not obvious to many people what lambda represents (especially those who consume the model results).
+
+### Exercise 16
+
+
+In an effort to make argument specification less painful, **parsnip** uses common argument names within and between packages. The table below shows, for random forests, what **parsnip** models use:
+
+
+```{r}
+knitr::include_graphics("images/TableTwo.png")
+```
+
+###
+
+Admittedly, this is one more set of arguments to memorize. However, when other types of models have the same argument types, these names still apply. For example, boosted tree ensembles also create a large number of tree-based models, so `trees` is also used there, as is `min_n`, and so on.
+
+### Exercise 17
+
+To understand how the **parsnip** argument names map to the original names, lets look at the `rand_forest()` function. In the Console, type in `?rand_forest()` and look at the *Description* section. CP/CR.
+
+
+```{r model-creation-17}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+###
+
+Our rule of thumb when standardizing argument names is:
+
+If a practitioner were to include these names in a plot or table, would the people viewing those results understand the name?
+
+### Exercise 18
+
+We can also use the `translate()` function to see this. Press "Run Code". 
+
+```{r model-creation-18, exercise = TRUE}
+rand_forest(trees = 1000, min_n = 5) |> 
+  set_engine("ranger") |>
+  set_mode("regression") |> 
+  translate()
+```
+
+```{r, include = FALSE}
+rand_forest(trees = 1000, min_n = 5) |>
+  set_engine("ranger") |>
+  set_mode("regression") |> 
+  translate()
+```
+
+###
+
+Modeling functions in **parsnip** separate model arguments into two categories:
+
+- *Main arguments* are more commonly used and tend to be available across engines.
+
+- *Engine arguments* are either specific to a particular engine or used more rarely.
+
+### Exercise 19
+
+Copy the previous code and inside `set_engine()`, set `verbose` to `TRUE`. Then, delete the `translate()` function and press "Run Code".
+
+```{r model-creation-19, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-creation-19-hint, eval = FALSE}
+rand_forest(trees = 1000, min_n = 5) |> 
+  set_engine("ranger", ... = ...) |>
+  set_mode("regression")
+```
+
+```{r, include = FALSE}
+rand_forest(trees = 1000, min_n = 5) |> 
+  set_engine("ranger", verbose = TRUE) |>
+  set_mode("regression")
+```
+
+###
+
+In the previous exercise, the arguments `num.threads`, `verbose`, and `seed` were added by default. These arguments are specific to the **ranger** implementation of random forest models and wouldn’t make sense as main arguments. Engine-specific arguments can be specified in `set_engine()`.
+
+
+## Using Model Results
+###
 
 
 ## Summary
-###
+### 
 
 <!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
 
