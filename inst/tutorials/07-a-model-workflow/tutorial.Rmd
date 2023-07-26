@@ -29,6 +29,26 @@ lm_model <-
 lm_wflow <- 
   workflow() |>
   add_model(lm_model)
+
+lm_wflow <- 
+  lm_wflow |>
+  add_formula(Sale_Price ~ Longitude + Latitude)
+
+data(ames)
+
+ames <- mutate(ames, Sale_Price = log10(Sale_Price))
+
+ames_split <- initial_split(ames, prop = 0.80, strata = Sale_Price)
+
+ames_train <- training(ames_split)
+
+ames_test  <-  testing(ames_split)
+
+lm_fit <- fit(lm_wflow, ames_train)
+
+lm_wflow <- lm_wflow |>
+  remove_formula() |>
+  add_variables(outcome = Sale_Price, predictors = c(Longitude, Latitude))
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -44,6 +64,18 @@ This tutorial covers [Chapter 7: A Model Workflow](https://www.tmwr.org/workflow
 
 ## Workflow Basics
 ###
+
+PCA is a way to replace correlated predictors with new artificial features that are uncorrelated and capture most of the information in the original set.
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+#include_graphics("inst/tutorials/07-a-model-workflow/images/img.png")
+
+```
+
 
 The workflows package allows the user to bind modeling and preprocessing objects together. Let’s start again with the Ames data and a simple linear model.
 
@@ -157,26 +189,303 @@ lm_wflow <-
 
 ###
 
+Principal Component Analysis (PCA) signal extraction is a way to replace correlated predictors with new artificial features that are uncorrelated and capture most of the information in the original set. 
 
 ### Exercise 6
 
+Type `lm_wflow` on the next line and hit "Run Code".
 
 ```{r workflow-basics-6, exercise = TRUE}
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r workflow-basics-6-hint, eval = FALSE}
-
+lm_wflow
 ```
 
 ```{r, include = FALSE}
-
+lm_wflow
 ```
 
 ###
 
+Notice how the preprocessor has not be defined yet. In statistics, a preprocessor refers to a step or a set of steps taken before modeling or analyzing the data. The main goal of a preprocessor is to transform the raw data into a format that is more suitable for the subsequent statistical analysis or modeling tasks.
+
+### Exercise 7
+
+The `add_formula()` function can be used to add a formula to the preprocessor. Copy the previous code and pipe `add_formula()`, with the formula being `Sale Price ~ Longitude + Latitude`. Set it equal to `lm_wflow`.
+
+```{r workflow-basics-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r workflow-basics-7-hint, eval = FALSE}
+lm_wflow <-
+  ... |>
+  add_formula(Sale_Price ~ Longitude + Latitude)
+```
+
+```{r, include = FALSE}
+lm_wflow <- 
+  lm_wflow |>
+  add_formula(Sale_Price ~ Longitude + Latitude)
+```
+
+###
+
+The fit() function is used to train a specified model on a given dataset, using the formula and data provided in the model specification. It returns a fitted model object that can be used for prediction and evaluation.
+
+### Exercise 8
+
+We will be using some of the objects created from the previous tutorial to make our fitted model using the `fit()` function. Within the function, add the parameters, `lm_wflow` and `ames_train`. Set this expression equal to `lm_fit`.
+
+```{r workflow-basics-8, exercise = TRUE}
+
+```
+
+```{r workflow-basics-8-hint, eval = FALSE}
+... <- fit(..., ames_train)
+```
+
+```{r, include = FALSE}
+lm_fit <- fit(lm_wflow, ames_train)
+```
+
+###
+
+The predict() function works with a wide range of models, including linear regression, generalized linear models, decision trees, random forests, support vector machines, and many others.
+
+### Exercise 9
+
+To predicted on the fitted workflow, we will be using `predict()`. Within the function, add the parameter `lm_fit`. Note that this will throw an error which will be fixed soon.
+
+```{r workflow-basics-9, exercise = TRUE}
+
+```
+
+```{r workflow-basics-9-hint, eval = FALSE}
+predict(...)
+```
+
+###
+
+The predict() function requires the "newdata" argument to make predictions on new data. This argument specifies the data frame containing the predictor variables for which you want to make predictions.
+
+### Exercise 10
+
+Copy the previous code and add the parameter `ames_test` as the new_data argument to make predictions on the data.
+
+```{r workflow-basics-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r workflow-basics-10-hint, eval = FALSE}
+predict(lm_fit, ...)
+```
+
+```{r, include = FALSE}
+predict(lm_fit, ames_train)
+```
+
+###
+
+There are too many rows that are difficult to look at once. The slice() functions lets us select a certain amount of rows to be printed out.
+
+### Exercise 11
+
+Copy the previous code and add `slice()` to the pipe. Add the parameter `1:3` to `slice()` and hit "Run Code".
+
+```{r workflow-basics-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r workflow-basics-11-hint, eval = FALSE}
+... |>
+  slice(...)
+```
+
+```{r, include = FALSE}
+predict(lm_fit, ames_train) |>
+  slice(1:3)
+```
+
+###
+
+
+`update_formula()` is used to update model formulae. This typically involves adding or dropping terms, but updates can be more general.
+
+### Exercise 12
+
+Pipe `update_formula()` to lm_fit. In `update_formula()`, we will change the formula to `Sale_Price ~ Longitude`.
+
+```{r workflow-basics-12, exercise = TRUE}
+
+```
+
+
+```{r workflow-basics-12-hint, eval = FALSE}
+lm_fit |>
+  update_formula(Sale_Price ~ ...)
+```
+
+```{r, include = FALSE}
+lm_fit |>
+  update_formula(Sale_Price ~ Longitude)
+```
+
+###
+
+Great Job! You now understand the basics of workflow and the different functions that can help model the data.
+
+## Adding Raw Variables to the `workflow()`
+###
+
+There is another interface for passing data to the model, the `add_variables()` function, which uses a **dplyr**-like syntax for choosing variables. The function has two primary arguments: *outcomes* and *predictors*. These use a selection approach similar to the **tidyselect** backend of **tidyverse** packages to capture multiple selectors using c().
+
+### Exercise 1
+
+We will not be needing a formula any more, as we only will need outcomes and predictors. Pipe `remove_formula()` to `lm_wflow`.
+
+```{r adding-raw-variables-1, exercise = TRUE}
+
+```
+
+```{r adding-raw-variables-1-hint, eval = FALSE}
+lm_wflow |>
+  ...
+```
+
+```{r, include = FALSE}
+lm_wflow |>
+  remove_formula()
+```
+
+###
+
+You can see under the preprocessor tab, there is no formula anymore. There now needs to be outcomes and predictors.
+
+### Exercise 2
+
+We will use the `add_variables()` function to add the outcome first. Copy the previous code and add `add_variables()` to the pipe, setting `outcome = Sale_Price`. This will throw an error.
+
+```{r adding-raw-variables-2, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r adding-raw-variables-2-hint, eval = FALSE}
+... |>
+  add_variables(outcome = ...)
+```
+
+```{r, include = FALSE}
+#lm_wflow |>
+  #remove_formula() |>
+  #add_variables(outcome = Sale_Price)
+```
+
+
+Note that there is no predictors parameter established yet.
+
+### Exercise 3
+
+Now we will add the predictor variable to the preprocessor. Copy the previous code and in `add_variables()`, add `parameter` and set it equal to `Longitude` and `Latitude` using `c()`.
+
+```{r adding-raw-variables-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r adding-raw-variables-3-hint, eval = FALSE}
+... |>
+  add_variables(outcome = Sale_Price, predictors = c(..., ...))
+```
+
+```{r, include = FALSE}
+lm_wflow |>
+  remove_formula() |>
+  add_variables(outcome = Sale_Price, predictors = c(Longitude, Latitude))
+```
+
+###
+
+`add_variables()` adds a new column to a data frame, while add_case() adds a new row to a data frame. These are convenient functions to add columns or rows not only at the end of a data frame, but at any column or row position. Furthermore, they allow easy integration into a pipe-workflow.
+
+
+### Exercise 4
+ 
+Finally, copy the previous code and set the expression equal to `lm_wflow` using the `<-`. On the next line, type in `lm_wflow` to see the workflow.
+
+```{r adding-raw-variables-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r adding-raw-variables-4-hint, eval = FALSE}
+... <- lm_wflow |>
+  remove_formula() |>
+  add_variables(outcome = Sale_Price, predictors = c(Longitude, Latitude))
+```
+
+```{r, include = FALSE}
+lm_wflow <- lm_wflow |>
+  remove_formula() |>
+  add_variables(outcome = Sale_Price, predictors = c(Longitude, Latitude))
+```
+
+###
+
+If you would like the underlying modeling method to do what it would normally do with the data, add_variables() can be a helpful interface. 
+
+### Exercise 5
+
+Now we can create the model using `fit()`. Within `fit()`, add the parameters `lm_wflow` and `ames_train`.
+
+```{r adding-raw-variables-5, exercise = TRUE}
+
+```
+
+
+```{r adding-raw-variables-5-hint, eval = FALSE}
+fit(lm_wflow, ...)
+```
+
+```{r, include = FALSE}
+fit(lm_wflow, ames_train)
+```
+
+###
+
+Models such as **glmnet** and **xgboost** expect the user to make indicator variables from factor predictors. In these cases, a recipe or formula interface will typically be a better choice.
+
+Great Job! You now know how to add raw variables such as outcome predictors to the workflow. In the next chapter, we will look at a more powerful preprocessor (called a recipe) that can also be added to a workflow.
+
+## How Does a `workflow()` Use the Formula?
+###
+
+When we fit a tree to the data, the **parsnip** package understands what the modeling function would do. For example, if a random forest model is fit using the ranger or **randomForest** packages, the workflow knows predictors columns that are factors should be left as is.
+
+### Exercise 1
+
+A number of multilevel models have standardized on a formula specification devised in the lme4 package. For example, to fit a regression model that has random effects for subjects, we would use the following formula:
+
+```{r how-does-a-workflow--1, exercise = TRUE}
+library(lme4)
+lmer(distance ~ Sex + (age | Subject), data = Orthodont)
+```
+
+
+###
 
 
 ## Summary
