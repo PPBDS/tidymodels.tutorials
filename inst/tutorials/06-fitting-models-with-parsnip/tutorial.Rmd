@@ -28,9 +28,13 @@ ames_update <- ames |>
 set.seed(502)
 ames_split <- initial_split(ames_update, prop = 0.80, strata = Sale_Price)
 ames_train <- training(ames_split)
+ames_test <- testing(ames_split)
 
 lm_model <- linear_reg() |>
   set_engine("lm")
+
+lm_form_fit <- lm_model |>
+  fit(formula = Sale_Price ~ Longitude + Latitude, data = ames_train)
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -39,8 +43,7 @@ lm_model <- linear_reg() |>
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
-
-<!-- DK: Don't use "our" or "we", unless you are talking about us, the authors of the tutorial. -->
+<!-- DK: Don't use "our" or "we", unless you are talking about us, the authors of the tutorial. Done. -->
 
 ## Introduction
 ### 
@@ -51,7 +54,7 @@ This tutorial covers [Chapter 6: Fitting Models with parsnip](https://www.tmwr.o
 ## Model Creation
 ### 
 
-Suppose that a linear regression model was our initial choice. This is equivalent to specifying that the outcome data is numeric and that the predictors are related to the outcome in terms of simple slopes and intercepts:
+Suppose that a linear regression model was the initial choice. This is equivalent to specifying that the outcome data is numeric and that the predictors are related to the outcome in terms of simple slopes and intercepts:
 
 
 $$y_i = \beta_0 + \beta_1 x_{1i} + \ldots + \beta_p x_{pi}$$
@@ -98,7 +101,7 @@ tidymodels_prefer()
 
 ### 
 
-In R, there are many different function we can use for various models, such as `stan_glm()`, `lm()`, and `glmnet()`.
+In R, there are many different function that can be used for various models, such as `stan_glm()`, `lm()`, and `glmnet()`.
 
 ### Exercise 3
 
@@ -115,7 +118,7 @@ question_text(NULL,
 
 ### 
 
-Going back to [Chapter 3](https://www.tmwr.org/base-r.html) of the [*Tidy Modeling with R*](https://www.tmwr.org/), we have used the `lm()` function before, specifically using the `formula`, `data`, and `na.action` parameters.
+Going back to [Chapter 3](https://www.tmwr.org/base-r.html) of the [*Tidy Modeling with R*](https://www.tmwr.org/), you have used the `lm()` function before, specifically using the `formula`, `data`, and `na.action` parameters.
 
 ### Exercise 4
 
@@ -158,7 +161,7 @@ Note that these interfaces are heterogeneous in either how the data are passed t
 
 ### Exercise 6
 
-In order to unify the approach to specifying a model, we need to:
+In order to unify the approach to specifying a model, you need to:
 
 1: Specify the type of model based on its mathematical structure
 2: Specify the engine for fitting the model
@@ -183,7 +186,7 @@ To showcase this, pipe `linear_reg()` to `set_engine()` (Note: This will throw a
 
 ### 
 
-`set_engine()` allows you to specify the package/system that will be used to fit your model. This code throws an error because we haven't specified which engine we want to use. 
+`set_engine()` allows you to specify the package/system that will be used to fit your model. This code throws an error because the engine hasn't been specified inside the `set_engine()` function.  
 
 ### Exercise 7
 
@@ -253,9 +256,9 @@ ames_update
 
 ### 
 
-As a reminder, we edited the `ames` data set in [Chapter 4](https://www.tmwr.org/ames.html) of *Tidy Modeling with R* so that the `Sale_Price` column was logged (meaning the `log10()` function has been applied to it). 
+As a reminder, the `ames` dataset has been edited in [Chapter 4](https://www.tmwr.org/ames.html) of *Tidy Modeling with R* so that the `Sale_Price` column was logged (meaning the `log10()` function has been applied to it). 
 
-Here is the code we used to do this:\
+Here is the code for this:
 
 ````
 
@@ -264,7 +267,7 @@ ames_update <- ames |>
   
 ````
 
-Also, in the "Spending our Data" tutorial, we created the `ames_train` variable, which contains the training data from the `ames` data set. As a reminder, here is the code we used to create this variable:
+Also, in the "Spending our Data" tutorial, the `ames_train` variable was created, which contains the training data from the `ames` data set. As a reminder, here is the code that was used to create this variable:
 
 ````
 set.seed(502)
@@ -313,7 +316,7 @@ Copy the previous code and save it to the variable `lm_model`, using the `<-` op
 ```
 
 ```{r include = FALSE}
- lm_model <- linear_reg() |>
+lm_model <- linear_reg() |>
   set_engine("lm")
 ```
 
@@ -341,11 +344,11 @@ lm_model |>
 
 ### 
 
-The reason this code throws an error is because the `fit()` function has a required `formula` argument; we haven`t passed in any formula yet.
+The reason this code throws an error is because the `fit()` function has a required `formula` argument, which hasn't been passed in yet. 
 
 ### Exercise 13
 
-Since we are predicting the sales prices of homes in the `ames` data as a function of only *longitude* and *latitude*, we will need to include that in our `fit()` function. Copy the previous code. Inside `fit()`, set `formula` to `Sale_Price ~ Longitude + Latitude`. 
+Since the sales prices of homes in the `ames` data as a function of only *longitude* and *latitude* is being predicted, it is necessary to include that in the `fit()` function. Copy the previous code. Inside `fit()`, set `formula` to `Sale_Price ~ Longitude + Latitude`. 
 
 ```{r model-creation-13, exercise = TRUE}
 
@@ -378,17 +381,17 @@ Copy the previous code and then assign its value to a new variable, `lm_form_fit
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r model-creation-14-hint, eval = FALSE}
+```{r model-creation-14-hint-1, eval = FALSE}
 ... <- lm_model |>
   fit(formula = Sale_Price ~ Longitude + Latitude, data = ames_train)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 lm_form_fit <- lm_model |>
   fit(formula = Sale_Price ~ Longitude + Latitude, data = ames_train)
 ```
 
-###
+### 
 
 Not only does **parsnip** enable a consistent model interface for different packages, it also provides consistency in the model arguments. It is common for different functions that fit the same model to have different argument names. 
 
@@ -400,12 +403,11 @@ Different functions, all of which fit random forest models, are a good examples 
 knitr::include_graphics("images/TableOne.png")
 ```
 
-###
+### 
 
 Some of the original argument names can be fairly jargon-y. For example, to specify the amount of regularization to use in a glmnet model, the Greek letter `lambda` is used. While this mathematical notation is commonly used in the statistics literature, it is not obvious to many people what lambda represents (especially those who consume the model results).
 
 ### Exercise 16
-
 
 In an effort to make argument specification less painful, **parsnip** uses common argument names within and between packages. The table below shows, for random forests, what **parsnip** models use:
 
@@ -414,7 +416,7 @@ In an effort to make argument specification less painful, **parsnip** uses commo
 knitr::include_graphics("images/TableTwo.png")
 ```
 
-###
+### 
 
 Admittedly, this is one more set of arguments to memorize. However, when other types of models have the same argument types, these names still apply. For example, boosted tree ensembles also create a large number of tree-based models, so `trees` is also used there, as is `min_n`, and so on.
 
@@ -432,15 +434,15 @@ question_text(NULL,
 	rows = 3)
 ```
 
-###
+### 
 
-Our rule of thumb when standardizing argument names is:
+The rule of thumb when standardizing argument names is:
 
 If a practitioner were to include these names in a plot or table, would the people viewing those results understand the name?
 
 ### Exercise 18
 
-We can also use the `translate()` function to see this. Press "Run Code". 
+The `translate()` function can also be used to see this. Press "Run Code". 
 
 ```{r model-creation-18, exercise = TRUE}
 rand_forest(trees = 1000, min_n = 5) |> 
@@ -449,14 +451,14 @@ rand_forest(trees = 1000, min_n = 5) |>
   translate()
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rand_forest(trees = 1000, min_n = 5) |>
   set_engine("ranger") |>
   set_mode("regression") |> 
   translate()
 ```
 
-###
+### 
 
 Modeling functions in **parsnip** separate model arguments into two categories:
 
@@ -474,26 +476,204 @@ Copy the previous code and inside `set_engine()`, set `verbose` to `TRUE`. Then,
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r model-creation-19-hint, eval = FALSE}
+```{r model-creation-19-hint-1, eval = FALSE}
 rand_forest(trees = 1000, min_n = 5) |> 
   set_engine("ranger", ... = ...) |>
   set_mode("regression")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rand_forest(trees = 1000, min_n = 5) |> 
   set_engine("ranger", verbose = TRUE) |>
   set_mode("regression")
 ```
 
-###
+### 
 
 In the previous exercise, the arguments `num.threads`, `verbose`, and `seed` were added by default. These arguments are specific to the **ranger** implementation of random forest models and wouldn’t make sense as main arguments. Engine-specific arguments can be specified in `set_engine()`.
 
 
 ## Using Model Results
-###
+### 
 
+Once the model is created and fit, the results can be used in various ways; you might want to plot, print, or otherwise examine the model output. Several quantities are stored in a **parsnip** model object, including the fitted model. This can be found in an element called `fit`, which can be returned using the `extract_fit_engine()` function.
+
+### Exercise 1
+
+Pipe `lm_form_fit` to `extract_fit_engine()` using the `|>` operator.
+
+```{r using-model-results-1, exercise = TRUE}
+
+```
+
+```{r using-model-results-1-hint-1, eval = FALSE}
+lm_form_fit |>
+  ...()
+```
+
+```{r include = FALSE}
+lm_form_fit |>
+  extract_fit_engine()
+```
+
+### 
+
+As you can see, the code extracts the `fit` argument in `lm_form_fit`, which represented the fitted model. Also, in the `call` section, you can see the `lm()` function, which is the engine used to create the model. 
+
+### Exercise 2
+
+Normal methods can be applied to this object, such as `vcov()`. `vcov()` returns the variance-covariance matrix of the main parameters of a fitted model object.
+
+Copy the previous code and pipe it to `vcov()`
+
+```{r using-model-results-2, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-model-results-2-hint-1, eval = FALSE}
+lm_form_fit |>
+  extract_fit_engine() |>
+    ...()
+```
+
+```{r include = FALSE}
+lm_form_fit |>
+  extract_fit_engine() |>
+    vcov()
+```
+
+### 
+
+Never pass the `fit` element of a parsnip model to a model prediction function. For example, use `predict(lm_form_fit)` but *do not* use `predict(lm_form_fit$fit)`. If the data were preprocessed in any way, incorrect predictions will be generated (sometimes, without errors). The underlying model’s prediction function has no idea if any transformations have been made to the data prior to running the model. 
+
+
+### Exercise 3
+
+One issue with some existing methods in base R is that the results are stored in a manner that may not be the most useful. This can be fixed with the `summary()` method; the `summary()` method for `lm` objects can be used to print the results of the model fit, including a table with parameter values, their uncertainty estimates, and p-values. 
+
+Copy the previous code. Replace `vcov()` with `summary()`.
+
+```{r using-model-results-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-model-results-3-hint-1, eval = FALSE}
+lm_form_fit |>
+  extract_fit_engine() |>
+    ...()
+```
+
+```{r include = FALSE}
+lm_form_fit |>
+  extract_fit_engine() |>
+    summary()
+```
+
+### 
+
+As you can see, by using `summary()`, the results of the model fit were printed out. 
+
+### Exercise 4
+
+The `coef()` function can be used to display a more accurate coefficient table of the model. `coef(()` is a generic function which extracts model coefficients from objects returned by modeling functions.
+
+Copy the previous code and place it inside `coef()`.
+
+```{r using-model-results-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-model-results-4-hint-1, eval = FALSE}
+...(lm_form_fit |>
+  extract_fit_engine() |>
+    summary())
+```
+
+```{r include = FALSE}
+coef(lm_form_fit |>
+  extract_fit_engine() |>
+    summary())
+```
+
+### 
+
+As you can see, the values in the table are more accurate. For example, looking at the `Pr(>|t|)` column, you can see actual numbers being displayed, instead of `<2e-16 ***`.
+
+### Exercise 5
+
+The `class()` function can be used to determine the type of object at hand. Copy the previous code and place it inside `class()`.
+
+```{r using-model-results-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-model-results-5-hint-1, eval = FALSE}
+...(coef(lm_form_fit |>
+  extract_fit_engine() |>
+    summary()))
+```
+
+```{r include = FALSE}
+class(coef(lm_form_fit |>
+  extract_fit_engine() |>
+    summary()))
+```
+
+### 
+
+As you can see, the output is `matrix`. In this scenario, this data structure was mostly likely chosen since all of the calculated results are numeric and a matrix object is stored more efficiently than a data frame. This choice was probably made in the late 1970s when computational efficiency was extremely critical.
+
+### Exercise 6
+
+A reasonable next step would be to create a visualization of this data. However, this is not possible. One reason is because several of the existing matrix column names would not be valid R column names for ordinary data frames (e.g., `"Pr(>|t|)"`).
+
+Click on this [link](https://broom.tidymodels.org/reference/tidy.lm.html) and copy/paste the first paragraph.
+
+```{r using-model-results-6}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+Another reason a visualization cannot be created is due to the consistency of the column names. For `lm` objects, the column for the p-value is `"Pr(>|t|)"`, but for other models, a different test might be used and, as a result, the column name would be different (e.g., `"Pr(>|z|)"`) and the type of test would be encoded in the column name.
+
+### Exercise 7
+
+As a solution, the **broom** package can convert many types of model objects to a tidy structure. Type in `tidy()` and pass in `lm_form_fit`.
+
+```{r using-model-results-7, exercise = TRUE}
+
+```
+
+```{r using-model-results-7-hint-1, eval = FALSE}
+tidy(...)
+```
+
+```{r include = FALSE}
+tidy(lm_form_fit)
+
+```
+
+### 
+
+The column names are standardized across models and do not contain any additional data (such as the type of statistical test). The data previously contained in the row names are now in a column called `term.` One important principle in the tidymodels ecosystem is that a function should return values that are *predictable*, *consistent*, and *unsurprising*.
+
+
+## Making Predictions 
+### 
 
 ## Summary
 ### 
