@@ -39,7 +39,8 @@ lm_model <- linear_reg() |>
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
-<!-- DK: Remove links to rdocumentation and other garbage sites. Done. -->
+
+<!-- DK: Don't use "our" or "we", unless you are talking about us, the authors of the tutorial. -->
 
 ## Introduction
 ### 
@@ -340,7 +341,7 @@ lm_model |>
 
 ### 
 
-The reason this code throws an error is because the `fit()` function has a `formula` argument; we haven`t passed any formula in yet.
+The reason this code throws an error is because the `fit()` function has a required `formula` argument; we haven`t passed in any formula yet.
 
 ### Exercise 13
 
@@ -359,30 +360,16 @@ lm_model |>
 
 ```{r include = FALSE}
 lm_model |>
-  fit(formula = Sale_Price ~ Longitude + Latitude, data = ames_train)
+  fit(formula = Sale_Price ~ Longitude + Latitude, data = ames_train) 
 ```
 
 ### 
 
-<!-- AK: Having trouble understanding the "Coefficients" section of the output.
-
-Here is the output:
-
-parsnip model object
-
-
-Call:
-stats::lm(formula = Sale_Price ~ Longitude + Latitude, data = data)
-
-Coefficients:
-(Intercept)    Longitude     Latitude  
-   -302.974       -2.075        2.710  
-
--->
+The fitted values suggest that houses are more expensive in the northern and western parts of Ames. The positive coefficient for `Latitude` means that, as latitude (which is a measure of how far north you are from the equator) increases, the price of homes increase. Similar, the negative coefficient of Longitude means that, as Longitude becomes more negative (meaning you are moving further, in a westerly direction from Greenwich, England), the more expensive houses become.
 
 ### Exercise 14
 
-Copy the previous code and set it to the variable `lm_form_fit`. 
+Copy the previous code and then assign its value to a new variable, `lm_form_fit`. 
 
 
 ```{r model-creation-14, exercise = TRUE}
@@ -407,7 +394,7 @@ Not only does **parsnip** enable a consistent model interface for different pack
 
 ### Exercise 15
 
-Random forest model functions are a good example. Three commonly used arguments are the number of trees in the ensemble, the number of predictors to randomly sample with each split within a tree, and the number of data points required to make a split. For three different R packages implementing this algorithm, those arguments are shown in the table below:
+Different functions, all of which fit random forest models, are a good examples of incompatible argument names. Three commonly used arguments are the number of trees in the ensemble, the number of predictors to randomly sample with each split within a tree, and the number of data points required to make a split. For three different R packages implementing this algorithm, those arguments are shown in the table below:
 
 ```{r}
 knitr::include_graphics("images/TableOne.png")
