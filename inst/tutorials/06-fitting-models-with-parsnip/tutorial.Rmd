@@ -3,10 +3,10 @@ title: Fitting Models with parsnip
 author: Aryan Kancherla and David Kane
 tutorial:
   id: fitting-models-with-parsnip
-output: 
+output:
   learnr::tutorial:
-    progressive: true
-    allow_skip: true
+    progressive: yes
+    allow_skip: yes
 runtime: shiny_prerendered
 description: 'Tutorial for Chapter 6: Fitting Models with parsnip'
 ---
@@ -15,9 +15,21 @@ description: 'Tutorial for Chapter 6: Fitting Models with parsnip'
 library(learnr)
 library(tutorial.helpers)
 library(tidymodels)
+library(tidyverse)
+
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
         tutorial.storage = "local") 
+
+ames_update <- ames |>
+  mutate(Sale_Price = log10(Sale_Price))
+
+set.seed(502)
+ames_split <- initial_split(ames_update, prop = 0.80, strata = Sale_Price)
+ames_train <- training(ames_split)
+
+lm_model <- linear_reg() |>
+  set_engine("lm")
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -29,13 +41,13 @@ options(tutorial.exercise.timelimit = 60,
 <!-- DK: Remove links to rdocumentation and other garbage sites. Done. -->
 
 ## Introduction
-###
+### 
 
 This tutorial covers [Chapter 6: Fitting Models with parsnip](https://www.tmwr.org/models.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This chapter will cover the usage of the [**parsnip**](https://parsnip.tidymodels.org/) package for a fluent and standardized interface of a variety of different models. You will learn how to use the `fit()` and `predict()` functions on a **parsnip** object.
 
 
 ## Model Creation
-###
+### 
 
 Suppose that a linear regression model was our initial choice. This is equivalent to specifying that the outcome data is numeric and that the predictors are related to the outcome in terms of simple slopes and intercepts:
 
@@ -50,15 +62,15 @@ Load the **tidymodels** package using `library()`.
 
 ```
 
-```{r model-creation-1-hint, eval = FALSE}
+```{r model-creation-1-hint-1, eval = FALSE}
 library(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 library(tidymodels)
 ```
 
-###
+### 
 
 A variety of methods can be used to estimate the model parameters:
 
@@ -74,15 +86,15 @@ Next, type in `tidymodels_prefer()` to get rid of the naming conflicts.
 
 ```
 
-```{r model-creation-2-hint, eval = FALSE}
+```{r model-creation-2-hint-1, eval = FALSE}
 ...()
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 tidymodels_prefer()
 ```
 
-###
+### 
 
 In R, there are many different function we can use for various models, such as `stan_glm()`, `lm()`, and `glmnet()`.
 
@@ -99,7 +111,7 @@ question_text(NULL,
 	rows = 3)
 ```
 
-###
+### 
 
 Going back to [Chapter 3](https://www.tmwr.org/base-r.html) of the [*Tidy Modeling with R*](https://www.tmwr.org/), we have used the `lm()` function before, specifically using the `formula`, `data`, and `na.action` parameters.
 
@@ -116,11 +128,11 @@ question_text(NULL,
 	rows = 3)
 ```
 
-###
+### 
 
 [*Preceptor’s Primer for Bayesian Data Science: Using the Cardinal Virtues for Inference*](https://ppbds.github.io/primer/) is a textbook that heavily uses Bayesian models.
 
-###
+### 
 
 The difference between the `lm()` and `stan_glm()` functions is that the `lm()` function doesn't have a `family` argument. With the `family` argument in `stan_glm()`, you can fit more complex models, such as Logistic and Poisson regression. 
 
@@ -138,7 +150,7 @@ question_text(NULL,
 	rows = 3)
 ```
 
-###
+### 
 
 Note that these interfaces are heterogeneous in either how the data are passed to the model function or in terms of their arguments. The first issue is that, to fit models across different packages, the data must be formatted in different ways. `lm()` and `stan_glm()` only have formula interfaces while `glmnet()` does not. For other types of models, the interfaces may be even more disparate. For a person trying to do data analysis, these differences require the memorization of each package’s syntax and can be very frustrating.
 
@@ -157,17 +169,17 @@ To showcase this, pipe `linear_reg()` to `set_engine()` (Note: This will throw a
 
 ```
 
-```{r model-creation-6-hint, eval = FALSE}
+```{r model-creation-6-hint-1, eval = FALSE}
 ...() |>
   set_engine()
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 # linear_reg() |> 
 #  set_engine()
 ```
 
-###
+### 
 
 `set_engine()` allows you to specify the package/system that will be used to fit your model. This code throws an error because we haven't specified which engine we want to use. 
 
@@ -181,17 +193,17 @@ Copy the previous code. Inside `set_engine()`, type in `"lm"`.
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r model-creation-7-hint, eval = FALSE}
+```{r model-creation-7-hint-1, eval = FALSE}
 linear_reg() |>
   set_engine("...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 linear_reg() |>
   set_engine("lm")
 ```
 
-###
+### 
 
 Once the details of the model have been specified, the model estimation can be done with either the `fit()` function (to use a formula) or the `fit_xy()` function (when your data are already pre-processed). The **parsnip** package allows the user to be indifferent to the interface of the underlying model; you can always use a formula even if the modeling package’s function only has the `x`/`y` interface.
 
@@ -205,46 +217,171 @@ We can use the `translate()` function can provide details on how **parsnip** con
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r model-creation-8-hint, eval = FALSE}
+```{r model-creation-8-hint-1, eval = FALSE}
 linear_reg() |>
   set_engine("lm") |>
     ...()
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 linear_reg() |>
   set_engine("lm") |>
     translate()
 ```
 
-###
+### 
 
 The `missing_arg()` function is just a placeholder for the data that has yet to be provided.
 
 ### Exercise 9
 
-Let’s use a linear model to predict the sale price of houses in the `ames` data set as a function of only longitude and latitude. In the code below, type in `ames`.
+Let’s use a linear model to predict the sale price of houses in the `ames` data set as a function of only longitude and latitude. In the code below, type in `ames_train`.
 
 ```{r model-creation-9, exercise = TRUE}
 
 ```
 
-```{r model-creation-9-hint, eval = FALSE}
+```{r model-creation-9-hint-1, eval = FALSE}
 ...
 ```
 
-```{r, include = FALSE}
-ames
+```{r include = FALSE}
+ames_update
 ```
 
-###
+### 
 
-As a reminder, the `ames` data set contains housing data in Ames, Iowa. 
+As a reminder, we edited the `ames` data set in [Chapter 4](https://www.tmwr.org/ames.html) of *Tidy Modeling with R* so that the `Sale_Price` column was logged (meaning the `log10()` function has been applied to it). 
 
+Here is the code we used to do this:\
+
+````
+
+ames_update <- ames |>
+  mutate(Sale_Price = log10(Sale_Price))
+  
+````
+
+Also, in the "Spending our Data" tutorial, we created the `ames_train` variable, which contains the training data from the `ames` data set. As a reminder, here is the code we used to create this variable:
+
+````
+set.seed(502)
+ames_split <- initial_split(ames_update, prop = 0.80, strata = Sale_Price)
+ames_train <- training(ames_split)
+
+````
+
+
+### Exercise 10
+
+Lets start creating this model. In the code chunk below, pipe (`|>`) `linear_reg()` to `set_engine()`. Inside `set_engine()`, type in `"lm"`. 
+
+
+```{r model-creation-10, exercise = TRUE}
+
+```
+
+```{r model-creation-10-hint-1, eval = FALSE}
+linear_reg() |>
+  ...("lm")
+```
+
+```{r include = FALSE}
+linear_reg() |>
+  set_engine("lm")
+```
+
+### 
+
+The **parsnip** package itself contains interfaces to a number of models. However, for ease of package installation and maintenance, there are other **tidymodels** packages that have **parsnip** model definitions for other sets of models. The **discrim** package has model definitions for the set of classification techniques called discriminant analysis methods (such as linear or quadratic discriminant analysis). 
+
+### Exercise 11
+
+Copy the previous code and save it to the variable `lm_model`, using the `<-` operator.
+
+```{r model-creation-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-creation-11-hint-1, eval = FALSE}
+... <- linear_reg() |>
+  set_engine("lm")
+```
+
+```{r include = FALSE}
+ lm_model <- linear_reg() |>
+  set_engine("lm")
+```
+
+### 
+
+A list of all of the models that can be used with parsnip (across different packages that are on CRAN) can be found [here](https://www.tidymodels.org/find/).
+
+### Exercise 12
+
+Now, lets create the fitted object. Pipe `lm_model` to `fit()` and set `data` to `ames_train`. (Note: This will throw an error).
+
+```{r model-creation-12, exercise = TRUE}
+
+```
+
+```{r model-creation-12-hint-1, eval = FALSE}
+lm_model |>
+  ...(data = ...)
+```
+
+```{r include = FALSE}
+#lm_model |>
+#  fit(data = ames_train)
+```
+
+### 
+
+The reason this code throws an error is because the `fit()` function has a `formula` argument; we haven`t passed any formula in yet.
+
+### Exercise 13
+
+Since we are predicting the sales prices of homes in the `ames` data as a function of only *longitude* and *latitude*, we will need to include that in our `fit()` function. Copy the previous code. Inside `fit()`, set `formula` to `Sale_Price ~ Longitude + Latitude`. 
+
+```{r model-creation-13, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r model-creation-13-hint-1, eval = FALSE}
+lm_model |>
+  fit(... = Sale_Price ~ Longitude + ..., data = ames_train)
+```
+
+```{r include = FALSE}
+lm_model |>
+  fit(formula = Sale_Price ~ Longitude + Latitude, data = ames_train)
+```
+
+### 
+
+<!-- AK: Having trouble understanding the "Coefficients" section of the output.
+
+Here is the output:
+
+parsnip model object
+
+
+Call:
+stats::lm(formula = Sale_Price ~ Longitude + Latitude, data = data)
+
+Coefficients:
+(Intercept)    Longitude     Latitude  
+   -302.974       -2.075        2.710  
+
+-->
 
 
 ## Summary
-###
+### 
 
 <!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
 
