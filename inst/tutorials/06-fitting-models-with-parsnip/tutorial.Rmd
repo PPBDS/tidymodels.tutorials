@@ -35,6 +35,17 @@ lm_model <- linear_reg() |>
 
 lm_form_fit <- lm_model |>
   fit(formula = Sale_Price ~ Longitude + Latitude, data = ames_train)
+
+ames_test_small <- ames_test |>
+  slice(1:5)
+
+tree_model <- decision_tree(min_n = 2) |>
+  set_engine("rpart") |>
+    set_mode("regression")
+
+tree_fit <- tree_model |> 
+  fit(Sale_Price ~ Longitude + Latitude, data = ames_train)
+
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -48,7 +59,7 @@ lm_form_fit <- lm_model |>
 ## Introduction
 ### 
 
-This tutorial covers [Chapter 6: Fitting Models with parsnip](https://www.tmwr.org/models.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This chapter will cover the usage of the [**parsnip**](https://parsnip.tidymodels.org/) package for a fluent and standardized interface of a variety of different models. You will learn how to use the `fit()` and `predict()` functions on a **parsnip** object.
+This tutorial covers [Chapter 6: Fitting Models with parsnip](https://www.tmwr.org/models.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This chapter will cover the usage of the [**parsnip**](https://parsnip.tidymodels.org/) package for a fluent and standardized interface of a variety of different models. You will learn how to use various functions, such as `fit()` and `predict()`, on a **parsnip** object.
 
 
 ## Model Creation
@@ -163,9 +174,9 @@ Note that these interfaces are heterogeneous in either how the data are passed t
 
 In order to unify the approach to specifying a model, you need to:
 
-1: Specify the type of model based on its mathematical structure
-2: Specify the engine for fitting the model
-3: Declare the mode of the model (when required)
+1. Specify the type of model based on its mathematical structure
+2. Specify the engine for fitting the model
+3. Declare the mode of the model (when required)
 
 
 To showcase this, pipe `linear_reg()` to `set_engine()` (Note: This will throw an error).
@@ -368,7 +379,7 @@ lm_model |>
 
 ### 
 
-The fitted values suggest that houses are more expensive in the northern and western parts of Ames. The positive coefficient for `Latitude` means that, as latitude (which is a measure of how far north you are from the equator) increases, the price of homes increase. Similar, the negative coefficient of Longitude means that, as Longitude becomes more negative (meaning you are moving further, in a westerly direction from Greenwich, England), the more expensive houses become.
+The fitted values suggest that houses are more expensive in the northern and western parts of Ames. The positive coefficient for *Latitude* means that, as latitude (which is a measure of how far north you are from the equator) increases, the price of homes increase. Similar, the negative coefficient of *Longitude* means that, as Longitude becomes more negative (meaning you are moving further, in a westerly direction from Greenwich, England), the more expensive houses become.
 
 ### Exercise 14
 
@@ -579,7 +590,7 @@ As you can see, by using `summary()`, the results of the model fit were printed 
 
 ### Exercise 4
 
-The `coef()` function can be used to display a more accurate coefficient table of the model. `coef(()` is a generic function which extracts model coefficients from objects returned by modeling functions.
+The `coef()` function can be used to display a more accurate coefficient table of the model. `coef()` is a generic function which extracts model coefficients from objects returned by modeling functions.
 
 Copy the previous code and place it inside `coef()`.
 
@@ -675,10 +686,498 @@ The column names are standardized across models and do not contain any additiona
 ## Making Predictions 
 ### 
 
+Another area where **parsnip** diverges from conventional R modeling functions is the format of values returned from `predict()`. For predictions, **parsnip** always conforms to the following rules:
+
+- The results are always a tibble.
+- The column names of the tibble are always predictable.
+- There are always as many rows in the tibble as there are in the input data set.
+
+### Exercise 1
+
+Before predicting values, lets extract a small sample of data from `ames_test`. As a reminder, `ames_test` was created in [Chapter 4](https://www.tmwr.org/ames.html) of *Tidy Modeling with R*, which holds the testing data.
+
+Pipe `ames_test` to `slice()`. Inside `slice()`, type in `1:5`.
+
+```{r making-predictions-1, exercise = TRUE}
+
+```
+
+```{r making-predictions-1-hint-1, eval = FALSE}
+ames_test |>
+  slice(...)
+```
+
+```{r include = FALSE}
+ames_test |>
+  slice(1:5)
+```
+
+### 
+
+`slice()` allows you to select, remove, and duplicate rows. In this scenario, `slice()` is selecting the first 5 rows inside `ames_test`.
+
+### Exercise 2
+
+Copy the previous code and assign it to the variable `ames_test_small`.
+
+```{r making-predictions-2, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r making-predictions-2-hint-1, eval = FALSE}
+... <- ames_test |>
+  slice(1:5)
+```
+
+```{r include = FALSE}
+ames_test_small <- ames_test |>
+  slice(1:5)
+```
+
+### 
+
+`predict()` is a function that predicts values based on previous data behaviors. 
+
+### Exercise 3
+
+Now, lets generate some predicted values using `predict()`. In the code chunk below, type in `predict()`. Pass in `lm_form_fit` and set `new_data` to `ames_test_small`.
+
+```{r making-predictions-3, exercise = TRUE}
+
+```
+
+```{r making-predictions-3-hint-1, eval = FALSE}
+predict(..., new_data = ...)
+```
+
+```{r include = FALSE}
+predict(lm_form_fit, new_data = ames_test_small)
+```
+
+### 
+
+The code outputs a tibble, containing 5 rows and 1 column. The data in each of these rows is a predicted sale price. 
+
+### 
+
+Why is there a dot in `.pred`? Some **tidyverse** and **tidymodels** arguments and return values contain periods. This is to protect against merging data with duplicate names. There are some data sets that contain predictors named `pred`!
+
+### Exercise 4
+
+The three rules **parsnip** conforms to (see the beginning of this section) makes it easy to merge predictions with the original data. 
+
+In order to do this, the `bind_cols()` function will be used. Type `?bind_cols()` in the Console and look at the *Description* section. CP/CR.  
+
+```{r making-predictions-4}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+By using `bind_cols()`, you are able to combine data frames together into 1 big data frame.
+
+### Exercise 5
+
+Now, lets start the merging process. Pipe `ames_test_small` to `select()`. Inside `select()`, type in `Sale_Price`.
+
+```{r making-predictions-5, exercise = TRUE}
+
+```
+
+```{r making-predictions-5-hint-1, eval = FALSE}
+ames_test_small |>
+  ...(Sale_Price) 
+```
+
+```{r include = FALSE}
+ames_test_small |>
+  select(Sale_Price) 
+```
+
+### 
+
+In this scenario, these values represent the original data.
+
+
+### Exercise 6
+
+Copy the previous code and pipe it to `bind_cols()`
+
+```{r making-predictions-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r making-predictions-6-hint-1, eval = FALSE}
+ames_test_small |>
+  select(Sale_Price) |>
+    ...()
+```
+
+```{r include = FALSE}
+ames_test_small |>
+  select(Sale_Price) |>
+    bind_cols()
+```
+
+### 
+
+The reason this code outputs the same results as the previous code is because the binding (or merging) columns haven't been placed inside `bind_cols()`
+
+### Exercise 7
+
+Copy the previous code. Inside `bind_col()`, type in `predict()`, Inside `predict()`, type in `lm_form_fit` and set `new_data` to `ames_test_small`.
+
+```{r making-predictions-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r making-predictions-7-hint-1, eval = FALSE}
+ames_test_small |>
+  select(Sale_Price) |>
+    bind_cols(...(lm_form_fit, new_data = ...))
+```
+
+```{r include = FALSE}
+ames_test_small |>
+  select(Sale_Price) |>
+    bind_cols(predict(lm_form_fit, new_data = ames_test_small))
+```
+
+### 
+
+This code produced the predicted sale prices, as represented by the `.pred` column, and bound them to the original data frame. Now, there are 2 columns.
+
+### Exercise 8
+
+Lets add 95% prediction intervals to the results. Copy the previous code and pipe it to `bind_cols(predict(lm_form_fit, new_data = ames_test_small))`. Inside `predict()`, set `type` to `"pred_int"`. 
+
+```{r making-predictions-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r making-predictions-8-hint-1, eval = FALSE}
+ames_test_small |>
+  select(Sale_Price) |>
+    bind_cols(predict(lm_form_fit, new_data = ames_test_small)) |>
+      bind_cols(predict(lm_form_fit, new_data = ames_test_small, ... = "pred_int"))
+```
+
+```{r include = FALSE}
+ames_test_small |>
+  select(Sale_Price) |>
+    bind_cols(predict(lm_form_fit, new_data = ames_test_small)) |>
+      bind_cols(predict(lm_form_fit, new_data = ames_test_small, type = "pred_int"))
+```
+
+### 
+
+The `.pred_lower` column represents the lower value of the 95% interval for each predicted value and `.pred_upper` column represents the highest value of the 95% interval for each predicted value.
+
+### Exercise 9
+
+The motivation for the first rule comes from some R packages producing dissimilar data types from prediction functions. For example, the native **glmnet** model can return at least four different output types for predictions, depending on the model specifics and characteristics of the data:
+
+```{r}
+knitr::include_graphics("images/TableThree.png")
+```
+
+Additionally, the column names of the results contain coded values that map to a vector called `lambda` within the **glmnet** model object. This excellent statistical method can be discouraging to use in practice because of all of the special cases an analyst might encounter that require additional code to be useful.
+
+### Exercise 10
+
+For the second tidymodels prediction rule, the predictable column names for different types of predictions are shown in the table below:
+
+```{r}
+knitr::include_graphics("images/TableFour.png")
+```
+
+### 
+
+The third rule regarding the number of rows in the output is critical. For example, if any rows of the new data contain missing values, the output will be padded with missing results for those rows. A main advantage of standardizing the model interface and prediction types in **parsnip** is that, when different models are used, the syntax is identical.
+
+### Exercise 11
+
+To showcase this, lets use a decision tree to model the `ames` data set. Type `?decision_tree()` in the Console and look at the *Description* section. CP/CR.
+
+
+```{r making-predictions-11}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+It may become tedious to write many model specifications, or to remember how to write the code to generate them. The **parsnip** package includes an RStudio addin that can help. By running `parsnip_addin()`, a window will open up in the Viewer panel of the RStudio IDE with a list of possible models for each model mode. These can be written to the source code panel.
+
+### Exercise 12
+
+Lets start creating the decision tree. Type in `decision_tree()`. Inside this function, set `min_n` to `2`. 
+
+```{r making-predictions-12, exercise = TRUE}
+
+```
+
+```{r making-predictions-12-hint-1, eval = FALSE}
+decision_tree(... = 2)
+```
+
+```{r include = FALSE}
+decision_tree(min_n = 2)
+```
+
+### 
+
+`min_n` is an integer for the minimum number of data points in a node that are required for the node to be split further.
+
+
+### Exercise 13
+
+Copy the previous code and pipe it to `set_engine()`. Inside this function, type in `"rpart"`.
+
+
+```{r making-predictions-13, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r making-predictions-13-hint-1, eval = FALSE}
+decision_tree(min_n = 2) |>
+  set_engine(...)
+```
+
+```{r include = FALSE}
+decision_tree(min_n = 2) |>
+  set_engine("rpart")
+```
+
+### 
+
+`rpart` is used for building classification and regression decision trees.
+
+### Exercise 14
+
+Copy the previous code and pipe it to `set_mode()`. Inside this function, type in `"regression"`.
+
+```{r making-predictions-14, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r making-predictions-14-hint-1, eval = FALSE}
+decision_tree(min_n = 2) |>
+  set_engine("rpart") |>
+    set_mode(...)
+```
+
+```{r include = FALSE}
+decision_tree(min_n = 2) |>
+  set_engine("rpart") |>
+    set_mode("regression")
+```
+
+### 
+
+There are two reasons that models permeate our lives today:
+
+1. An abundance of software exists to create models, and
+2. It has become easier to capture and store data, as well as make it accessible.
+
+### Exercise 15
+
+Copy the previous code and assingn it to the variable `tree_model`.
+
+```{r making-predictions-15, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r making-predictions-15-hint-1, eval = FALSE}
+... <- decision_tree(min_n = 2) |>
+  set_engine("rpart") |>
+    set_mode("regression")
+```
+
+```{r include = FALSE}
+tree_model <- decision_tree(min_n = 2) |>
+  set_engine("rpart") |>
+    set_mode("regression")
+```
+
+### 
+
+Since the beginning of the 21st century, mathematical models have become ubiquitous in our daily lives, in both obvious and subtle ways. A typical day for many people might involve checking the weather to see when might be a good time to walk the dog, ordering a product from a website, typing a text message to a friend and having it autocorrected, and checking email. In each of these instances, there is a good chance that some type of model was involved.
+
+### Exercise 16
+
+Next, pipe `tree_model` to `fit()`. Inside `fit()`, set `formula` to `Sale_Price ~ Longitude + Latitude` and `data` to `ames_train`
+
+```{r making-predictions-16, exercise = TRUE}
+
+```
+
+```{r making-predictions-16-hint-1, eval = FALSE}
+... |> 
+  ...(Sale_Price ~ Longitude + Latitude, data = ...)
+```
+
+```{r include = FALSE}
+tree_model |> 
+  fit(Sale_Price ~ Longitude + Latitude, data = ames_train)
+```
+
+### 
+
+The data science process includes:
+
+- Exploratory data analysis, in which there is a back and forth between numerical analysis and data visualization
+
+- Feature engineering, in which the understanding gained from EDA results in the creation of specific model terms makes it easier to accurately model the observed data
+
+- Model tuning and selection, in which a variety of models are generated and their performance is compared
+
+- Model evaluation, in which the model’s performance metrics are assessed 
+
+### Exercise 17
+
+Copy the previous code and assign it to the variable `tree_fit`.
+
+```{r making-predictions-17, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r making-predictions-17-hint-1, eval = FALSE}
+... <- tree_model |> 
+  fit(Sale_Price ~ Longitude + Latitude, data = ames_train)
+```
+
+```{r include = FALSE}
+tree_fit <- tree_model |> 
+  fit(Sale_Price ~ Longitude + Latitude, data = ames_train)
+```
+
+### 
+
+Here is a schematic for the typical modeling process:
+
+```{r}
+knitr::include_graphics("images/DiagramOne.png")
+
+```
+
+### Exercise 18
+
+Next, pipe `ames_test_small` to `select()`. Inside this function, type in `Sale_Price`.
+
+```{r making-predictions-18, exercise = TRUE}
+
+```
+
+```{r making-predictions-18-hint-1, eval = FALSE}
+ames_test_small |> 
+  select(...)
+```
+
+```{r include = FALSE}
+ames_test_small |> 
+  select(Sale_Price)
+```
+
+### 
+
+After an initial sequence of these data science process, more understanding is gained regarding which models are superior as well as which data subpopulations are not being effectively estimated. This leads to additional EDA and feature engineering, another round of modeling, and so on.
+
+### Exercise 19
+
+Copy the previous code and pipe it to `bind_cols()`.
+
+```{r making-predictions-19, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r making-predictions-19-hint-1, eval = FALSE}
+ames_test_small |> 
+  select(Sale_Price) |>
+    ...()
+```
+
+```{r include = FALSE}
+ames_test_small |> 
+  select(Sale_Price) |>
+    bind_cols()
+```
+
+### 
+
+Once the data analysis goals are achieved, typically the last steps are to finalize, document, and communicate the model. For predictive models, it is common at the end to validate the model on an additional set of data reserved for this specific purpose.
+
+### Exercise 20
+
+Copy the previous code. Inside `bind_cols()`, type `predict()`. Inside `predict()`, type `tree_fit, ames_test_small`.
+
+```{r making-predictions-20, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r making-predictions-20-hint-1, eval = FALSE}
+ames_test_small |> 
+  select(Sale_Price) |>
+    bind_cols(predict(..., ...)) 
+```
+
+```{r include = FALSE}
+ames_test_small |> 
+  select(Sale_Price) |>
+    bind_cols(predict(tree_fit, ames_test_small))
+```
+
+### 
+
+This demonstrates the benefit of homogenizing the data analysis process and syntax across different models. It enables users to spend their time on the results and interpretation rather than having to focus on the syntactical differences between R packages.
+
+
 ## Summary
 ### 
 
-<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+In this tutorial you have learned:
+
+- How to create a linear regression model with `linear_reg()` and `set_engine()`
+
+- How to fit a model with `fit()`
+
+- How **parsnip** argument names map to the original names with `rand_forest()`
+
+- How to use the results of a model with `extract_fit_engine()` and `coef()`
+
+- How to predict values with `predict()`
+
+- How to merge predictions with `bind_cols()`
+
 
 ```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
 ```
