@@ -32,10 +32,41 @@ options(tutorial.exercise.timelimit = 60,
 ## Introduction
 ###
 
-<!-- Two to four sentence about the main topics covered in this tutorial. Why are we here? What will students get out of giving you 90 minutes of their lives? How does this tutorial connect to other tutorials? -->
+This tutorial covers [Chapter 8: Feature Engineering with recipies](https://www.tmwr.org/recipes.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This tutorial covers the usage of `recipe()`.
 
-## First section (use sentence case)
+ 
+
+## A simple `recipe()` for the Ames housing data
 ###
+
+In this section, we will focus on a small subset of the predictors available in the `ames` housing data:
+
+- The neighborhood (qualitative, with 29 neighborhoods in the training set)
+- The gross above-grade living area (continuous, named `Gr_Liv_Area`)
+- The year built (`Year_Built`)
+- The type of building (`Bldg_Type` with values `OneFam` (n = 1936), `TwoFmCon` (n = 50), `Duplex` (n = 88), `Twnhs` (n = 77), `TwnhsE` (n = 191)
+
+### Exercise 1
+
+
+```{r a-simple-recipe-for--1, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-simple-recipe-for--1-hint, eval = FALSE}
+
+```
+
+```{r, include = FALSE}
+
+```
+
+###
+
+
+
 
 ## Summary
 ###
