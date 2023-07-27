@@ -14,6 +14,7 @@ description: 'Tutorial for Chapter 8: Feature Engineering with recipes'
 ```{r setup, include = FALSE}
 library(learnr)
 library(tutorial.helpers)
+library(tidyverse)
 library(tidymodels)
 tidymodels_prefer()
 
