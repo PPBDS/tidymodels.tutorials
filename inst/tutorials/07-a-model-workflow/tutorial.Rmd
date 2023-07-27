@@ -1,6 +1,6 @@
 ---
 title: A Model Workflow
-author: David Kane and Pratham Kancherla
+author: Pratham Kancherla and David Kane
 tutorial:
   id: a-model-workflow
 output: 
@@ -17,6 +17,9 @@ library(tutorial.helpers)
 library(knitr)
 library(tidyverse)
 library(tidymodels)
+library(lme4)
+library(multilevelmod)
+library(nlme)
 
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
@@ -46,9 +49,35 @@ ames_test  <-  testing(ames_split)
 
 lm_fit <- fit(lm_wflow, ames_train)
 
-lm_wflow <- lm_wflow |>
+lm_wflow <- 
+  lm_wflow |>
   remove_formula() |>
-  add_variables(outcome = Sale_Price, predictors = c(Longitude, Latitude))
+  add_variables(outcome = Sale_Price,
+                predictors = c(Longitude, Latitude)
+  )
+
+multilevel_spec <- 
+  linear_reg() |> 
+  set_engine("lmer")
+
+multilevel_workflow <- 
+  workflow() |>
+  add_variables(outcome = distance,
+                predictors = c(Sex, age, Subject)) |>
+  add_model(multilevel_spec, 
+            formula = distance ~ Sex + (age | Subject)
+    )
+
+multilevel_fit <- fit(multilevel_workflow, data = Orthodont)
+
+location <- list(
+  longitude = Sale_Price ~ Longitude,
+  latitude = Sale_Price ~ Latitude,
+  coords = Sale_Price ~ Longitude + Latitude,
+  neighborhood = Sale_Price ~ Neighborhood
+)
+
+library(workflowsets)
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -236,7 +265,7 @@ lm_wflow <-
 
 ###
 
-The fit() function is used to train a specified model on a given dataset, using the formula and data provided in the model specification. It returns a fitted model object that can be used for prediction and evaluation.
+The `fit()` function is used to train a specified model on a given dataset, using the formula and data provided in the model specification. It returns a fitted model object that can be used for prediction and evaluation.
 
 ### Exercise 8
 
@@ -256,7 +285,7 @@ lm_fit <- fit(lm_wflow, ames_train)
 
 ###
 
-The predict() function works with a wide range of models, including linear regression, generalized linear models, decision trees, random forests, support vector machines, and many others.
+The `predict()` function works with a wide range of models, including linear regression, generalized linear models, decision trees, random forests, support vector machines, and many others.
 
 ### Exercise 9
 
@@ -272,7 +301,7 @@ predict(...)
 
 ###
 
-The predict() function requires the "newdata" argument to make predictions on new data. This argument specifies the data frame containing the predictor variables for which you want to make predictions.
+The `predict()` function requires the "newdata" argument to make predictions on new data. This argument specifies the data frame containing the predictor variables for which you want to make predictions.
 
 ### Exercise 10
 
@@ -294,7 +323,7 @@ predict(lm_fit, ames_train)
 
 ###
 
-There are too many rows that are difficult to look at once. The slice() functions lets us select a certain amount of rows to be printed out.
+There are too many rows that are difficult to look at once. The `slice()` functions lets us select a certain amount of rows to be printed out.
 
 ### Exercise 11
 
@@ -347,7 +376,7 @@ Great Job! You now understand the basics of workflow and the different functions
 ## Adding Raw Variables to the `workflow()`
 ###
 
-There is another interface for passing data to the model, the `add_variables()` function, which uses a **dplyr**-like syntax for choosing variables. The function has two primary arguments: *outcomes* and *predictors*. These use a selection approach similar to the **tidyselect** backend of **tidyverse** packages to capture multiple selectors using c().
+There is another interface for passing data to the model, the `add_variables()` function, which uses a **dplyr**-like syntax for choosing variables. The function has two primary arguments: *outcomes* and *predictors*. These use a selection approach similar to the **tidyselect** backend of **tidyverse** packages to capture multiple selectors using `c()`.
 
 ### Exercise 1
 
@@ -418,7 +447,7 @@ lm_wflow |>
 
 ###
 
-`add_variables()` adds a new column to a data frame, while add_case() adds a new row to a data frame. These are convenient functions to add columns or rows not only at the end of a data frame, but at any column or row position. Furthermore, they allow easy integration into a pipe-workflow.
+`add_variables()` adds a new column to a data frame, while `add_case()` adds a new row to a data frame. These are convenient functions to add columns or rows not only at the end of a data frame, but at any column or row position. Furthermore, they allow easy integration into a pipe-workflow.
 
 
 ### Exercise 4
@@ -434,18 +463,23 @@ Finally, copy the previous code and set the expression equal to `lm_wflow` using
 ```{r adding-raw-variables-4-hint, eval = FALSE}
 ... <- lm_wflow |>
   remove_formula() |>
-  add_variables(outcome = Sale_Price, predictors = c(Longitude, Latitude))
+  add_variables(
+    outcome = Sale_Price, 
+    predictors = c(Longitude, ...))
 ```
 
 ```{r, include = FALSE}
-lm_wflow <- lm_wflow |>
+lm_wflow <- 
+  lm_wflow |>
   remove_formula() |>
-  add_variables(outcome = Sale_Price, predictors = c(Longitude, Latitude))
+  add_variables(outcome = Sale_Price,
+                predictors = c(Longitude, Latitude)
+  )
 ```
 
 ###
 
-If you would like the underlying modeling method to do what it would normally do with the data, add_variables() can be a helpful interface. 
+If you would like the underlying modeling method to do what it would normally do with the data, `add_variables()` can be a helpful interface. 
 
 ### Exercise 5
 
@@ -481,11 +515,427 @@ A number of multilevel models have standardized on a formula specification devis
 
 ```{r how-does-a-workflow--1, exercise = TRUE}
 library(lme4)
-lmer(distance ~ Sex + (age | Subject), data = Orthodont)
+lmer(formula = distance ~ Sex + (age | Subject), data = Orthodont)
+```
+
+###
+
+The effect of this is that each subject will have an estimated intercept and slope parameter for age. The problem, however, is that standard R methods can’t properly process this formula.
+
+### Exercise 2
+
+We can try to process this formula with `model.matrix()`. Copy the previous code and replace `lmer()` with `model.matrix()`. Hit "Run Code".
+
+```{r how-does-a-workflow--2, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r how-does-a-workflow--2-hint, eval = FALSE}
+...(distance ~ Sex + (age | Subject), data = Orthodont)
+```
+
+```{r, include = FALSE}
+model.matrix(distance ~ Sex + (age | Subject), data = Orthodont)
+```
+
+Even if this formula could be used with `model.matrix()`, this would still present a problem since the formula also specifies the statistical attributes of the model.
+
+### Exercise 3
+
+The solution in workflows is an optional supplementary model formula that can be passed to `add_model()`. The `add_variables()` specification provides the bare column names, and then the actual formula given to the model is set within `add_model()`.
+
+First, load the library **multilevelmod** using `library()`.
+
+```{r how-does-a-workflow--3, exercise = TRUE}
+
 ```
 
 
+```{r how-does-a-workflow--3-hint, eval = FALSE}
+library(multilevelmod)
+```
 ###
+
+**multilevelmod** package enables the use of multilevel models (a.k.a mixed-effects models, Bayesian hierarchical models, etc.) with the **parsnip** package.
+
+### Exercise 4
+
+We need the specify that we will be using a linear regression model. Pipe `set_model("lmer")` to `linear_reg()`. Set this expression equal to `multilevel_spec` using `<-`
+
+```{r how-does-a-workflow--4, exercise = TRUE}
+
+```
+
+
+```{r how-does-a-workflow--4-hint, eval = FALSE}
+multilevel_spec <- 
+  linear_reg() |>
+  set_model("...")
+```
+
+```{r, include = FALSE}
+multilevel_spec <- 
+  linear_reg() |> 
+  set_engine("lmer")
+```
+
+###
+
+The `set_engine()` function is used to specify the computational "engine" or backend for fitting a model. It allows you to choose a specific modeling library or package to be used for model training and prediction.
+
+### Exercise 5
+
+We now need a workflow to model the data. Type `workflow()` to create a workflow. Hit "Run Code".
+
+```{r how-does-a-workflow--5, exercise = TRUE}
+
+```
+
+
+```{r how-does-a-workflow--5-hint, eval = FALSE}
+workflow()
+```
+
+###
+
+The `workflow()` function allows you to build a complete modeling pipeline by combining various modeling and preprocessing steps, making it easier to manage and reproduce complex analyses.
+
+### Exercise 6
+
+Now we need to add the raw variables to the model, which are the outcomes and predictors. Copy the previous code and pipe `add_variables()`. This will throw and error because we should always have two parameters: `outcomes` and `parameters`.
+
+```{r how-does-a-workflow--6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r how-does-a-workflow--6-hint, eval = FALSE}
+... |>
+  add_variables()
+```
+
+```{r, include = FALSE}
+#workflow() |>
+  #add_variables()
+```
+
+###
+
+For predictive models, it is advisable to evaluate a variety of different model types. This requires the user to create multiple model specifications.
+
+### Exercise 7
+
+Copy the previous code and add the parameter `outcome`, setting it equal to `distance`. This also will not work because the `predictors` parameter needs to be added
+
+```{r how-does-a-workflow--7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r how-does-a-workflow--7-hint, eval = FALSE}
+... |>
+  add_variables(outcome = ...)
+```
+
+```{r, include = FALSE}
+#workflow() |>
+  #add_variables(outcome = distance)
+```
+
+###
+
+Sequential testing of models typically starts with an expanded set of predictors. This “full model” is compared to a sequence of the same model that removes each predictor in turn. Using basic hypothesis testing methods or empirical validation, the effect of each predictor can be isolated and assessed.
+
+### Exercise 8
+
+Copy the previous code and the `predictors` parameters. Set the parameter equal to `Sex, age, Subject` using the vector function `c()`.
+
+```{r how-does-a-workflow--8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r how-does-a-workflow--8-hint, eval = FALSE}
+... |>
+  add_variables(
+    outcome = distance,
+    predictors = ...(Sex, age, Subject))
+```
+
+```{r, include = FALSE}
+workflow() |>
+  add_variables(
+    outcome = distance,
+    predictors = c(Sex, age, Subject))
+```
+
+###
+
+In regression analysis, the outcome variable is the variable we aim to model as a function of one or more predictor variables. It represents the target or dependent variable that we want to predict or explain. 
+
+### Exercise 9
+
+Finally we need to add the model. Copy the previous code and pipe `add_model()`. This will throw and error becasue a `spec` or model specification was not specified. 
+
+```{r how-does-a-workflow--9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r how-does-a-workflow--9-hint, eval = FALSE}
+... |>
+  add_model()
+```
+
+```{r, include = FALSE}
+# workflow() |>
+#   add_variables(
+#     outcome = distance,
+#     predictors = c(Sex, age, Subject)) |>
+#   add_model()
+```
+
+###
+
+The `add_model()` function allows you to add a modeling specification to your workflow. It specifies the type of model you want to use for the analysis, such as linear regression, random forest, support vector machine, etc.
+
+### Exercise 10
+
+Copy the previous code and add the specification we made earlier, `multilevel_spec` as the first parameter.
+
+```{r how-does-a-workflow--10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r how-does-a-workflow--10-hint, eval = FALSE}
+... |>
+  add_model(multilevel_spec)
+```
+
+```{r, include = FALSE}
+workflow() |>
+  add_variables(
+    outcome = distance,
+    predictors = c(Sex, age, Subject)) |>
+  add_model(multilevel_spec)
+```
+
+###
+
+The `formula` parameter allows you to specify the formula that defines the relationship between the outcome variable (response variable) and the predictor variables in the model.
+
+### Exercise 11
+
+Copy the previous code and add the parameter `formula` to `add_model()`. Set `formula` equal to the formula seen in exercise 1, `distance ~ Sex + (age | Subject)`.
+
+```{r how-does-a-workflow--11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r how-does-a-workflow--11-hint, eval = FALSE}
+... |>
+  add_model(
+    multilevel_spec,
+    formula = ...
+            )
+```
+
+```{r, include = FALSE}
+workflow() |>
+  add_variables(
+    outcome = distance,
+    predictors = c(Sex, age, Subject)) |>
+  add_model(
+    multilevel_spec, 
+    formula = distance ~ Sex + (age | Subject)
+    )
+```
+
+### Exercise 12
+
+Copy the previous code and set it equal to `multilevel_workflow` using `<-`.
+
+```{r how-does-a-workflow--12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r how-does-a-workflow--12-hint, eval = FALSE}
+multilevel_workflow <- ...
+```
+
+```{r, include = FALSE}
+multilevel_workflow <- 
+  workflow() |>
+  add_variables(outcome = distance,
+                predictors = c(Sex, age, Subject)) |>
+  add_model(multilevel_spec, 
+            formula = distance ~ Sex + (age | Subject)
+    )
+```
+
+###
+
+Since the preprocessing is model dependent, workflows attempts to emulate what the underlying model would do whenever possible. If it is not possible, the formula processing should not do anything to the columns used in the formula. 
+
+### Exercise 13
+
+Now we need to fit the model specified using a model specification object using `fit()`. Type in `fit()` and add the parameter `multilevel_workflow`. Error will appear but we will fix it later.
+
+```{r how-does-a-workflow--13, exercise = TRUE}
+
+```
+
+```{r how-does-a-workflow--13-hint, eval = FALSE}
+fit(...)
+```
+
+```{r, include = FALSE}
+#fit(multilevel_workflow)
+```
+
+###
+
+Preprocessing is a crucial step in the data analysis workflow because it helps address various issues and challenges associated with real-world data.
+
+### Exercise 14
+
+Copy the previous code and add the `data` parameter, setting it equal `Orthodont`. Set this expression equal to `multilevel_fit` and print it out on the next line.
+
+```{r how-does-a-workflow--14, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r how-does-a-workflow--14-hint, eval = FALSE}
+multilevel_fit <- fit(multilevel_workflow, data = ...)
+```
+
+```{r, include = FALSE}
+fit(multilevel_workflow, data = Orthodont)
+```
+
+###
+
+`strata()` is a special function used in the context of the Cox survival model. It identifies stratification variables when they appear on the right hand side of a formula.
+
+### Exercise 15
+
+<!-- PK: Not sure if I should just give this code since it is kind of repetitive from the last 13 exercises of just split it up. -->
+
+We can even use the previously mentioned `strata()` function from the survival package for survival analysis. Run the following code.
+
+```{r how-does-a-workflow--15, exercise = TRUE}
+library(censored)
+
+parametric_spec <- survival_reg()
+
+parametric_workflow <- 
+  workflow() %>% 
+  add_variables(outcome = c(fustat, futime), predictors = c(age, rx)) %>% 
+  add_model(parametric_spec, 
+            formula = Surv(futime, fustat) ~ age + strata(rx))
+
+parametric_fit <- fit(parametric_workflow, data = ovarian)
+parametric_fit
+```
+
+###
+
+Great Job! You now know how a workflow uses different sorts of formulas from a data set.
+
+## Creating Multiple Workflows at Once
+###
+In some situations, the data require numerous attempts to find an appropriate model. In these situations, as well as others, it can become tedious or onerous to create a lot of workflows from different sets of preprocessors and/or model specifications. To address this problem, the **workflowset** package creates combinations of workflow components. A list of preprocessors (e.g., formulas, **dplyr** selectors, or feature engineering recipe objects discussed in the next chapter) can be combined with a list of model specifications, resulting in a set of workflows.
+
+### Exercise 1
+
+Let’s say that we want to focus on the different ways that house location is represented in the Ames data. We can create a set of formulas that capture these predictors. Hit "Run Code".
+
+```{r creating-multiple-wo-1, exercise = TRUE}
+location <- list(
+  longitude = Sale_Price ~ Longitude,
+  latitude = Sale_Price ~ Latitude,
+  coords = Sale_Price ~ Longitude + Latitude,
+  neighborhood = Sale_Price ~ Neighborhood
+)
+```
+
+###
+
+In R, list() is a built-in function used to create a list, which is a versatile data structure that can hold elements of different types, such as vectors, matrices, data frames, and even other lists. Lists allow you to organize and store multiple objects together in a single container.
+
+### Exercise 2
+ 
+Load the library **workflowsets** using `library()`.
+
+```{r creating-multiple-wo-2, exercise = TRUE}
+
+```
+
+```{r creating-multiple-wo-2-hint, eval = FALSE}
+library(...)
+```
+
+```{r, include = FALSE}
+library(workflowsets)
+```
+
+###
+
+The goal of **workflowsets** is to allow users to create and easily fit a large number of models. **workflowsets** can create a *workflow set* that holds multiple workflow objects. These objects can be created by crossing all combinations of preprocessors (e.g., formula, recipe, etc) and model specifications. This set can be tuned or resampled using a set of specific functions.
+
+### Exercise 3
+
+Create a workflow set by using the method `workflow_set()`. Add the parameter `preproc` and set it equal to the `location` list created earlier.
+
+```{r creating-multiple-wo-3, exercise = TRUE}
+
+```
+
+```{r creating-multiple-wo-3-hint, eval = FALSE}
+workflow_set(preproc = ...)
+```
+
+```{r, include = FALSE}
+#workflow_set(preproc = location)
+```
+
+This throws an error because no model is specified for the set. 
+
+### Exercise 4
+
+We will use a linear model `lm_model` across the list of locations. Copy the previous code and add the parameter `models`, setting it equal to `list(lm = lm_model)`.
+
+```{r creating-multiple-wo-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-multiple-wo-4-hint, eval = FALSE}
+
+```
+
+```{r, include = FALSE}
+
+```
+
+###
+
+
 
 
 ## Summary
