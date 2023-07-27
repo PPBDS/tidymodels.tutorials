@@ -1,0 +1,77 @@
+---
+title: Feature Engineering with recipes
+author: Aryan Kancherla and David Kane
+tutorial:
+  id: feature-engineering-with-recipes
+output: 
+  learnr::tutorial:
+    progressive: true
+    allow_skip: true
+runtime: shiny_prerendered
+description: 'Tutorial for Chapter 8: Feature Engineering with recipes'
+---
+
+```{r setup, include = FALSE}
+library(learnr)
+library(tutorial.helpers)
+library(tidyverse)
+library(tidymodels)
+tidymodels_prefer()
+
+knitr::opts_chunk$set(echo = FALSE)
+options(tutorial.exercise.timelimit = 60, 
+        tutorial.storage = "local") 
+```
+
+```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
+```
+
+```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
+```
+
+## Introduction
+###
+
+This tutorial covers [Chapter 8: Feature Engineering with recipies](https://www.tmwr.org/recipes.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This tutorial covers the usage of `recipe()`.
+
+ 
+
+## A simple `recipe()` for the Ames housing data
+###
+
+In this section, we will focus on a small subset of the predictors available in the `ames` housing data:
+
+- The neighborhood (qualitative, with 29 neighborhoods in the training set)
+- The gross above-grade living area (continuous, named `Gr_Liv_Area`)
+- The year built (`Year_Built`)
+- The type of building (`Bldg_Type` with values `OneFam` (n = 1936), `TwoFmCon` (n = 50), `Duplex` (n = 88), `Twnhs` (n = 77), `TwnhsE` (n = 191)
+
+### Exercise 1
+
+
+```{r a-simple-recipe-for--1, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-simple-recipe-for--1-hint, eval = FALSE}
+
+```
+
+```{r, include = FALSE}
+
+```
+
+###
+
+
+
+
+## Summary
+###
+
+<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+
+```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
+```
