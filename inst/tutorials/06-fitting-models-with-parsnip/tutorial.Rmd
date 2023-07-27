@@ -54,7 +54,7 @@ tree_fit <- tree_model |>
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
-<!-- DK: Don't use "our" or "we", unless you are talking about us, the authors of the tutorial. Done. -->
+<!-- DK: Pipe things like coef(). Don't wrap them around a multi-step pipeline. -->
 
 ## Introduction
 ### 

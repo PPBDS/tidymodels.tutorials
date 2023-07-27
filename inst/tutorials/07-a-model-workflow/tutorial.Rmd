@@ -833,7 +833,7 @@ fit(multilevel_workflow, data = Orthodont)
 
 ### Exercise 15
 
-<!-- PK: Not sure if I should just give this code since it is kind of repetitive from the last 13 exercises of just split it up. -->
+<!-- PK: Not sure if I should just give this code since it is kind of repetitive from the last 13 exercises of just split it up. Split it up! Repetition in the pursuit of understanding is no vice! -->
 
 We can even use the previously mentioned `strata()` function from the survival package for survival analysis. Run the following code.
 
