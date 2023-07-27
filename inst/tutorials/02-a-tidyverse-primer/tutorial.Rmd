@@ -1,6 +1,6 @@
 ---
 title: A Tidyverse Primer
-author: David Kane and Pratham Kancherla
+author: Pratham Kancherla and David Kane
 tutorial:
   id: a-tidyverse-primer
 output:

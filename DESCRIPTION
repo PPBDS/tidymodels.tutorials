@@ -18,5 +18,8 @@ Suggests:
     testthat (>= 3.0.0),
     tutorial.helpers,
     tidyverse,
-    tidymodels
+    tidymodels,
+    lme4,
+    multilevelmod,
+    nlme
 Config/testthat/edition: 3
