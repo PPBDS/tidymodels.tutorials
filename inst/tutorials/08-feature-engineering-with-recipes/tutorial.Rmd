@@ -14,13 +14,39 @@ description: 'Tutorial for Chapter 8: Feature Engineering with recipes'
 ```{r setup, include = FALSE}
 library(learnr)
 library(tutorial.helpers)
-library(tidyverse)
 library(tidymodels)
 tidymodels_prefer()
 
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
         tutorial.storage = "local") 
+
+ames_update <- ames |>
+  mutate(Sale_Price = log10(Sale_Price))
+
+set.seed(502)
+ames_strata_split <- initial_split(ames_update, prop = 0.80, strata = Sale_Price)
+ames_train <- training(ames_strata_split)
+ames_test <- testing(ames_strata_split)
+
+simple_ames <- recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+    step_dummy(all_nominal_predictors())
+
+lm_model <- linear_reg() %>% set_engine("lm")
+
+lm_wflow <- 
+  workflow() %>% 
+  add_model(lm_model) %>% 
+  add_variables(outcome = Sale_Price, predictors = c(Longitude, Latitude))
+
+lm_wflow_edit <- lm_wflow |>
+  remove_variables() |>
+    add_recipe(simple_ames)
+
+lm_fit <- fit(lm_wflow, ames_train)
+
+
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -48,19 +74,427 @@ In this section, we will focus on a small subset of the predictors available in 
 
 ### Exercise 1
 
+Load the **tidymodels** library using `library()`.
 
 ```{r a-simple-recipe-for--1, exercise = TRUE}
 
 ```
 
+```{r a-simple-recipe-for--1-hint, eval = FALSE}
+library(...)
+```
+
+```{r, include = FALSE}
+library(tidymodels)
+```
+
+###
+
+Feature engineering entails reformatting predictor values to make them easier for a model to use effectively. This includes transformations and encodings of the data to best represent their important characteristics. Imagine that you have two predictors in a data set that can be more effectively represented in your model as a ratio; creating a new predictor from the ratio of the original two is a simple example of feature engineering.
+
+### Exercise 2
+
+Type in `tidymodels_prefer()` to get rid of naming conflicts.
+
+```{r a-simple-recipe-for--2, exercise = TRUE}
+
+```
+
+```{r a-simple-recipe-for--2-hint, eval = FALSE}
+...()
+```
+
+```{r, include = FALSE}
+tidymodels_prefer()
+```
+
+###
+
+A recipe is also an object that defines a series of steps for data processing. Unlike the formula method inside a modeling function, the recipe defines the steps via `step_*()` functions without immediately executing them; it is only a specification of what should be done.
+
+### Exercise 3
+
+Type in `?recipe()` in the Console and look at the Description section. CP/CR.
+
+```{r a-simple-recipe-for--3}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+###
+
+For example, when choosing how to encode the location of a house in Ames in modeling, we might choose an option we believe is most associated with the outcome. The original format of the data, for example numeric (e.g., distance) versus categorical (e.g., neighborhood), is also a driving factor in feature engineering choices. This is called *preprocessing*.
+
+### Exercise 4
+
+Type in `ames_train` and press "Run Code".
+
+```{r a-simple-recipe-for--4, exercise = TRUE}
+
+```
+
+```{r a-simple-recipe-for--4-hint, eval = FALSE}
+...
+```
+
+```{r, include = FALSE}
+ames_train
+```
+
+###
+
+This variable was created in [Chapter 5: Spending our Data](https://www.tmwr.org/splitting.html). As a reminder, this variable contains the training data from the `ames` data set (which has been pre-logged). 
+
+### Exercise 5
+
+Lets create a recipe using `ames_train`. Type in `recipe()` and set `formula` to `Sale_Price ~ Neighborhood`. Then, set `data` to `ames_train`.
+
+```{r a-simple-recipe-for--5, exercise = TRUE}
+
+```
+
+```{r a-simple-recipe-for--5-hint, eval = FALSE}
+...(... = Sale_Price ~ Neighborhood, data = ...)
+```
+
+```{r, include = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood, data = ames_train)
+```
+
+###
+
+Other examples of preprocessing to build better features for modeling include:
+
+- Correlation between predictors can be reduced via feature extraction or the removal of some predictors.
+
+- When some predictors have missing values, they can be imputed using a sub-model.
+
+- Models that use variance-type measures may benefit from coercing the distribution of some skewed predictors to be symmetric by estimating a transformation.
+
+### Exercise 6
+
+Copy the previous code. After `Neighborhood`, add `Gr_Liv_Area`, `Year_Built`, and `Bldg_Type` using `+`.
+
+```{r a-simple-recipe-for--6, exercise = TRUE}
+
+```
+
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r a-simple-recipe-for--1-hint, eval = FALSE}
+```{r a-simple-recipe-for--6-hint, eval = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + ... + ... , data = ames_train)
 
 ```
 
 ```{r, include = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train)
+```
 
+###
+
+The call to `recipe()` with a formula tells the recipe the *roles* of the “ingredients” or variables (e.g., predictor, outcome). It only uses the data `ames_train` to determine the data types for the columns.
+
+### Exercise 7
+
+Next, the `step_log()` function is going to be used. In the Console, type in `?step_log()` and look at the *Description* section. CP/CR.
+
+```{r a-simple-recipe-for--7}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+###
+
+Feature engineering and data preprocessing can also involve reformatting that may be required by the model. Some models use geometric distance metrics and, consequently, numeric predictors should be centered and scaled so that they are all in the same units. Otherwise, the distance values would be biased by the scale of each column.
+
+
+### Exercise 8
+
+Copy the code from Exercise 6 and pipe it to `step_log()`. Inside this function, type in `Gr_Liv_Area` and set `base` to `10`.
+
+```{r a-simple-recipe-for--8, exercise = TRUE}
+
+```
+
+```{r a-simple-recipe-for--8-hint, eval = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(..., base = ...)
+```
+
+```{r, include = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10)
+```
+
+###
+
+`step_log()` declares that `Gr_Liv_Area` should be log transformed.
+
+### Exercise 9
+
+Next, the `step_dummy()` function will be used. In the Console, type `?step_dummy()` and look at the *Description* section. CP/CR.
+
+```{r a-simple-recipe-for--9}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+###
+
+Different models have different preprocessing requirements and some, such as tree-based models, require very little preprocessing at all.
+
+
+### Exercise 10
+
+Copy the code from Exercise 8 and pipe it to `step_dummy()`. Inside of the function, type in `all_nominal_predictors()`.  
+
+```{r a-simple-recipe-for--10, exercise = TRUE}
+
+```
+
+```{r a-simple-recipe-for--10-hint, eval = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+    step_dummy(...())
+```
+
+```{r, include = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+    step_dummy(all_nominal_predictors())
+```
+
+###
+
+`step_dummy()` specifies which variables should be converted from a qualitative format to a quantitative format, in this case, using dummy or indicator variables. An indicator or dummy variable is a binary numeric variable (a column of ones and zeroes) that encodes qualitative information
+
+The function `all_nominal_predictors()` captures the names of any predictor columns that are currently factor or character (i.e., nominal) in nature. This is a **dplyr**-like selector function similar to `starts_with()` or `matches()` but that can only be used inside of a recipe
+
+### Exercise 11
+
+Copy the previous code and assign it to a new variable called `simple_ames`. 
+
+```{r a-simple-recipe-for--11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-simple-recipe-for--11-hint, eval = FALSE}
+... <- recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+    step_dummy(all_nominal_predictors())
+```
+
+```{r, include = FALSE}
+simple_ames <- recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+    step_dummy(all_nominal_predictors())
+```
+
+###
+
+What is the advantage to using a recipe, over a formula or raw predictors? There are a few, including:
+
+- These computations can be recycled across models since they are not tightly coupled to the modeling function.
+
+- A recipe enables a broader set of data processing choices than formulas can offer.
+
+- The syntax can be very compact. For example, all_nominal_predictors() can be used to capture many variables for specific types of processing while a formula would require each to be explicitly listed.
+
+- All data processing can be captured in a single R object instead of in scripts that are repeated, or even spread across different files.
+
+###
+
+Congrats! You have learned how to create a recipe.
+
+## Using Recipies
+###
+
+Preprocessing choices and feature engineering should typically be considered part of a modeling workflow, not a separate task. The **workflows** package contains high level functions to handle different types of preprocessors. The previous workflow (`lm_wflow`) used a simple set of dplyr selectors. To improve on that approach with more complex feature engineering, let’s use the simple_ames recipe to preprocess data for modeling.
+
+### Exercise 1
+
+Type in `lm_wflow` and press "Run Code".
+
+```{r using-recipies-1, exercise = TRUE}
+
+```
+
+```{r using-recipies-1-hint, eval = FALSE}
+...
+```
+
+```{r, include = FALSE}
+lm_wflow
+```
+
+###
+
+As a reminder, a *model workflow* encapsulates the major pieces of the modeling process by encouraging good methodology (since it is a single point of entry to the estimation components of a data analysis) and enabling the user to better organize projects.
+
+Here is the code for `lm_wflow`, which was created in the *A Model Workflow* tutorial:
+
+````
+lm_model <- linear_reg() %>% set_engine("lm")
+
+lm_wflow <- 
+  workflow() %>% 
+  add_model(lm_model) %>% 
+  add_variables(outcome = Sale_Price, predictors = c(Longitude, Latitude))
+  
+````
+
+### Exercise 2
+
+Lets attach `simple_ames` to this workflow. In the code chunk below, pipe `lm_wflow` to `add_recipe()`. Inside this function, pass in `simple_ames` (Note: This will throw an error).
+
+```{r using-recipies-2, exercise = TRUE}
+
+```
+
+```{r using-recipies-2-hint, eval = FALSE}
+lm_wflow |>
+  add_recipe(...)
+```
+
+```{r, include = FALSE}
+# lm_wflow |>
+#  add_recipe(simple_ames)
+```
+
+###
+
+There can only be one preprocessing method at a time, so the existing preprocessor needs to be removed before adding the recipe.
+
+### Exercise 3
+
+Copy the previous code. Instead of piping `lm_wflow` to `add_recipe()`, pipe `lm_wflow` to `remove_variables()` and then create the pipe to `add_recipe()`.
+
+```{r using-recipies-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-recipies-3-hint, eval = FALSE}
+lm_wflow |>
+  ...() |>
+    add_recipe(simple_ames)
+```
+
+```{r, include = FALSE}
+lm_wflow |>
+  remove_variables() |>
+    add_recipe(simple_ames)
+```
+
+###
+
+Take a look at the output. The *Workflow* section shows that this model is a linear regression model, with a preprocessor of `recipe`. The *Preprocessor* section shows the steps that have been created: `step_log()`, which declared that `Gr_Liv_Area` should be log transformed, and `step_dummy()`, which specified which variables should be converted from a qualitative format to a quantitative format.
+
+### Exercise 4
+
+Copy the previous code and assign it to `lm_wflow_edit`. 
+
+```{r using-recipies-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-recipies-4-hint, eval = FALSE}
+... <- lm_wflow |>
+  remove_variables() |>
+    add_recipe(simple_ames)
+```
+
+```{r, include = FALSE}
+lm_wflow_edit <- lm_wflow |>
+  remove_variables() |>
+    add_recipe(simple_ames)
+```
+
+###
+
+Other selectors specific to the recipes package are: `all_numeric_predictors()`, `all_numeric()`, `all_predictors()`, and `all_outcomes()`. As with **dplyr**, one or more unquoted expressions, separated by commas, can be used to select which columns are affected by each step.
+
+### Exercise 5
+
+Now, let’s estimate both the recipe and model using a simple call to `fit()`.Type in `fit()`, passing in `lm_wflow` and `ames_train`. 
+
+```{r using-recipies-5, exercise = TRUE}
+
+```
+
+```{r using-recipies-5-hint, eval = FALSE}
+fit(..., ames_train)
+```
+
+```{r, include = FALSE}
+fit(lm_wflow_edit, ames_train)
+```
+
+###
+
+<!-- AK: Confused on the "Coefficients" section of the output -->
+
+### Exercise 6
+
+Copy the previous code and assign it to a new variable called `lm_fit`.
+
+```{r using-recipies-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-recipies-6-hint, eval = FALSE}
+... <- fit(lm_wflow_edit, ames_train)
+```
+
+```{r, include = FALSE}
+lm_fit <- fit(lm_wflow_edit, ames_train)
+```
+
+###
+
+Take a look at the following code:
+
+````
+lm(Sale_Price ~ Neighborhood + log10(Gr_Liv_Area) + Year_Built + Bldg_Type, data = ames)
+````
+
+When this function is executed, the data are converted from a data frame to a numeric design matrix (also called a model matrix) and then the least squares method is used to estimate parameters.
+
+### Exercise 7
+
+The `predict()` method applies the same preprocessing that was used on the training set to the new data before passing them along to the model’s `predict()` method.
+
+Type in `predict()`, passing in `lm_fit` and `ames_train`.
+
+```{r using-recipies-7, exercise = TRUE}
+
+```
+
+```{r using-recipies-7-hint, eval = FALSE}
+predict(..., ...)
+```
+
+```{r, include = FALSE}
+predict(lm_fit, ames_test)
 ```
 
 ###

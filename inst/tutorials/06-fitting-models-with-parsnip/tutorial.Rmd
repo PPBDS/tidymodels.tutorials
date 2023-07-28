@@ -26,9 +26,9 @@ ames_update <- ames |>
   mutate(Sale_Price = log10(Sale_Price))
 
 set.seed(502)
-ames_split <- initial_split(ames_update, prop = 0.80, strata = Sale_Price)
-ames_train <- training(ames_split)
-ames_test <- testing(ames_split)
+ames__strata_split <- initial_split(ames_update, prop = 0.80, strata = Sale_Price)
+ames_train <- training(ames_strata_split)
+ames_test <- testing(ames_strata_split)
 
 lm_model <- linear_reg() |>
   set_engine("lm")
@@ -282,8 +282,8 @@ Also, in the "Spending our Data" tutorial, the `ames_train` variable was created
 
 ````
 set.seed(502)
-ames_split <- initial_split(ames_update, prop = 0.80, strata = Sale_Price)
-ames_train <- training(ames_split)
+ames_strata_split <- initial_split(ames_update, prop = 0.80, strata = Sale_Price)
+ames_train <- training(ames_strata_split)
 
 ````
 
