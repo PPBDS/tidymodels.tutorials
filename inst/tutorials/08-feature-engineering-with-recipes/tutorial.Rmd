@@ -44,7 +44,7 @@ lm_wflow_edit <- lm_wflow |>
   remove_variables() |>
     add_recipe(simple_ames)
 
-lm_fit <- fit(lm_wflow, ames_train)
+lm_fit <- fit(lm_wflow_edit, ames_train)
 
 
 ```
@@ -55,12 +55,14 @@ lm_fit <- fit(lm_wflow, ames_train)
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
+<!-- Note to self: Use section 8.3 for knowledge drops. -->
+<!-- Note to self: Finish "Introduction" Section -->
+
 ## Introduction
 ###
 
 This tutorial covers [Chapter 8: Feature Engineering with recipies](https://www.tmwr.org/recipes.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This tutorial covers the usage of `recipe()`.
 
- 
 
 ## A simple `recipe()` for the Ames housing data
 ###
@@ -320,10 +322,10 @@ What is the advantage to using a recipe, over a formula or raw predictors? There
 
 Congrats! You have learned how to create a recipe.
 
-## Using Recipies
+## Using Recipes
 ###
 
-Preprocessing choices and feature engineering should typically be considered part of a modeling workflow, not a separate task. The **workflows** package contains high level functions to handle different types of preprocessors. The previous workflow (`lm_wflow`) used a simple set of dplyr selectors. To improve on that approach with more complex feature engineering, let’s use the simple_ames recipe to preprocess data for modeling.
+Preprocessing choices and feature engineering should typically be considered part of a modeling workflow, not a separate task. The **workflows** package contains high level functions to handle different types of preprocessors. The previous workflow (`lm_wflow`) used a simple set of dplyr selectors. To improve on that approach with more complex feature engineering, let’s use the `simple_ames` recipe to preprocess data for modeling.
 
 ### Exercise 1
 
@@ -433,7 +435,7 @@ Other selectors specific to the recipes package are: `all_numeric_predictors()`,
 
 ### Exercise 5
 
-Now, let’s estimate both the recipe and model using a simple call to `fit()`.Type in `fit()`, passing in `lm_wflow` and `ames_train`. 
+Now, let’s estimate both the recipe and model using a simple call to `fit()`.Type in `fit()`, passing in `lm_wflow_edit` and `ames_train`. 
 
 ```{r using-recipies-5, exercise = TRUE}
 
@@ -449,7 +451,7 @@ fit(lm_wflow_edit, ames_train)
 
 ###
 
-<!-- AK: Confused on the "Coefficients" section of the output -->
+<!-- AK: Add knowledge drop -->
 
 ### Exercise 6
 
@@ -485,6 +487,8 @@ The `predict()` method applies the same preprocessing that was used on the train
 
 Type in `predict()`, passing in `lm_fit` and `ames_train`.
 
+<!-- AK: Getting a warning message here and unsure of how to fix it.  -->
+
 ```{r using-recipies-7, exercise = TRUE}
 
 ```
@@ -499,6 +503,93 @@ predict(lm_fit, ames_test)
 
 ###
 
+This [link](https://www.tmwr.org/pre-proc-table.html#pre-proc-table) contains a small table of recommended preprocessing techniques for different models.
+
+### Exercise 8
+
+The `extract_recipe()` function can be used to retrieve a bare model object or recipe.
+
+In the code chunk below, pipe `lm_fit` to `extract_recipe()`. Inside this function, set `estimated` to `TRUE`.
+
+```{r using-recipies-8, exercise = TRUE}
+
+```
+
+```{r using-recipies-8-hint, eval = FALSE}
+lm_fit |>
+  ...(estimated = ...)
+```
+
+```{r, include = FALSE}
+lm_fit |>
+  extract_recipe(estimated = TRUE)
+```
+
+###
+
+As you can see, this code produces all the information about the recipe that was created at the beginning of this section, including the inputs, training data information, and the operations on the recipe.
+
+### Exercise 9
+
+Finally, lets tidy the model fit, ultimately producing a tibble. Start by piping `lm_fit` to `extract_fit_parsnip()`.
+
+```{r using-recipies-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-recipies-9-hint, eval = FALSE}
+lm_fit |>
+  ...()
+```
+
+```{r, include = FALSE}
+lm_fit |>
+  extract_fit_parsnip()
+```
+
+###
+
+`extract_fit_parsnip()` returns the parsnip object, including the coefficients and the function that was used to create the model, which in this case is `lm()`.
+
+### Exercise 10
+
+Copy the previous code and pipe it to `tidy()`. Then, pipe the code to `slice(1:5)`. 
+
+```{r using-recipies-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-recipies-10-hint, eval = FALSE}
+
+```
+
+```{r, include = FALSE}
+lm_fit |>
+  extract_fit_parsnip() |>
+    tidy() |>
+      slice(1:5)
+```
+
+###
+
+- `estimate` stands for the estimated coefficient for each predictor variable, representing its effect on the outcome variable.
+
+- std.error` stands for the standard error associated with the estimate, representing the uncertainty or variability in the coefficient estimate.
+
+- `statistic` stands for the t-statistic or z-statistic, which is used to test the null hypothesis that the corresponding coefficient is equal to zero.
+
+- `p-value` stands for the p-value associated with the statistical test for each predictor variable. It indicates the probability of observing the data if the null hypothesis (the coefficient is zero) is true. Smaller p-values suggest stronger evidence against the null hypothesis.
+
+###
+
+Congrats! You have learned how to use recipes.
+
+## Examples of Recipe Steps
+###
 
 
 
