@@ -1070,15 +1070,15 @@ Lets add this to `step_ames1`, which was created earlier in this section. Type i
 
 ```
 
-```{r examples-of-recipe-s-16-hint, eval = FALSE}
+```{r examples-of-recipe-s-16-hint-1, eval = FALSE}
 ...
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 simple_ames1
 ```
 
-###
+### 
 
 Here is one way to specify an interaction in a recipe (referring to `ames`):
 
@@ -1099,17 +1099,17 @@ Copy the previous code and pipe it to `step_interact()`. Inside this function, p
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r examples-of-recipe-s-17-hint, eval = FALSE}
+```{r examples-of-recipe-s-17-hint-1, eval = FALSE}
 simple_ames1 |>
   ...(...( ~ Gr_Liv_Area:starts_with("Bldg_Type_") ))
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 simple_ames1 |>
   step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_"))
 ```
 
-###
+### 
 
 Here's another way to specify an interaction for a recipe (referring to `ames`):
 
@@ -1127,17 +1127,17 @@ Copy the previous code and assign it to a new variable called `simple_ames2`.
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r examples-of-recipe-s-18-hint, eval = FALSE}
+```{r examples-of-recipe-s-18-hint-1, eval = FALSE}
 ... <- simple_ames1 |>
   step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_"))
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 simple_ames2 <- simple_ames1 |>
   step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_"))
 ```
 
-###
+### 
 
 Additional interactions can be specified in this formula by separating them by `+`. Also note that the recipe will only use interactions between different variables; if the formula uses `var_1:var_1`, this term will be ignored.
 
@@ -1150,7 +1150,7 @@ Suppose that, in a recipe, dummy variables had not been made for building types.
 step_interact( ~ Gr_Liv_Area:Bldg_Type )
 ````
 
-###
+### 
 
 This is telling the underlying (base R) code used by step_interact() to make dummy variables and then form the interactions. In fact, if this occurs, a warning states that this might generate unexpected results.
 
@@ -1165,15 +1165,15 @@ Load the `patchwork` library.
 
 ```
 
-```{r examples-of-recipe-s-20-hint, eval = FALSE}
+```{r examples-of-recipe-s-20-hint-1, eval = FALSE}
 library(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 library(patchwork)
 ```
 
-###
+### 
 
 One common method for doing this is to use *spline* functions to represent the data. Splines replace the existing numeric predictor with a set of columns that allow a model to emulate a flexible, nonlinear relationship. As more spline terms are added to the data, the capacity to nonlinearly represent the relationship increases.
 
@@ -1185,15 +1185,15 @@ Load the `splines` library.
 
 ```
 
-```{r examples-of-recipe-s-21-hint, eval = FALSE}
+```{r examples-of-recipe-s-21-hint-1, eval = FALSE}
 library(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 library(splines)
 ```
 
-###
+### 
 
 Unfortunately, the more spline terms that are added to the data, the more likely it is to pick up data trends that occur by chance (i.e., overfitting).
 
@@ -1205,19 +1205,19 @@ Lets create a spline graph for the latitude predictor. Start by typing in `funct
 
 ```
 
-```{r examples-of-recipe-s-22-hint, eval = FALSE}
+```{r examples-of-recipe-s-22-hint-1, eval = FALSE}
 function (deg_free) {
   ...()
 }
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 function (deg_free) {
   ggplot()
 }
 ```
 
-###
+### 
 
 `deg_free` stands for the degrees of freedom, which isthe maximum number of logically independent values.
 
@@ -1230,19 +1230,19 @@ Copy the previous code. Inside `ggplot()`, set `data` to `ames_train`.
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r examples-of-recipe-s-23-hint, eval = FALSE}
+```{r examples-of-recipe-s-23-hint-1, eval = FALSE}
 function (deg_free) {
   ggplot(data = ...)
 }
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 function (deg_free) {
   ggplot(data = ames_train)
 }
 ```
 
-###
+### 
 
 When using `predict(workflow, new_data)`, no model or preprocessor parameters like those from recipes are re-estimated using the values in `new_data`. Take centering and scaling using `step_normalize()` as an example. Using this step, the means and standard deviations from the appropriate columns are determined from the training set; new samples at prediction time are standardized using these values from training when `predict()` is invoked.
 
@@ -1257,19 +1257,19 @@ Copy the previous code. Inside `ggplot()`, using `aes()`, set `x` to `Latitude` 
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r examples-of-recipe-s-24-hint, eval = FALSE}
+```{r examples-of-recipe-s-24-hint-1, eval = FALSE}
 function (deg_free) {
   ggplot(data = ames_train, aes(x = ..., y = ...))
 }
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 function (deg_free) {
   ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price))
 }
 ```
 
-###
+### 
 
 Recipes can also handle data that are not in the traditional structure where the columns are features. For example, the **textrecipes** package can apply natural language processing methods to the data. The input column is typically a string of text, and different steps can be used to tokenize the data (e.g., split the text into separate words), filter out tokens, and create new features appropriate for modeling.
 
@@ -1283,21 +1283,21 @@ Copy the previous code and add `geom_point()`. Inside `geom_point()`, set `alpha
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r examples-of-recipe-s-25-hint, eval = FALSE}
+```{r examples-of-recipe-s-25-hint-1, eval = FALSE}
 function (deg_free) {
   ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
     geom_point(alpha = 0.2)
 }
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 function (deg_free) {
   ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
     geom_point(alpha = 0.2)
 }
 ```
 
-###
+### 
 
 Note: for simple transformations of the outcome column(s), is is strongly suggest that those operations be conducted *outside of the recipe*.
 
@@ -1311,7 +1311,7 @@ Copy the previous code and add `scale_y_log10()`.
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r examples-of-recipe-s-26-hint, eval = FALSE}
+```{r examples-of-recipe-s-26-hint-1, eval = FALSE}
 function (deg_free) {
   ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
     geom_point(alpha = 0.2) + 
@@ -1319,7 +1319,7 @@ function (deg_free) {
 }
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 function (deg_free) {
   ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
     geom_point(alpha = 0.2) + 
@@ -1327,7 +1327,7 @@ function (deg_free) {
 }
 ```
 
-###
+### 
 
 The step functions in the **recipes** and **themis** packages that are only applied to the training data are: `step_adasyn()`, `step_bsmote()`, `step_downsample()`, `step_filter()`, `step_naomit()`, `step_nearmiss()`, `step_rose()`, `step_sample()`, `step_slice()`, `step_smote()`, `step_smotenc()`, `step_tomek()`, and `step_upsample()`.
 
@@ -1341,7 +1341,7 @@ Copy the previous code and add `geom_smooth()`. Inside `geom_smooth()`, set `met
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r examples-of-recipe-s-27-hint, eval = FALSE}
+```{r examples-of-recipe-s-27-hint-1, eval = FALSE}
 function (deg_free) {
   ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
     geom_point(alpha = 0.2) + 
@@ -1353,7 +1353,7 @@ function (deg_free) {
 }
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 function (deg_free) {
   ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
     geom_point(alpha = 0.2) + 
@@ -1365,7 +1365,7 @@ function (deg_free) {
 }
 ```
 
-###
+### 
 
 The `ns()` function is a part of the **splines** package, and it is used to generate a natural cubic splines, which are a type of flexible curve fitting method.
 
@@ -1379,7 +1379,7 @@ Copy the previous code. Inside `geom_smooth()`, set `color` to `lightblue` and `
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r examples-of-recipe-s-28-hint, eval = FALSE}
+```{r examples-of-recipe-s-28-hint-1, eval = FALSE}
 function (deg_free) {
   ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
     geom_point(alpha = 0.2) + 
@@ -1393,7 +1393,7 @@ function (deg_free) {
 }
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 function (deg_free) {
   ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
     geom_point(alpha = 0.2) + 
@@ -1407,7 +1407,7 @@ function (deg_free) {
 }
 ```
 
-###
+### 
 
 `se` stands for the standard error (also known as a confidence interval). By setting `se` to `FALSE`, the standard error will not be displayed on the graph.
 
@@ -1421,7 +1421,7 @@ Copy the previous code and add `labs()`. Set `title` to `paste(deg_free, "Spline
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r examples-of-recipe-s-29-hint, eval = FALSE}
+```{r examples-of-recipe-s-29-hint-1, eval = FALSE}
 function (deg_free) {
   ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
     geom_point(alpha = 0.2) + 
@@ -1437,7 +1437,7 @@ function (deg_free) {
 }
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 function (deg_free) {
   ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
     geom_point(alpha = 0.2) + 
@@ -1453,7 +1453,7 @@ function (deg_free) {
 }
 ```
 
-###
+### 
 
 Since the graph has been created inside a function, the graph won't be displayed unless the function is called.
 
@@ -1467,7 +1467,7 @@ Lets give a name to this function. Copy the previous code and assign it to a new
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r examples-of-recipe-s-30-hint, eval = FALSE}
+```{r examples-of-recipe-s-30-hint-1, eval = FALSE}
 ... <- function (deg_free) {
   ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
     geom_point(alpha = 0.2) + 
@@ -1483,7 +1483,7 @@ Lets give a name to this function. Copy the previous code and assign it to a new
 }
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 plot_smoother <- function (deg_free) {
   ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
     geom_point(alpha = 0.2) + 
@@ -1499,7 +1499,7 @@ plot_smoother <- function (deg_free) {
 }
 ```
 
-###
+### 
 
 Now, `plot_smoother` is the name to access the function. Note that since `deg_free` in inside the parenthesis for this function, it is a parameter that needs a value to be passed in.
 
@@ -1511,12 +1511,11 @@ Press "Run code"
 (plot_smoother(2) + plot_smoother(5)) / (plot_smoother(20) + plot_smoother(100))
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 (plot_smoother(2) + plot_smoother(5)) / (plot_smoother(20) + plot_smoother(100))
 ```
 
-###
-
+### 
 
 As you can, this code displays a variety of Spline Term graphs. However,the "2 Spline Terms" graph *underfit* the data while the "100 Spline Terms" graph *overfit* the data. This indicates that the proper amount of “nonlinear-ness” matters.
 
