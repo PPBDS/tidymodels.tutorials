@@ -52,7 +52,6 @@ ames_test_res <- predict(lm_fit, new_data = ames_test %>% select(-Sale_Price))
 
 ames_test_res <- bind_cols(ames_test_res, ames_test %>% select(Sale_Price))
 
-ames_test_res <- ames_test_res |> rename(Sale_Price = Sale_Price)
 
 ames_metrics <- metric_set(rmse, rsq, mae)
 
@@ -179,7 +178,7 @@ ames_test_res <- bind_cols(ames_test_res, ames_test |> ...(Sale_Price))
 ```
 
 ```{r include = FALSE}
-bind_cols(ames_test_res, ames_test |> select(Sale_Price))
+ames_test_res <- bind_cols(ames_test_res, ames_test |> select(Sale_Price))
 ```
 
 ### 
@@ -349,7 +348,7 @@ Copy the previous code and add `coord_obs_pred()`. Also add `theme_classic()` to
 
 ### Exercise 12
 
-We will be using `rmse()` to compute the Root-Mean Square Error of `ames_test_res`. Pipe `rsme()` to `ames_test_res`. This might throw an error.
+We will be using `rmse()` to compute the Root-Mean Square Error of `ames_test_res`. Pipe `ames_test_res` to `rsme()`. This might throw an error.
 
 ```{r regression-metrics-12, exercise = TRUE}
 
@@ -815,7 +814,7 @@ roc_auc(hpc_cv, ...)
 ```
 
 ```{r, include = FALSE}
-roc_auc(hpc_cv, obs)
+# roc_auc(hpc_cv, obs)
 ```
 
 
