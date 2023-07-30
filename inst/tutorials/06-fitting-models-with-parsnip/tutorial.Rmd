@@ -26,9 +26,9 @@ ames_update <- ames |>
   mutate(Sale_Price = log10(Sale_Price))
 
 set.seed(502)
-ames_split <- initial_split(ames_update, prop = 0.80, strata = Sale_Price)
-ames_train <- training(ames_split)
-ames_test <- testing(ames_split)
+ames_strata_split <- initial_split(ames_update, prop = 0.80, strata = Sale_Price)
+ames_train <- training(ames_strata_split)
+ames_test <- testing(ames_strata_split)
 
 lm_model <- linear_reg() |>
   set_engine("lm")
@@ -54,7 +54,7 @@ tree_fit <- tree_model |>
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
-<!-- DK: Pipe things like coef(). Don't wrap them around a multi-step pipeline. -->
+<!-- DK: Pipe things like coef(). Don't wrap them around a multi-step pipeline. Done. -->
 
 ## Introduction
 ### 
@@ -282,8 +282,8 @@ Also, in the "Spending our Data" tutorial, the `ames_train` variable was created
 
 ````
 set.seed(502)
-ames_split <- initial_split(ames_update, prop = 0.80, strata = Sale_Price)
-ames_train <- training(ames_split)
+ames_strata_split <- initial_split(ames_update, prop = 0.80, strata = Sale_Price)
+ames_train <- training(ames_strata_split)
 
 ````
 
@@ -531,6 +531,8 @@ lm_form_fit |>
 
 As you can see, the code extracts the `fit` argument in `lm_form_fit`, which represented the fitted model. Also, in the `call` section, you can see the `lm()` function, which is the engine used to create the model. 
 
+As mentioned previously, the positive coefficient for *Latitude* means that, as latitude increases, the price of homes increase. Similar, the negative coefficient of *Longitude* means that, as Longitude becomes more negative, the more expensive houses become.
+
 ### Exercise 2
 
 Normal methods can be applied to this object, such as `vcov()`. `vcov()` returns the variance-covariance matrix of the main parameters of a fitted model object.
@@ -592,7 +594,7 @@ As you can see, by using `summary()`, the results of the model fit were printed 
 
 The `coef()` function can be used to display a more accurate coefficient table of the model. `coef()` is a generic function which extracts model coefficients from objects returned by modeling functions.
 
-Copy the previous code and place it inside `coef()`.
+Copy the previous code and pipe it to `coef()`.
 
 ```{r using-model-results-4, exercise = TRUE}
 
@@ -601,15 +603,17 @@ Copy the previous code and place it inside `coef()`.
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r using-model-results-4-hint-1, eval = FALSE}
-...(lm_form_fit |>
+lm_form_fit |>
   extract_fit_engine() |>
-    summary())
+    summary() |>
+      ...()
 ```
 
 ```{r include = FALSE}
-coef(lm_form_fit |>
+lm_form_fit |>
   extract_fit_engine() |>
-    summary())
+    summary() |>
+      coef()
 ```
 
 ### 
@@ -618,7 +622,7 @@ As you can see, the values in the table are more accurate. For example, looking 
 
 ### Exercise 5
 
-The `class()` function can be used to determine the type of object at hand. Copy the previous code and place it inside `class()`.
+The `class()` function can be used to determine the type of object at hand. Copy the previous code and pipe it to `class()`.
 
 ```{r using-model-results-5, exercise = TRUE}
 
@@ -627,15 +631,19 @@ The `class()` function can be used to determine the type of object at hand. Copy
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r using-model-results-5-hint-1, eval = FALSE}
-...(coef(lm_form_fit |>
+lm_form_fit |>
   extract_fit_engine() |>
-    summary()))
+    summary() |>
+      coef() |>
+        ...()
 ```
 
 ```{r include = FALSE}
-class(coef(lm_form_fit |>
+lm_form_fit |>
   extract_fit_engine() |>
-    summary()))
+    summary() |>
+      coef() |>
+        class()
 ```
 
 ### 

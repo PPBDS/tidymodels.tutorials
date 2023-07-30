@@ -3,10 +3,10 @@ title: Feature Engineering with recipes
 author: Aryan Kancherla and David Kane
 tutorial:
   id: feature-engineering-with-recipes
-output: 
+output:
   learnr::tutorial:
-    progressive: true
-    allow_skip: true
+    progressive: yes
+    allow_skip: yes
 runtime: shiny_prerendered
 description: 'Tutorial for Chapter 8: Feature Engineering with recipes'
 ---
@@ -14,6 +14,8 @@ description: 'Tutorial for Chapter 8: Feature Engineering with recipes'
 ```{r setup, include = FALSE}
 library(learnr)
 library(tutorial.helpers)
+library(patchwork)
+library(splines)
 library(tidyverse)
 library(tidymodels)
 tidymodels_prefer()
@@ -21,6 +23,83 @@ tidymodels_prefer()
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
         tutorial.storage = "local") 
+
+ames_update <- ames |>
+  mutate(Sale_Price = log10(Sale_Price))
+
+set.seed(502)
+ames_strata_split <- initial_split(ames_update, prop = 0.80, strata = Sale_Price)
+ames_train <- training(ames_strata_split)
+ames_test <- testing(ames_strata_split)
+
+simple_ames <- recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+    step_dummy(all_nominal_predictors())
+
+lm_model <- linear_reg() %>% set_engine("lm")
+
+lm_wflow <- 
+  workflow() %>% 
+  add_model(lm_model) %>% 
+  add_variables(outcome = Sale_Price, predictors = c(Longitude, Latitude))
+
+lm_wflow_edit <- lm_wflow |>
+  remove_variables() |>
+    add_recipe(simple_ames)
+
+lm_fit <- fit(lm_wflow_edit, ames_train)
+
+neighborhood_plot <- ggplot(ames_train, aes(y = Neighborhood)) + 
+  geom_bar() + 
+  labs(y = NULL)
+
+simple_ames1 <- recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+    step_other(Neighborhood, theshold = 0.01) |>
+      step_dummy(all_nominal_predictors())
+
+facet_wrap_ames_plot <- ames_train |>
+  ggplot(aes(x = Gr_Liv_Area, y = 10^Sale_Price)) +
+  geom_point(alpha = 0.2) + 
+  facet_wrap(~ Bldg_Type) + 
+  geom_smooth(method = lm, formula = y ~ x, se = FALSE, color = "lightblue") + 
+  scale_x_log10() + 
+  scale_y_log10() + 
+  labs(x = "Gross Living Area", y = "Sale Price (USD)")
+
+simple_ames2 <- simple_ames1 |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_"))
+
+plot_smoother <- function (deg_free) {
+  ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
+    geom_point(alpha = 0.2) + 
+    scale_y_log10() + 
+    geom_smooth(
+      method = lm,
+      formula = y ~ ns(x, df = deg_free),
+      color = "lightblue",
+      se = FALSE
+    ) + 
+    labs(title = paste(deg_free, "Spline Terms"),
+         y = "Sale Price (USD)")
+}
+
+ames_rec <- recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, threshold = 0.01, id = "my_id") |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+  step_ns(Latitude, Longitude, deg_free = 20)
+
+lm_wflow1 <- workflow() |> 
+  add_model(lm_model) |>
+  add_recipe(ames_rec)
+
+lm_fit1 <- fit(lm_wflow1, ames_train)
+
+estimated_recipe <- lm_fit1 |>
+  extract_recipe(estimated = TRUE)
+
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -30,14 +109,12 @@ options(tutorial.exercise.timelimit = 60,
 ```
 
 ## Introduction
-###
+### 
 
-This tutorial covers [Chapter 8: Feature Engineering with recipies](https://www.tmwr.org/recipes.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This tutorial covers the usage of `recipe()`.
-
- 
+This tutorial covers [Chapter 8: Feature Engineering with recipies](https://www.tmwr.org/recipes.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. You will learn how to create recipes (using `recipe()`) and add steps to them (using `step_*()`). You will also learn how to use various functions on a recipe, including `fit()`, `predict()`, and `tidy()`. 
 
 ## A simple `recipe()` for the Ames housing data
-###
+### 
 
 In this section, we will focus on a small subset of the predictors available in the `ames` housing data:
 
@@ -48,30 +125,2032 @@ In this section, we will focus on a small subset of the predictors available in 
 
 ### Exercise 1
 
+Load the **tidymodels** library using `library()`.
 
 ```{r a-simple-recipe-for--1, exercise = TRUE}
 
 ```
 
+```{r a-simple-recipe-for--1-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(tidymodels)
+```
+
+### 
+
+Feature engineering entails reformatting predictor values to make them easier for a model to use effectively. This includes transformations and encodings of the data to best represent their important characteristics. Imagine that you have two predictors in a data set that can be more effectively represented in your model as a ratio; creating a new predictor from the ratio of the original two is a simple example of feature engineering.
+
+### Exercise 2
+
+Type in `tidymodels_prefer()` to get rid of naming conflicts.
+
+```{r a-simple-recipe-for--2, exercise = TRUE}
+
+```
+
+```{r a-simple-recipe-for--2-hint-1, eval = FALSE}
+...()
+```
+
+```{r include = FALSE}
+tidymodels_prefer()
+```
+
+### 
+
+A recipe is also an object that defines a series of steps for data processing. Unlike the formula method inside a modeling function, the recipe defines the steps via `step_*()` functions without immediately executing them; it is only a specification of what should be done.
+
+### Exercise 3
+
+Type in `?recipe()` in the Console and look at the Description section. CP/CR.
+
+```{r a-simple-recipe-for--3}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+For example, when choosing how to encode the location of a house in Ames in modeling, we might choose an option we believe is most associated with the outcome. The original format of the data, for example numeric (e.g., distance) versus categorical (e.g., neighborhood), is also a driving factor in feature engineering choices. This is called *preprocessing*.
+
+### Exercise 4
+
+Type in `ames_train` and press "Run Code".
+
+```{r a-simple-recipe-for--4, exercise = TRUE}
+
+```
+
+```{r a-simple-recipe-for--4-hint-1, eval = FALSE}
+...
+```
+
+```{r include = FALSE}
+ames_train
+```
+
+### 
+
+This variable was created in [Chapter 5: Spending our Data](https://www.tmwr.org/splitting.html). As a reminder, this variable contains the training data from the `ames` data set (which has been pre-logged). 
+
+### Exercise 5
+
+Lets create a recipe using `ames_train`. Type in `recipe()` and set `formula` to `Sale_Price ~ Neighborhood`. Then, set `data` to `ames_train`.
+
+```{r a-simple-recipe-for--5, exercise = TRUE}
+
+```
+
+```{r a-simple-recipe-for--5-hint-1, eval = FALSE}
+...(... = Sale_Price ~ Neighborhood, data = ...)
+```
+
+```{r include = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood, data = ames_train)
+```
+
+### 
+
+Other examples of preprocessing to build better features for modeling include:
+
+- Correlation between predictors can be reduced via feature extraction or the removal of some predictors.
+
+- When some predictors have missing values, they can be imputed using a sub-model.
+
+- Models that use variance-type measures may benefit from coercing the distribution of some skewed predictors to be symmetric by estimating a transformation.
+
+### Exercise 6
+
+Copy the previous code. After `Neighborhood`, add `Gr_Liv_Area`, `Year_Built`, and `Bldg_Type` using `+`.
+
+```{r a-simple-recipe-for--6, exercise = TRUE}
+
+```
+
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r a-simple-recipe-for--1-hint, eval = FALSE}
+```{r a-simple-recipe-for--6-hint-1, eval = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + ... + ... , data = ames_train)
 
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train)
+```
+
+### 
+
+The call to `recipe()` with a formula tells the recipe the *roles* of the “ingredients” or variables (e.g., predictor, outcome). It only uses the data `ames_train` to determine the data types for the columns.
+
+### Exercise 7
+
+Next, the `step_log()` function is going to be used. In the Console, type in `?step_log()` and look at the *Description* section. CP/CR.
+
+```{r a-simple-recipe-for--7}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+Feature engineering and data preprocessing can also involve reformatting that may be required by the model. Some models use geometric distance metrics and, consequently, numeric predictors should be centered and scaled so that they are all in the same units. Otherwise, the distance values would be biased by the scale of each column.
+
+
+### Exercise 8
+
+Copy the code from Exercise 6 and pipe it to `step_log()`. Inside this function, type in `Gr_Liv_Area` and set `base` to `10`.
+
+```{r a-simple-recipe-for--8, exercise = TRUE}
 
 ```
+
+```{r a-simple-recipe-for--8-hint-1, eval = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(..., base = ...)
+```
+
+```{r include = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10)
+```
+
+### 
+
+`step_log()` declares that `Gr_Liv_Area` should be log transformed.
+
+### Exercise 9
+
+Next, the `step_dummy()` function will be used. In the Console, type `?step_dummy()` and look at the *Description* section. CP/CR.
+
+```{r a-simple-recipe-for--9}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+Different models have different preprocessing requirements and some, such as tree-based models, require very little preprocessing at all.
+
+
+### Exercise 10
+
+Copy the code from Exercise 8 and pipe it to `step_dummy()`. Inside of the function, type in `all_nominal_predictors()`.  
+
+```{r a-simple-recipe-for--10, exercise = TRUE}
+
+```
+
+```{r a-simple-recipe-for--10-hint-1, eval = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+    step_dummy(...())
+```
+
+```{r include = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+    step_dummy(all_nominal_predictors())
+```
+
+### 
+
+`step_dummy()` specifies which variables should be converted from a qualitative format to a quantitative format, in this case, using dummy or indicator variables. An indicator or dummy variable is a binary numeric variable (a column of ones and zeroes) that encodes qualitative information
+
+The function `all_nominal_predictors()` captures the names of any predictor columns that are currently factor or character (i.e., nominal) in nature. This is a **dplyr**-like selector function similar to `starts_with()` or `matches()` but that can only be used inside of a recipe
+
+### Exercise 11
+
+Copy the previous code and assign it to a new variable called `simple_ames`. 
+
+```{r a-simple-recipe-for--11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-simple-recipe-for--11-hint-1, eval = FALSE}
+... <- recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+    step_dummy(all_nominal_predictors())
+```
+
+```{r include = FALSE}
+simple_ames <- recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+    step_dummy(all_nominal_predictors())
+```
+
+### 
+
+What is the advantage to using a recipe, over a formula or raw predictors? There are a few, including:
+
+- These computations can be recycled across models since they are not tightly coupled to the modeling function.
+
+- A recipe enables a broader set of data processing choices than formulas can offer.
+
+- The syntax can be very compact. For example, all_nominal_predictors() can be used to capture many variables for specific types of processing while a formula would require each to be explicitly listed.
+
+- All data processing can be captured in a single R object instead of in scripts that are repeated, or even spread across different files.
+
+### 
+
+Congrats! You have learned how to create a recipe.
+
+## Using Recipes
+### 
+
+Preprocessing choices and feature engineering should typically be considered part of a modeling workflow, not a separate task. The **workflows** package contains high level functions to handle different types of preprocessors. The previous workflow (`lm_wflow`) used a simple set of dplyr selectors. To improve on that approach with more complex feature engineering, let’s use the `simple_ames` recipe to preprocess data for modeling.
+
+### Exercise 1
+
+Type in `lm_wflow` and press "Run Code".
+
+```{r using-recipes-1, exercise = TRUE}
+
+```
+
+```{r using-recipes-1-hint-1, eval = FALSE}
+...
+```
+
+```{r include = FALSE}
+lm_wflow
+```
+
+### 
+
+As a reminder, a *model workflow* encapsulates the major pieces of the modeling process by encouraging good methodology (since it is a single point of entry to the estimation components of a data analysis) and enabling the user to better organize projects.
+
+Here is the code for `lm_wflow`, which was created in the *A Model Workflow* tutorial:
+
+````
+lm_model <- linear_reg() %>% set_engine("lm")
+
+lm_wflow <- 
+  workflow() %>% 
+  add_model(lm_model) %>% 
+  add_variables(outcome = Sale_Price, predictors = c(Longitude, Latitude))
+  
+````
+
+### Exercise 2
+
+Lets attach `simple_ames` to this workflow. In the code chunk below, pipe `lm_wflow` to `add_recipe()`. Inside this function, pass in `simple_ames` (Note: This will throw an error).
+
+```{r using-recipes-2, exercise = TRUE}
+
+```
+
+```{r using-recipes-2-hint-1, eval = FALSE}
+lm_wflow |>
+  add_recipe(...)
+```
+
+```{r include = FALSE}
+# lm_wflow |>
+#  add_recipe(simple_ames)
+```
+
+### 
+
+There can only be one preprocessing method at a time, so the existing preprocessor needs to be removed before adding the recipe.
+
+### Exercise 3
+
+Copy the previous code. Instead of piping `lm_wflow` to `add_recipe()`, pipe `lm_wflow` to `remove_variables()` and then create the pipe to `add_recipe(simple_ames)`.
+
+```{r using-recipes-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-recipes-3-hint-1, eval = FALSE}
+lm_wflow |>
+  ...() |>
+    add_recipe(simple_ames)
+```
+
+```{r include = FALSE}
+lm_wflow |>
+  remove_variables() |>
+    add_recipe(simple_ames)
+```
+
+### 
+
+Take a look at the output. The *Workflow* section shows that this model is a linear regression model, with a preprocessor of `recipe`. The *Preprocessor* section shows the steps that have been created: `step_log()`, which declared that `Gr_Liv_Area` should be log transformed, and `step_dummy()`, which specified which variables should be converted from a qualitative format to a quantitative format.
+
+### Exercise 4
+
+Copy the previous code and assign it to `lm_wflow_edit`. 
+
+```{r using-recipes-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-recipes-4-hint-1, eval = FALSE}
+... <- lm_wflow |>
+  remove_variables() |>
+    add_recipe(simple_ames)
+```
+
+```{r include = FALSE}
+lm_wflow_edit <- lm_wflow |>
+  remove_variables() |>
+    add_recipe(simple_ames)
+```
+
+### 
+
+Other selectors specific to the recipes package are: `all_numeric_predictors()`, `all_numeric()`, `all_predictors()`, and `all_outcomes()`. As with **dplyr**, one or more unquoted expressions, separated by commas, can be used to select which columns are affected by each step.
+
+### Exercise 5
+
+Now, let’s estimate both the recipe and model using a simple call to `fit()`.Type in `fit()`, passing in `lm_wflow_edit` and `ames_train`. 
+
+```{r using-recipes-5, exercise = TRUE}
+
+```
+
+```{r using-recipes-5-hint-1, eval = FALSE}
+fit(..., ames_train)
+```
+
+```{r include = FALSE}
+fit(lm_wflow_edit, ames_train)
+```
+
+### 
+
+As you can see, this code fits the model, displaying the call and the coefficients.
+
+### Exercise 6
+
+Copy the previous code and assign it to a new variable called `lm_fit`.
+
+```{r using-recipes-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-recipes-6-hint-1, eval = FALSE}
+... <- fit(lm_wflow_edit, ames_train)
+```
+
+```{r include = FALSE}
+lm_fit <- fit(lm_wflow_edit, ames_train)
+```
+
+### 
+
+Take a look at the following code:
+
+````
+lm(Sale_Price ~ Neighborhood + log10(Gr_Liv_Area) + Year_Built + Bldg_Type, data = ames)
+````
+
+When this function is executed, the data are converted from a data frame to a numeric design matrix (also called a model matrix) and then the least squares method is used to estimate parameters.
+
+### Exercise 7
+
+The `predict()` method applies the same preprocessing that was used on the training set to the new data before passing them along to the model’s `predict()` method.
+
+Type in `predict()`, passing in `lm_fit` and `ames_train`.
+
+<!-- AK: Getting a warning message here and unsure of how to fix it.  -->
+
+```{r using-recipes-7, exercise = TRUE}
+
+```
+
+```{r using-recipes-7-hint-1, eval = FALSE}
+predict(..., ...)
+```
+
+```{r include = FALSE}
+predict(lm_fit, ames_test)
+```
+
+### 
+
+As you can, the code outputs a list of predicted sale prices based on the neighborhood, year built, building type, and area.
 
 ###
 
+This [link](https://www.tmwr.org/pre-proc-table.html#pre-proc-table) contains a small table of recommended preprocessing techniques for different models.
 
+### Exercise 8
+
+The `extract_recipe()` function can be used to retrieve a bare model object or recipe.
+
+In the code chunk below, pipe `lm_fit` to `extract_recipe()`. Inside this function, set `estimated` to `TRUE`.
+
+```{r using-recipes-8, exercise = TRUE}
+
+```
+
+```{r using-recipes-8-hint-1, eval = FALSE}
+lm_fit |>
+  ...(estimated = ...)
+```
+
+```{r include = FALSE}
+lm_fit |>
+  extract_recipe(estimated = TRUE)
+```
+
+### 
+
+As you can see, this code produces all the information about the recipe that was created at the beginning of this section, including the inputs, training data information, and the operations on the recipe.
+
+### Exercise 9
+
+Finally, lets tidy the model fit, ultimately producing a tibble. Start by piping `lm_fit` to `extract_fit_parsnip()`.
+
+```{r using-recipes-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-recipes-9-hint-1, eval = FALSE}
+lm_fit |>
+  ...()
+```
+
+```{r include = FALSE}
+lm_fit |>
+  extract_fit_parsnip()
+```
+
+### 
+
+`extract_fit_parsnip()` returns the parsnip object, including the coefficients and the function that was used to create the model, which in this case is `lm()`.
+
+### Exercise 10
+
+Copy the previous code and pipe it to `tidy()`. Then, pipe the code to `slice(1:5)`. 
+
+```{r using-recipes-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-recipes-10-hint-1, eval = FALSE}
+
+```
+
+```{r include = FALSE}
+lm_fit |>
+  extract_fit_parsnip() |>
+    tidy() |>
+      slice(1:5)
+```
+
+### 
+
+- `estimate` stands for the estimated coefficient for each predictor variable, representing its effect on the outcome variable.
+
+- std.error` stands for the standard error associated with the estimate, representing the uncertainty or variability in the coefficient estimate.
+
+- `statistic` stands for the t-statistic or z-statistic, which is used to test the null hypothesis that the corresponding coefficient is equal to zero.
+
+- `p-value` stands for the p-value associated with the statistical test for each predictor variable. It indicates the probability of observing the data if the null hypothesis (the coefficient is zero) is true. Smaller p-values suggest stronger evidence against the null hypothesis.
+
+### 
+
+Congrats! You have learned how to use recipes.
+
+## Examples of Recipe Steps
+### 
+
+Before proceeding, let’s take an extended tour of the capabilities of recipes and explore some of the most important `step_*()` functions. These recipe step functions each specify a specific possible step in a feature engineering process, and different recipe steps can have different effects on columns of data.
+
+### Exercise 1
+
+Load the **tidyverse** library using `library()`.
+
+```{r examples-of-recipe-s-1, exercise = TRUE}
+
+```
+
+```{r examples-of-recipe-s-1-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(tidyverse)
+```
+
+### 
+
+One of the most common feature engineering tasks is transforming nominal or qualitative data (factors or characters) so that they can be encoded or represented numerically. Sometimes the factor levels of a qualitative column can be altered in helpful ways prior to such a transformation. For example, `step_unknown()` can be used to change missing values to a dedicated factor level. 
+
+### Exercise 2
+
+Lets create the following plot:
+
+```{r}
+neighborhood_plot
+```
+
+Start by piping `ames_train` to `ggplot()`.
+
+
+```{r examples-of-recipe-s-2, exercise = TRUE}
+
+```
+
+```{r examples-of-recipe-s-2-hint-1, eval = FALSE}
+ames_train |>
+  ...()
+```
+
+```{r include = FALSE}
+ames_train |>
+  ggplot()
+```
+
+### 
+
+Anticipating that a new factor level may be encountered in future data, the `step_novel()` function can allot a new level. 
+
+### Exercise 3
+
+Copy the previous code. Inside `ggplot()`, type in `aes()` and set `y` to `Neighborhood`.
+
+```{r examples-of-recipe-s-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-3-hint-1, eval = FALSE}
+ames_train |>
+  ggplot(aes(... = ...))
+```
+
+```{r include = FALSE}
+ames_train |>
+  ggplot(aes(y = Neighborhood))
+```
+
+### 
+
+Additionally, `step_other()` can be used to analyze the frequencies of the factor levels in the training set and convert infrequently occurring values to a catch-all level of “other,” with a threshold that can be specified.
+
+### Exercise 4
+
+Copy the previous code and add `geom_bar()`.
+
+```{r examples-of-recipe-s-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-4-hint-1, eval = FALSE}
+ames_train |>
+  ggplot(aes(y = Neighborhood)) +
+    ...()
+```
+
+```{r include = FALSE}
+ames_train |>
+  ggplot(aes(y = Neighborhood)) +
+    geom_bar()
+```
+
+### 
+
+This graph shows that two neighborhoods have less than five properties in the training data (Landmark and Green Hills); in this case, no houses at all in the Landmark neighborhood were included in the testing set. For some models, it may be problematic to have dummy variables with a single nonzero entry in the column. At a minimum, it is highly improbable that these features would be important to a model.
+
+### Exercise 5
+
+If `step_other(Neighborhood, threshold = 0.01)` is added to the `simple_ames` recipe, the bottom 1% of the neighborhoods will be lumped into a new level called “other.” In this training set, this will catch seven neighborhoods.
+
+Take a look at `simple_ames`, which you created earlier in this tutorial. After `step_log()`, but before `step_dummy()`, create a pipe to `step_other()`. Inside this function, type in `Neighborhood` and set `threshold` to `0.01`.
+
+```{r examples-of-recipe-s-5, exercise = TRUE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+    step_dummy(all_nominal_predictors())
+```
+
+```{r examples-of-recipe-s-5-hint-1, eval = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+    step_other(..., threshold = ...) |>
+      step_dummy(all_nominal_predictors())
+```
+
+```{r include = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+    step_other(Neighborhood, threshold = 0.01) |>
+      step_dummy(all_nominal_predictors())
+```
+
+### 
+
+Many, but not all, underlying model calculations require predictor values to be encoded as numbers. Notable exceptions include tree-based models, rule-based models, and naive Bayes models.
+
+### Exercise 6
+
+Copy the previous code and assign it to a new variable called `simple_ames1`.
+
+
+```{r examples-of-recipe-s-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-6-hint-1, eval = FALSE}
+... <- recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+    step_other(Neighborhood, theshold = 0.01) |>
+      step_dummy(all_nominal_predictors())
+```
+
+```{r include = FALSE}
+simple_ames1 <- recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+    step_other(Neighborhood, theshold = 0.01) |>
+      step_dummy(all_nominal_predictors())
+```
+
+### 
+
+All preprocessing and feature engineering steps use only the training data. Otherwise, information leakage can negatively impact the model’s performance when used with new data.
+
+### Exercise 7
+
+Interaction effects involve two or more predictors. Such an effect occurs when one predictor has an effect on the outcome that is contingent on one or more other predictors. Numerically, an interaction term between predictors is encoded as their product. Interactions are defined in terms of their effect on the outcome and can be combinations of different types of data (e.g., numeric, categorical, etc). 
+
+Lets see whether the regression slopes for the gross living area differ for different building types in the `ames` data set. Start by piping `ames_train` to `ggplot()`
+
+```{r examples-of-recipe-s-7, exercise = TRUE}
+
+```
+
+```{r examples-of-recipe-s-7-hint-1, eval = FALSE}
+ames_train |>
+  ...()
+```
+
+```{r include = FALSE}
+ames_train |>
+  ggplot()
+```
+
+### 
+
+Here's an example of interaction effects: if you were trying to predict how much traffic there will be during your commute, two potential predictors could be the specific time of day you commute and the weather. However, the relationship between the amount of traffic and bad weather is different for different times of day. In this case, you could add an interaction term between the two predictors to the model along with the original two predictors (which are called the main effects).
+
+### Exercise 8
+
+Copy the previous code. Inside `ggplot()`, using `aes()`, set `x` to `Gr_Liv_Area` and `y` to `10^Sale_Price`.
+
+```{r examples-of-recipe-s-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-8-hint-1, eval = FALSE}
+ames_train |>
+  ggplot(aes(x = ..., y = ...))
+```
+
+```{r include = FALSE}
+ames_train |>
+  ggplot(aes(x = Gr_Liv_Area, y = 10^Sale_Price))
+```
+
+### 
+
+One helpful feature of `step_dummy()` is that there is more control over how the resulting dummy variables are named. In base R, dummy variable names mash the variable name with the level, resulting in names like `NeighborhoodVeenker`.
+
+### Exercise 9
+
+Copy the previous code and add `geom_point()`. Inside this function set `alpha` to `0.2`.
+
+```{r examples-of-recipe-s-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-9-hint-1, eval = FALSE}
+ames_train |>
+  ggplot(aes(x = Gr_Liv_Area, y = 10^Sale_Price)) +
+  geom_point(... = ...)
+```
+
+```{r include = FALSE}
+ames_train |>
+  ggplot(aes(x = Gr_Liv_Area, y = 10^Sale_Price)) +
+  geom_point(alpha = 0.2)
+```
+
+### 
+
+Recipes, by default, use an underscore as the separator between the name and level (e.g., `Neighborhood_Veenker`) and there is an option to use custom formatting for the names. The default naming convention in recipes makes it easier to capture those new columns in future steps using a selector, such as `starts_with("Neighborhood_")`.
+
+### Exercise 10
+
+Copy the previous code and add `facet_wrap()`, passing in `~ Bldg_Type`.
+
+```{r examples-of-recipe-s-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-10-hint-1, eval = FALSE}
+ames_train |>
+  ggplot(aes(x = Gr_Liv_Area, y = 10^Sale_Price)) +
+  geom_point(alpha = 0.2) + 
+  facet_wrap(...)
+```
+
+```{r include = FALSE}
+ames_train |>
+  ggplot(aes(x = Gr_Liv_Area, y = 10^Sale_Price)) +
+  geom_point(alpha = 0.2) + 
+  facet_wrap(~ Bldg_Type)
+```
+
+### 
+
+`facet_wrap()` is a way of visualizing data by dividing it into subsets based on one or more categorical variables and creating separate panels or plots for each subset. As you can see, the graph is split into five different graphs, which have been separated by each `Bldg_Type`.
+
+### Exercise 11
+
+Copy the previous code and add `geom_smooth()`. Inside this function, set `method` to `lm` and `formula` to `y ~ x`.
+
+```{r examples-of-recipe-s-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-11-hint-1, eval = FALSE}
+ames_train |>
+  ggplot(aes(x = Gr_Liv_Area, y = 10^Sale_Price)) +
+  geom_point(alpha = 0.2) + 
+  facet_wrap(~ Bldg_Type) + 
+  geom_smooth(... = lm, ... = y ~ x)
+```
+
+```{r include = FALSE}
+ames_train |>
+  ggplot(aes(x = Gr_Liv_Area, y = 10^Sale_Price)) +
+  geom_point(alpha = 0.2) + 
+  facet_wrap(~ Bldg_Type) + 
+  geom_smooth(method = lm, formula = y ~ x)
+```
+
+### 
+
+Different recipe steps behave differently when applied to variables in the data. For example, `step_log()` modifies a column in place without changing the name. Other steps, such as `step_dummy()`, eliminate the original data column and replace it with one or more columns with different names. The effect of a recipe step depends on the type of feature engineering transformation being done.
+
+
+### Exercise 12
+
+Copy the previous code. Inside `geom_smooth()`, set `se` to `FALSE` and `color` to `"lightblue"`.
+
+```{r examples-of-recipe-s-12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-12-hint-1, eval = FALSE}
+ames_train |>
+  ggplot(aes(x = Gr_Liv_Area, y = 10^Sale_Price)) +
+  geom_point(alpha = 0.2) + 
+    facet_wrap(~ Bldg_Type) + 
+    geom_smooth(method = lm, formula = y ~ x, se = ..., color = "...")
+```
+
+```{r include = FALSE}
+ames_train |>
+  ggplot(aes(x = Gr_Liv_Area, y = 10^Sale_Price)) +
+  geom_point(alpha = 0.2) + 
+  facet_wrap(~ Bldg_Type) + 
+  geom_smooth(method = lm, formula = y ~ x, se = FALSE, color = "lightblue")
+```
+
+### 
+
+Traditional dummy variables require that all of the possible categories be known to create a full set of numeric features. There are other methods for doing this transformation to a numeric format:
+
+*Feature hashing* methods only consider the value of the category to assign it to a predefined pool of dummy variables. 
+
+*Effect or likelihood* encodings replace the original data with a single numeric column that measures the effect of those data. 
+
+Both feature hashing and effect encoding can seamlessly handle situations where a novel factor level is encountered in the data.
+
+### Exercise 13
+
+Copy the previous code and add `scale_x_log10()`.
+
+```{r examples-of-recipe-s-13, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-13-hint-1, eval = FALSE}
+ames_train |>
+  ggplot(aes(x = Gr_Liv_Area, y = 10^Sale_Price)) +
+  geom_point(alpha = 0.2) + 
+  facet_wrap(~ Bldg_Type) + 
+  geom_smooth(method = lm, formula = y ~ x, se = FALSE, color = "lightblue") + 
+  ...()
+```
+
+```{r include = FALSE}
+ames_train |>
+  ggplot(aes(x = Gr_Liv_Area, y = 10^Sale_Price)) +
+  geom_point(alpha = 0.2) + 
+  facet_wrap(~ Bldg_Type) + 
+  geom_smooth(method = lm, formula = y ~ x, se = FALSE, color = "lightblue") + 
+  scale_x_log10()
+```
+
+### 
+
+Data are passed to recipes at different stages:
+
+First, when calling `recipe(..., data)`, the data set is used to determine the data types of each column so that selectors such as `all_numeric()` or `all_numeric_predictors()` can be used.
+
+Second, when preparing the data using `fit(workflow, data)`, the training data are used for all estimation operations including a recipe that may be part of the `workflow`, from determining factor levels to computing PCA components and everything in between.
+
+### Exercise 14
+
+Copy the previous code and add `scale_y_log10()`.
+
+```{r examples-of-recipe-s-14, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-14-hint-1, eval = FALSE}
+ames_train |>
+  ggplot(aes(x = Gr_Liv_Area, y = 10^Sale_Price)) +
+  geom_point(alpha = 0.2) + 
+  facet_wrap(~ Bldg_Type) + 
+  geom_smooth(method = lm, formula = y ~ x, se = FALSE, color = "lightblue") + 
+  scale_x_log10() + 
+  ...()
+```
+
+```{r include = FALSE}
+ames_train |>
+  ggplot(aes(x = Gr_Liv_Area, y = 10^Sale_Price)) +
+  geom_point(alpha = 0.2) + 
+  facet_wrap(~ Bldg_Type) + 
+  geom_smooth(method = lm, formula = y ~ x, se = FALSE, color = "lightblue") + 
+  scale_x_log10() + 
+  scale_y_log10()
+```
+
+### 
+
+All preprocessing and feature engineering steps use only the training data. Otherwise, information leakage can negatively impact the model’s performance when used with new data.
+
+### Exercise 15
+
+Finally, copy the previous code and `labs()`. The final graph should look like this:
+
+```{r}
+facet_wrap_ames_plot
+```
+
+```{r examples-of-recipe-s-15, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-15-hint-1, eval = FALSE}
+ames_train |>
+  ggplot(aes(x = Gr_Liv_Area, y = 10^Sale_Price)) +
+  geom_point(alpha = 0.2) + 
+  facet_wrap(~ Bldg_Type) + 
+  geom_smooth(method = lm, formula = y ~ x, se = FALSE, color = "lightblue") + 
+  scale_x_log10() + 
+  scale_y_log10() + 
+  labs(x = "...", y = "...")
+```
+
+```{r include = FALSE}
+facet_wrap_ames_plot
+```
+
+### 
+
+Going back to the purpose of creating this graph, you can see that the regression slopes for the gross living area *do in fact* differ for different building types.
+
+### Exercise 16
+
+With the current recipe, `step_dummy()` has already created dummy variables. In order to combine these for an interaction, the additional step would be to add `step_interact(~ interaction terms)`, where the terms on the right-hand side of the tilde are the interactions. 
+
+Lets add this to `simple_ames1`, which was created earlier in this section. Type in `simple_ames1` and press "Run Code". 
+
+```{r examples-of-recipe-s-16, exercise = TRUE}
+
+```
+
+```{r examples-of-recipe-s-16-hint-1, eval = FALSE}
+...
+```
+
+```{r include = FALSE}
+simple_ames1
+```
+
+### 
+
+Here is one way to specify an interaction in a recipe (referring to `ames`):
+
+```
+Sale_Price ~ Neighborhood + log10(Gr_Liv_Area) + Bldg_Type + 
+  log10(Gr_Liv_Area):Bldg_Type
+````
+
+where `*` expands those columns to the main effects and interaction term. 
+
+### Exercise 17
+
+Copy the previous code and pipe it to `step_interact()`. Inside this function, pass in `~ Gr_Liv_Area:starts_with("Bldg_Type_")`.
+
+```{r examples-of-recipe-s-17, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-17-hint-1, eval = FALSE}
+simple_ames1 |>
+  ...(...( ~ Gr_Liv_Area:starts_with("Bldg_Type_") ))
+```
+
+```{r include = FALSE}
+simple_ames1 |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_"))
+```
+
+### 
+
+As you can see, the output displays an `Interaction:` section, which represents the interaction you have created.
+
+###
+
+Here's another way to specify an interaction for a recipe (referring to `ames`):
+
+````
+Sale_Price ~ Neighborhood + log10(Gr_Liv_Area) * Bldg_Type 
+````
+
+### Exercise 18
+
+Copy the previous code and assign it to a new variable called `simple_ames2`.
+
+```{r examples-of-recipe-s-18, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-18-hint-1, eval = FALSE}
+... <- simple_ames1 |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_"))
+```
+
+```{r include = FALSE}
+simple_ames2 <- simple_ames1 |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_"))
+```
+
+### 
+
+Additional interactions can be specified in this formula by separating them by `+`. Also note that the recipe will only use interactions between different variables; if the formula uses `var_1:var_1`, this term will be ignored.
+
+### Exercise 19
+
+Suppose that, in a recipe, dummy variables had not been made for building types. It would be inappropriate to include a factor column in this step, such as:
+
+
+````
+step_interact( ~ Gr_Liv_Area:Bldg_Type )
+````
+
+### 
+
+This is telling the underlying (base R) code used by step_interact() to make dummy variables and then form the interactions. In fact, if this occurs, a warning states that this might generate unexpected results.
+
+### Exercise 20
+
+When a predictor has a nonlinear relationship with the outcome, some types of predictive models can adaptively approximate this relationship during training. However, simpler is usually better and it is not uncommon to try to use a simple model, such as a linear fit, and add in specific nonlinear features for predictors that may need them, such as longitude and latitude for the Ames housing data.
+
+
+Load the `patchwork` library.
+
+```{r examples-of-recipe-s-20, exercise = TRUE}
+
+```
+
+```{r examples-of-recipe-s-20-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(patchwork)
+```
+
+### 
+
+One common method for doing this is to use *spline* functions to represent the data. Splines replace the existing numeric predictor with a set of columns that allow a model to emulate a flexible, nonlinear relationship. As more spline terms are added to the data, the capacity to nonlinearly represent the relationship increases.
+
+### Exercise 21
+
+Load the `splines` library.
+
+```{r examples-of-recipe-s-21, exercise = TRUE}
+
+```
+
+```{r examples-of-recipe-s-21-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(splines)
+```
+
+### 
+
+Unfortunately, the more spline terms that are added to the data, the more likely it is to pick up data trends that occur by chance (i.e., overfitting).
+
+### Exercise 22
+
+Lets create a spline graph for the latitude predictor. Start by typing in `function(deg_free){}`. Inside the function, type in `ggplot()`. 
+
+```{r examples-of-recipe-s-22, exercise = TRUE}
+
+```
+
+```{r examples-of-recipe-s-22-hint-1, eval = FALSE}
+function (deg_free) {
+  ...()
+}
+```
+
+```{r include = FALSE}
+function (deg_free) {
+  ggplot()
+}
+```
+
+### 
+
+`deg_free` stands for the degrees of freedom, which isthe maximum number of logically independent values.
+
+The `<environment>` stands for the environment that has been created by `ggplot()`, but hasn't been outputted due to it being inside a `function`. 
+
+### Exercise 23
+
+Copy the previous code. Inside `ggplot()`, set `data` to `ames_train`.
+```{r examples-of-recipe-s-23, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-23-hint-1, eval = FALSE}
+function (deg_free) {
+  ggplot(data = ...)
+}
+```
+
+```{r include = FALSE}
+function (deg_free) {
+  ggplot(data = ames_train)
+}
+```
+
+### 
+
+When using `predict(workflow, new_data)`, no model or preprocessor parameters like those from recipes are re-estimated using the values in `new_data`. Take centering and scaling using `step_normalize()` as an example. Using this step, the means and standard deviations from the appropriate columns are determined from the training set; new samples at prediction time are standardized using these values from training when `predict()` is invoked.
+
+### Exercise 24
+
+Copy the previous code. Inside `ggplot()`, using `aes()`, set `x` to `Latitude` and `y` to `10^Sale_Price`.
+
+
+```{r examples-of-recipe-s-24, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-24-hint-1, eval = FALSE}
+function (deg_free) {
+  ggplot(data = ames_train, aes(x = ..., y = ...))
+}
+```
+
+```{r include = FALSE}
+function (deg_free) {
+  ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price))
+}
+```
+
+### 
+
+Recipes can also handle data that are not in the traditional structure where the columns are features. For example, the **textrecipes** package can apply natural language processing methods to the data. The input column is typically a string of text, and different steps can be used to tokenize the data (e.g., split the text into separate words), filter out tokens, and create new features appropriate for modeling.
+
+### Exercise 25
+
+Copy the previous code and add `geom_point()`. Inside `geom_point()`, set `alpha` to `0.2`.
+
+```{r examples-of-recipe-s-25, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-25-hint-1, eval = FALSE}
+function (deg_free) {
+  ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
+    geom_point(alpha = 0.2)
+}
+```
+
+```{r include = FALSE}
+function (deg_free) {
+  ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
+    geom_point(alpha = 0.2)
+}
+```
+
+### 
+
+Note: for simple transformations of the outcome column(s), is is strongly suggest that those operations be conducted *outside of the recipe*.
+
+### Exercise 26
+
+Copy the previous code and add `scale_y_log10()`.
+
+```{r examples-of-recipe-s-26, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-26-hint-1, eval = FALSE}
+function (deg_free) {
+  ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
+    geom_point(alpha = 0.2) + 
+    ...()
+}
+```
+
+```{r include = FALSE}
+function (deg_free) {
+  ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
+    geom_point(alpha = 0.2) + 
+    scale_y_log10()
+}
+```
+
+### 
+
+The step functions in the **recipes** and **themis** packages that are only applied to the training data are: `step_adasyn()`, `step_bsmote()`, `step_downsample()`, `step_filter()`, `step_naomit()`, `step_nearmiss()`, `step_rose()`, `step_sample()`, `step_slice()`, `step_smote()`, `step_smotenc()`, `step_tomek()`, and `step_upsample()`.
+
+### Exercise 27
+
+Copy the previous code and add `geom_smooth()`. Inside `geom_smooth()`, set `method` to `lm` and set `formula` to `y ~ ns(x, df = deg_free)`.
+
+```{r examples-of-recipe-s-27, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-27-hint-1, eval = FALSE}
+function (deg_free) {
+  ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
+    geom_point(alpha = 0.2) + 
+    scale_y_log10() + 
+    geom_smooth(
+      ... = lm,
+      ... = y ~ ns(x, df = deg_free)
+    )
+}
+```
+
+```{r include = FALSE}
+function (deg_free) {
+  ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
+    geom_point(alpha = 0.2) + 
+    scale_y_log10() + 
+    geom_smooth(
+      method = lm,
+      formula = y ~ ns(x, df = deg_free)
+    )
+}
+```
+
+### 
+
+The `ns()` function is a part of the **splines** package, and it is used to generate a natural cubic splines, which are a type of flexible curve fitting method.
+
+### Exercise 28
+
+Copy the previous code. Inside `geom_smooth()`, set `color` to `lightblue` and `se` to `FALSE`.
+
+```{r examples-of-recipe-s-28, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-28-hint-1, eval = FALSE}
+function (deg_free) {
+  ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
+    geom_point(alpha = 0.2) + 
+    scale_y_log10() + 
+    geom_smooth(
+      method = lm,
+      formula = y ~ ns(x, df = deg_free),
+      color = "...",
+      se = ...
+    )
+}
+```
+
+```{r include = FALSE}
+function (deg_free) {
+  ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
+    geom_point(alpha = 0.2) + 
+    scale_y_log10() + 
+    geom_smooth(
+      method = lm,
+      formula = y ~ ns(x, df = deg_free),
+      color = "lightblue",
+      se = FALSE
+    )
+}
+```
+
+### 
+
+`se` stands for the standard error (also known as a confidence interval). By setting `se` to `FALSE`, the standard error will not be displayed on the graph.
+
+### Exercise 29
+
+Copy the previous code and add `labs()`. Set `title` to `paste(deg_free, "Spline Terms")` and `y` to `"Sale Price (USD)"`.
+
+```{r examples-of-recipe-s-29, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-29-hint-1, eval = FALSE}
+function (deg_free) {
+  ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
+    geom_point(alpha = 0.2) + 
+    scale_y_log10() + 
+    geom_smooth(
+      method = lm,
+      formula = y ~ ns(x, df = deg_free),
+      color = "lightblue",
+      se = FALSE
+    ) + 
+    ...(... = paste(deg_free, "Spline Terms"),
+         ... = "Sale Price (USD)")
+}
+```
+
+```{r include = FALSE}
+function (deg_free) {
+  ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
+    geom_point(alpha = 0.2) + 
+    scale_y_log10() + 
+    geom_smooth(
+      method = lm,
+      formula = y ~ ns(x, df = deg_free),
+      color = "lightblue",
+      se = FALSE
+    ) + 
+    labs(title = paste(deg_free, "Spline Terms"),
+         y = "Sale Price (USD)")
+}
+```
+
+### 
+
+Since the graph has been created inside a function, the graph won't be displayed unless the function is called.
+
+### Exercise 30
+
+Lets give a name to this function. Copy the previous code and assign it to a new variable called `plot_smoother`.
+
+```{r examples-of-recipe-s-30, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-30-hint-1, eval = FALSE}
+... <- function (deg_free) {
+  ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
+    geom_point(alpha = 0.2) + 
+    scale_y_log10() + 
+    geom_smooth(
+      method = lm,
+      formula = y ~ ns(x, df = deg_free),
+      color = "lightblue",
+      se = FALSE
+    ) + 
+    labs(title = paste(deg_free, "Spline Terms"),
+         y = "Sale Price (USD)")
+}
+```
+
+```{r include = FALSE}
+plot_smoother <- function (deg_free) {
+  ggplot(data = ames_train, aes(x = Latitude, y = 10^Sale_Price)) + 
+    geom_point(alpha = 0.2) + 
+    scale_y_log10() + 
+    geom_smooth(
+      method = lm,
+      formula = y ~ ns(x, df = deg_free),
+      color = "lightblue",
+      se = FALSE
+    ) + 
+    labs(title = paste(deg_free, "Spline Terms"),
+         y = "Sale Price (USD)")
+}
+```
+
+### 
+
+Now, `plot_smoother` is the name to access the function. Note that since `deg_free` in inside the parenthesis for this function, it is a parameter that needs a value to be passed in.
+
+### Exercise 31
+
+Press "Run code"
+
+```{r examples-of-recipe-s-31, exercise = TRUE}
+(plot_smoother(2) + plot_smoother(5)) / (plot_smoother(20) + plot_smoother(100))
+```
+
+```{r include = FALSE}
+(plot_smoother(2) + plot_smoother(5)) / (plot_smoother(20) + plot_smoother(100))
+```
+
+### 
+
+As you can, this code displays a variety of Spline Term graphs. However,the "2 Spline Terms" graph *underfit* the data while the "100 Spline Terms" graph *overfit* the data.  The panels with five and twenty terms seem like reasonably smooth fits that catch the main patterns of the data.
+
+This indicates that the proper amount of “nonlinear-ness” matters. The number of spline terms could then be considered a *tuning parameter* for this model.
+
+### Exercise 32
+
+Take a look at the recipe you coded earlier this tutorial. Recently, interaction terms were added using `step_interact()`. Now, a natural spline representation will be added using `step_ns()`.
+
+Pipe this code to `step_ns()`. Inside this function, type in `Latitude` and set `deg_free` to `20`.
+
+```{r examples-of-recipe-s-32, exercise = TRUE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, theshold = 0.01) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_"))
+  
+```
+
+```{r examples-of-recipe-s-32-hint-1, eval = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, theshold = 0.01) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+  step_ns(..., deg_free = ...)
+```
+
+```{r include = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, theshold = 0.01) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+  step_ns(Latitude, deg_free = 20)
+```
+
+### 
+
+The `ns()` function in the splines package generates feature columns using functions called *natural splines*.
+
+
+### Exercise 33
+
+Another common method for representing multiple features at once is called feature extraction. Most of these techniques create new features from the predictors that capture the information in the broader set as a whole. 
+
+Type `?step_pca()` in the Console and look at the *Description* section. CP/CR.
+
+```{r examples-of-recipe-s-33}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+Principal component analysis (PCA) tries to extract as much of the original information in the predictor set as possible using a smaller number of features. PCA is a linear extraction method, meaning that each new feature is a linear combination of the original predictors. One nice aspect of PCA is that each of the new features, called the principal components or PCA scores, are uncorrelated with one another. 
+
+### Exercise 34
+
+Type `?matches()` in the Console and look at the *Description* section. Copy/Paste the text of the first link (Should say "Select variables..."). 
+
+```{r examples-of-recipe-s-34}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+PCA can be very effective at reducing the correlation between predictors. Note that PCA is only aware of the predictors; the new PCA features might not be associated with the outcome.
+
+### Exercise 35
+
+In the Ames data, several predictors measure size of the property, such as the total basement size (`Total_Bsmt_SF`), size of the first floor (`First_Flr_SF`), the gross living area (`Gr_Liv_Area`), and so on. PCA might be an option to represent these potentially redundant variables as a smaller feature set.
+
+Pipe the following code to `step_pca()`. Inside this function, type in `matches()`.
+
+```{r examples-of-recipe-s-35, exercise = TRUE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, theshold = 0.01) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+  step_ns(Latitude, deg_free = 20)
+```
+
+```{r examples-of-recipe-s-35-hint-1, eval = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, theshold = 0.01) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+  step_ns(Latitude, deg_free = 20) |>
+  ...(matches())
+```
+
+```{r include = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, theshold = 0.01) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+  step_ns(Latitude, deg_free = 20) |>
+  step_pca(matches())
+```
+
+### 
+
+As you can see, the output shows "PCA extraction with: matches()". However, nothing has been extracted, as nothing has been passed into the `matches()` function.
+
+### Exercise 36
+
+Copy the previous code. Inside `matches()`, type in `"(SF$)|(Gr_Liv)"`.
+
+```{r examples-of-recipe-s-36, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r examples-of-recipe-s-36-hint-1, eval = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, theshold = 0.01) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+  step_ns(Latitude, deg_free = 20) |>
+  step_pca(matches("..."))
+```
+
+```{r include = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, theshold = 0.01) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+  step_ns(Latitude, deg_free = 20) |>
+  step_pca(matches("(SF$)|(Gr_Liv)"))
+```
+
+### 
+
+This code extracts any predictor that measure size of the property with a suffix of `SF` *or* has `Gr_Liv`. 
+
+### Exercise 37
+
+*Subsampling* techniques for class imbalances change the class proportions in the data being given to the model; these techniques often don’t improve overall performance but can generate better behaved distributions of the predicted class probabilities. 
+
+Downsampling is one approach to try when subsampling your data with class imbalance. *Downsampling* the data keeps the minority class and takes a random sample of the majority class so that class frequencies are balanced.
+
+The `step_downsample()` function would be used to do this and would look something like this:
+
+````
+`step_downsample(outcome_column_name)`
+
+````
+
+### 
+
+Some other approaches include upsampling, which replicates samples from the minority class to balance the classes, and hybrid, which does a combination of downsampling and upsampling.
+
+
+## Tidy a `recipe()`
+### 
+
+In the "A Review of R Modeling Fundamentals" tutorial, the `tidy()` function was introduced, which creates a tibble with standardized names. There is also a tidy() method for recipes, as well as individual recipe steps.
+
+### Exercise 1
+
+Type in `recipe()`. Inside this function, set `formula` to `Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude` and set `data` to `ames_train`.
+
+```{r tidy-a-recipe-1, exercise = TRUE}
+
+```
+
+```{r tidy-a-recipe-1-hint-1, eval = FALSE}
+...(... ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ...)
+```
+
+```{r include = FALSE}
+recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train)
+```
+
+### 
+
+For simple transformations of the outcome column(s), it is strongly suggested that those operations be conducted outside of the recipe.
+
+### Exercise 2
+
+Copy the previous code and pipe it to `step_log()`. Inside this function, type in `Gr_Liv_Area` and set `base` to `10`.
+
+```{r tidy-a-recipe-2, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidy-a-recipe-2-hint-1, eval = FALSE}
+recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(..., base = ...)
+```
+
+```{r include = FALSE}
+recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10)
+```
+
+### 
+
+Only the training set should be affected by subsampling techniques. The test set or other holdout samples should be left as-is when processed using the recipe. For this reason, all of the subsampling steps default the `skip` argument to have a value of `TRUE`.
+
+
+### Exercise 3
+
+Copy the previous code and pipe it to `step_other()`. Inside this function, type in `Neighborhood`, set `threshold` to `0.01`, and set `id` to `"my_id"`.
+
+```{r tidy-a-recipe-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidy-a-recipe-3-hint-1, eval = FALSE}
+recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, threshold = ..., id = "...")
+```
+
+```{r include = FALSE}
+recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, threshold = 0.01, id = "my_id")
+```
+
+### 
+
+The `id` argument can be helpful if the same type of step is added to the recipe more than once.
+
+### Exercise 4
+
+Copy the previous code and pipe it to `step_dummy()`. Inside this function, pass in `all_nominal_predictors()`. 
+
+```{r tidy-a-recipe-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidy-a-recipe-4-hint-1, eval = FALSE}
+recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, threshold = 0.01, id = "my_id") |>
+  step_dummy(...)
+```
+
+```{r include = FALSE}
+recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, threshold = 0.01, id = "my_id") |>
+  step_dummy(all_nominal_predictors())
+```
+
+### 
+
+`step_mutate()` can be used to conduct a variety of basic operations to the data. It is best used for straightforward transformations like computing a ratio of two variables, such as `Bedroom_AbvGr / Full_Bath`, the ratio of bedrooms to bathrooms for the Ames housing data.
+
+### Exercise 5
+
+Copy the previous code and pipe it to `step_interact()`. Inside this function, type in ` ~ Gr_Liv_Area:starts_with("Bldg_Type_")`
+
+```{r tidy-a-recipe-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidy-a-recipe-5-hint-1, eval = FALSE}
+recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, threshold = 0.01, id = "my_id") |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ ...:starts_with("..."))
+```
+
+```{r include = FALSE}
+recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, threshold = 0.01, id = "my_id") |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_"))
+```
+
+### 
+
+Recipes can also handle data that are not in the traditional structure where the columns are features. For example, the **textrecipes** package can apply natural language processing methods to the data. The input column is typically a string of text, and different steps can be used to tokenize the data (e.g., split the text into separate words), filter out tokens, and create new features appropriate for modeling.
+
+### Exercise 6
+
+Copy the previous code and pipe it to `step_ns()`. Inside this function, type in `Latitude`, `Longitude`, and set `deg_free` to `20`. 
+
+```{r tidy-a-recipe-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidy-a-recipe-6-hint-1, eval = FALSE}
+recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, threshold = 0.01, id = "my_id") |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+  step_ns(..., Longitude, deg_free = ...)
+```
+
+```{r include = FALSE}
+recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, threshold = 0.01, id = "my_id") |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+  step_ns(Latitude, Longitude, deg_free = 20)
+```
+
+### 
+
+There are existing recipe steps for other extraction methods, such as: independent component analysis (ICA), non-negative matrix factorization (NNMF), multidimensional scaling (MDS), uniform manifold approximation and projection (UMAP), and others
+
+### Exercise 7
+
+Copy the previous code and assign it to a new variable called `ames_rec`. 
+
+```{r tidy-a-recipe-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidy-a-recipe-7-hint-1, eval = FALSE}
+... <- recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, threshold = 0.01, id = "my_id") |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+  step_ns(Latitude, Longitude, deg_free = 20)
+```
+
+```{r include = FALSE}
+ames_rec <- recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, threshold = 0.01, id = "my_id") |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+  step_ns(Latitude, Longitude, deg_free = 20)
+```
+
+### 
+
+When using `step_mutate()`, use extra care to avoid data leakage in your preprocessing. Consider, for example, the transformation `x = w > mean(w)`. When applied to new data or testing data, this transformation would use the mean of `w` from the *new* data, not the mean of `w` from the training data.
+
+### Exercise 8
+
+The `tidy()` method will give a summary of the recipe steps of `ames_rec`. Type in `tidy()` and pass in `ames_rec`.
+
+```{r tidy-a-recipe-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidy-a-recipe-8-hint-1, eval = FALSE}
+tidy(...)
+```
+
+```{r include = FALSE}
+tidy(ames_rec)
+```
+
+### 
+
+Some step functions that are row-based include `step_filter()`, `step_sample()`, `step_slice()`, and `step_arrange()`.
+
+### Exercise 9
+
+Now, lets refit the workflow with the new recipe you have created. Pipe `workflow()` to `add_model()`. Inside `add_model()`, pass in `lm_model`. 
+
+```{r tidy-a-recipe-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidy-a-recipe-9-hint-1, eval = FALSE}
+workflow() |> 
+  add_model(...)
+```
+
+```{r include = FALSE}
+workflow() |> 
+  add_model(lm_model)
+```
+
+### 
+
+The **themis** package has recipe steps that can be used to address class imbalance via subsampling. Visit this [link](https://themis.tidymodels.org/) to learn more. 
+
+### Exercise 10
+
+Copy the previous code and pipe it to `add_recipe()`. Inside this function, pass in `ames_rec`.
+
+```{r tidy-a-recipe-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidy-a-recipe-10-hint-1, eval = FALSE}
+workflow() |> 
+  add_model(lm_model) |>
+  add_recipe(...)
+```
+
+```{r include = FALSE}
+workflow() |> 
+  add_model(lm_model) |>
+  add_recipe(ames_rec)
+```
+
+### 
+
+Principal component analysis (PCA) assumes that all of the predictors are on the same scale. `step_normalize()` will center and scale each column.
+
+### Exercise 11
+
+Copy the previous code and assign it to a new variable called `lm_wflow1`.
+
+```{r tidy-a-recipe-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidy-a-recipe-11-hint-1, eval = FALSE}
+... <- workflow() |> 
+  add_model(lm_model) |>
+  add_recipe(ames_rec)
+```
+
+```{r include = FALSE}
+lm_wflow1 <- workflow() |> 
+  add_model(lm_model) |>
+  add_recipe(ames_rec)
+```
+
+### 
+
+As a reminder, `workflow()` is a container object that aggregates information required to fit and predict from a model. 
+
+### Exercise 12
+
+Now, lets fit this workflow. Type in `fit()`, passing in `lm_wflow1` and `ames_train`.
+
+```{r tidy-a-recipe-12, exercise = TRUE}
+
+```
+
+```{r tidy-a-recipe-12-hint-1, eval = FALSE}
+fit(..., ...)
+```
+
+```{r include = FALSE}
+fit(lm_wflow1, ames_train)
+```
+
+### 
+
+Theoretically, any tree-based model does not require imputation. However, many tree ensemble implementations require imputation.
+
+### Exercise 13
+
+Copy the previous code and assign it to a new variable called `lm_fit1`. 
+
+```{r tidy-a-recipe-13, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidy-a-recipe-13-hint-1, eval = FALSE}
+... <- fit(lm_wflow1, ames_train)
+```
+
+```{r include = FALSE}
+lm_fit1 <- fit(lm_wflow1, ames_train)
+```
+
+### 
+
+While tree-based boosting methods generally do not require the creation of dummy variables, models using the `xgboost` engine do.
+
+### Exercise 14
+
+The `tidy()` method can be called again along with the id identifier that was specified specified to get the results for applying `step_other()`.
+
+Pipe `lm_fit1` to `extract_recipe()`. Inside this function, set `estimated` to `TRUE`.
+
+```{r tidy-a-recipe-14, exercise = TRUE}
+
+```
+
+```{r tidy-a-recipe-14-hint-1, eval = FALSE}
+lm_fit1 |> 
+  extract_recipe(... = ...)
+```
+
+```{r include = FALSE}
+lm_fit1 |>
+  extract_recipe(estimated = TRUE)
+```
+
+### 
+
+As a reminder, `extract_recipe()` is used to return the recipe that was used. 
+
+### Exercise 15
+
+Copy the previous code and assign it to a new variable called `estimated_recipe`.
+
+```{r tidy-a-recipe-15, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidy-a-recipe-15-hint-1, eval = FALSE}
+... <- lm_fit1 |>
+  extract_recipe(estimated = TRUE)
+```
+
+```{r include = FALSE}
+estimated_recipe <- lm_fit1 |>
+  extract_recipe(estimated = TRUE)
+```
+
+### 
+
+This [link](https://www.tidymodels.org/find/parsnip/) provides more information about all the parsnip models in the **tidymodels** framework.
+
+### Exercise 16
+
+Now, lets use `tidy()` on `estimated_recipe`. Type in `tidy()`. Inside this function, type in `estimated_recipe` and set `id` to `"my_id"`. 
+
+```{r tidy-a-recipe-16, exercise = TRUE}
+
+```
+
+```{r tidy-a-recipe-16-hint-1, eval = FALSE}
+tidy(estimated_recipe, ... = "...")
+
+```
+
+```{r include = FALSE}
+tidy(estimated_recipe, id = "my_id")
+```
+
+### 
+
+The `tidy()` results shown here for using `step_other()` show which factor levels were retained i.e., not added to the new “other” category.
+
+### Exercise 17
+
+The `tidy()` method can be called with the number identifier as well, if it is known which step in the recipe is needed.
+
+Type in `tidy()`, passing in `estimated_recipe` and setting `number` to `2`. 
+
+```{r tidy-a-recipe-17, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tidy-a-recipe-17-hint-1, eval = FALSE}
+tidy(..., number = ...)
+```
+
+```{r include = FALSE}
+tidy(estimated_recipe, number = 2)
+```
+
+### 
+
+Each `tidy()` method returns the relevant information about that step. For example, the `tidy()` method for `step_dummy()` returns a column with the variables that were converted to dummy variables and another column with all of the known levels for each column.
 
 
 ## Summary
-###
+### 
 
-<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+In this tutorial you have learned:
+
+- How to create a recipe using `recipe()`
+- How to add steps to a recipe using `step_*()`
+- How to use workflows with recipes using `add_recipe()`
+- How to estimate both the recipe and model using `fit()` and `predict()`
+- How to extract a recipe that `extract_recipe()`
+- How to tidy a recipe using `tidy()`
 
 ```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
 ```
