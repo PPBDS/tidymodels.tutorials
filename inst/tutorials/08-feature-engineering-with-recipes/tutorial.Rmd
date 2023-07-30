@@ -108,14 +108,10 @@ estimated_recipe <- lm_fit1 |>
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
-<!-- Note to self: Use section 8.3 for knowledge drops. -->
-<!-- Note to self: Finish "Introduction" Section -->
-
 ## Introduction
 ### 
 
-This tutorial covers [Chapter 8: Feature Engineering with recipies](https://www.tmwr.org/recipes.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This tutorial covers the usage of `recipe()`.
-
+This tutorial covers [Chapter 8: Feature Engineering with recipies](https://www.tmwr.org/recipes.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. You will learn how to create recipes (using `recipe()`) and add steps to them (using `step_*()`). You will also learn how to use various functions on a recipe, including `fit()`, `predict()`, and `tidy()`. 
 
 ## A simple `recipe()` for the Ames housing data
 ### 
@@ -436,7 +432,7 @@ There can only be one preprocessing method at a time, so the existing preprocess
 
 ### Exercise 3
 
-Copy the previous code. Instead of piping `lm_wflow` to `add_recipe()`, pipe `lm_wflow` to `remove_variables()` and then create the pipe to `add_recipe()`.
+Copy the previous code. Instead of piping `lm_wflow` to `add_recipe()`, pipe `lm_wflow` to `remove_variables()` and then create the pipe to `add_recipe(simple_ames)`.
 
 ```{r using-recipes-3, exercise = TRUE}
 
@@ -504,7 +500,7 @@ fit(lm_wflow_edit, ames_train)
 
 ### 
 
-<!-- AK: Add knowledge drop -->
+As you can see, this code fits the model, displaying the call and the coefficients.
 
 ### Exercise 6
 
@@ -555,6 +551,10 @@ predict(lm_fit, ames_test)
 ```
 
 ### 
+
+As you can, the code outputs a list of predicted sale prices based on the neighborhood, year built, building type, and area.
+
+###
 
 This [link](https://www.tmwr.org/pre-proc-table.html#pre-proc-table) contains a small table of recommended preprocessing techniques for different models.
 
@@ -760,14 +760,14 @@ recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Typ
 ```{r examples-of-recipe-s-5-hint-1, eval = FALSE}
 recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
   step_log(Gr_Liv_Area, base = 10) |>
-    step_other(..., theshold = ...) |>
+    step_other(..., threshold = ...) |>
       step_dummy(all_nominal_predictors())
 ```
 
 ```{r include = FALSE}
 recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type , data = ames_train) |>
   step_log(Gr_Liv_Area, base = 10) |>
-    step_other(Neighborhood, theshold = 0.01) |>
+    step_other(Neighborhood, threshold = 0.01) |>
       step_dummy(all_nominal_predictors())
 ```
 
@@ -904,7 +904,7 @@ ames_train |>
 
 ### 
 
-`facet_wrap()` is a way of visualizing data by dividing it into subsets based on one or more categorical variables and creating separate panels or plots for each subset. As you can see, the graph is split into five different graphs, which have been separated by each `BLdg_Type`.
+`facet_wrap()` is a way of visualizing data by dividing it into subsets based on one or more categorical variables and creating separate panels or plots for each subset. As you can see, the graph is split into five different graphs, which have been separated by each `Bldg_Type`.
 
 ### Exercise 11
 
@@ -1080,7 +1080,7 @@ Going back to the purpose of creating this graph, you can see that the regressio
 
 With the current recipe, `step_dummy()` has already created dummy variables. In order to combine these for an interaction, the additional step would be to add `step_interact(~ interaction terms)`, where the terms on the right-hand side of the tilde are the interactions. 
 
-Lets add this to `step_ames1`, which was created earlier in this section. Type in `step_ames1` and press "Run Code". 
+Lets add this to `simple_ames1`, which was created earlier in this section. Type in `simple_ames1` and press "Run Code". 
 
 ```{r examples-of-recipe-s-16, exercise = TRUE}
 
@@ -1126,6 +1126,10 @@ simple_ames1 |>
 ```
 
 ### 
+
+As you can see, the output displays an `Interaction:` section, which represents the interaction you have created.
+
+###
 
 Here's another way to specify an interaction for a recipe (referring to `ames`):
 
@@ -1236,6 +1240,8 @@ function (deg_free) {
 ### 
 
 `deg_free` stands for the degrees of freedom, which isthe maximum number of logically independent values.
+
+The `<environment>` stands for the environment that has been created by `ggplot()`, but hasn't been outputted due to it being inside a `function`. 
 
 ### Exercise 23
 
