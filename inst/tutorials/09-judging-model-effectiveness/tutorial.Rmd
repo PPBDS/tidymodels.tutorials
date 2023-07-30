@@ -1,0 +1,954 @@
+---
+title: Judging Model Effectiveness
+author: Pratham Kancherla and David Kane
+tutorial:
+  id: judging-model-effectiveness
+output:
+  learnr::tutorial:
+    progressive: yes
+    allow_skip: yes
+runtime: shiny_prerendered
+description: 'Tutorial for Chapter 9: Judging Model Effectiveness'
+---
+
+```{r setup, include = FALSE}
+library(learnr)
+library(tutorial.helpers)
+library(tidyverse)
+library(tidymodels)
+
+knitr::opts_chunk$set(echo = FALSE)
+options(tutorial.exercise.timelimit = 60, 
+        tutorial.storage = "local") 
+
+data(ames)
+ames <- mutate(ames, Sale_Price = log10(Sale_Price))
+
+ames_split <- initial_split(ames, prop = 0.80, strata = Sale_Price)
+ames_train <- training(ames_split)
+ames_test  <-  testing(ames_split)
+
+ames_rec <- 
+  recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + 
+           Latitude + Longitude, data = ames_train) %>%
+  step_log(Gr_Liv_Area, base = 10) %>% 
+  step_other(Neighborhood, threshold = 0.01) %>% 
+  step_dummy(all_nominal_predictors()) %>% 
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_") ) %>% 
+  step_ns(Latitude, Longitude, deg_free = 20)
+  
+lm_model <- 
+  linear_reg() |>
+  set_engine("lm")
+
+lm_wflow <- 
+  workflow() |> 
+  add_model(lm_model) |>
+  add_recipe(ames_rec)
+
+lm_fit <- fit(lm_wflow, ames_train)
+
+ames_test_res <- predict(lm_fit, new_data = ames_test %>% select(-Sale_Price))
+
+ames_test_res <- bind_cols(ames_test_res, ames_test %>% select(Sale_Price))
+
+ames_test_res <- ames_test_res |> rename(Sale_Price = Sale_Price)
+
+ames_metrics <- metric_set(rmse, rsq, mae)
+
+classification_metrics <- metric_set(accuracy, mcc, f_meas)
+
+two_class_curve <- roc_curve(two_class_example, truth, Class1)
+
+```
+
+```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
+```
+
+```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
+```
+
+<!-- PK: Having trouble with the column `Sale_Price` in data set `ames_test_res` -->
+
+## Introduction
+### 
+
+<!-- Two to four sentence about the main topics covered in this tutorial. Why are we here? What will students get out of giving you 90 minutes of their lives? How does this tutorial connect to other tutorials? -->
+
+## Regression Metrics
+### 
+
+**tidymodels** prediction functions produce tibbles with columns for the predicted values. These columns have consistent names, and the functions in the **yardstick** package that produce performance metrics have consistent interfaces.
+
+### Exercise 1
+
+Load the library **tidyverse** using `library()`.
+
+```{r regression-metrics-1, exercise = TRUE}
+
+```
+
+```{r regression-metrics-1-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(tidyverse)
+```
+
+### 
+
+Two common metrics for regression models are the root mean squared error (RMSE) and the coefficient of determination (a.k.a. R2). The former measures accuracy while the latter measures correlation. These are not necessarily the same thing. 
+
+### Exercise 2
+
+Now lets create the prediction model using `predict()`. Add the parameter`lm_fit` to `predict()` and the data object, `ames_test` (from the previous tutorials), hit "Run Code".
+
+```{r regression-metrics-2, exercise = TRUE}
+
+```
+
+```{r regression-metrics-2-hint-1, eval = FALSE}
+predict(lm_fit, new_data = ...)
+```
+
+```{r include = FALSE}
+predict(lm_fit, new_data = ames_test)
+```
+
+### 
+
+Now we need to add `-Sale_Price` to ignore that column in the data set `ames_test`. 
+
+<!-- PK: Not sure what this does -->
+
+### Exercise 3
+
+Copy the previous code and pipe `select(-Sale_Price)` to the code. Set this expression equal to `ames_test_res`. Hit "Run Code".
+
+```{r regression-metrics-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regression-metrics-3-hint-1, eval = FALSE}
+ames_test_res <- predict(lm_fit, new_data = ames_test |> select(-...)) 
+```
+
+```{r include = FALSE}
+ames_test_res <- predict(lm_fit, new_data = ames_test |> select(-Sale_Price)) 
+```
+
+### 
+
+The `select()` function is part of the **dplyr** package in R, which is widely used for data manipulation tasks. The function allows you to choose or remove specific columns from a data frame or tibble, providing a flexible and straightforward way to work with data.
+
+### Exercise 4
+
+The predicted numeric outcome from the regression model is named .pred. Let’s match the predicted values with their corresponding observed outcome values using `bind_cols()`. Within in the function, add the parameter `ames_test_res` and the `ames_test` as the data argument. 
+
+```{r regression-metrics-4, exercise = TRUE}
+
+```
+
+```{r regression-metrics-4-hint-1, eval = FALSE}
+bind_cols(ames_test_res, ...)
+```
+
+```{r include = FALSE}
+bind_cols(ames_test_res, ames_test)
+```
+
+### 
+
+In R, `bind_cols()` is a function from the **dplyr** package used to combine data frames or tibbles by column-wise binding. It is commonly used to merge multiple data frames horizontally, adding new columns to the resulting data frame.
+
+### Exercise 5
+
+We only want to compare the predicted values to the `Sale_Price` column, which is why we need to only look at that column from the `ames_test` data set. Copy the previous code and within the function, pipe `select(Sale_Price)` after `ames_test`. Set this expression to `ames_test_res`.
+
+```{r regression-metrics-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regression-metrics-5-hint-1, eval = FALSE}
+ames_test_res <- bind_cols(ames_test_res, ames_test |> ...(Sale_Price))
+```
+
+```{r include = FALSE}
+bind_cols(ames_test_res, ames_test |> select(Sale_Price))
+```
+
+### 
+
+Note that both the predicted and observed outcomes are in log-10 units. It is best practice to analyze the predictions on the transformed scale (if one were used) even if the predictions are reported using the original units.
+
+### Exercise 6
+
+Now let's graph the data. Pipe `ggplot()` to `ames_test_res` and hit "Run Code."
+
+```{r regression-metrics-6, exercise = TRUE}
+
+```
+
+```{r regression-metrics-6-hint-1, eval = FALSE}
+ames_test_res |>
+  ...()
+```
+
+```{r include = FALSE}
+ames_test_res |>
+  ggplot()
+```
+
+### 
+
+### Exercise 7
+
+Copy the previous code and within `aes()`, set `x = Sale_Price` and `y = .pred`. Hit "Run Code".
+
+```{r regression-metrics-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regression-metrics-7-hint-1, eval = FALSE}
+ames_test_res |>
+  ggplot(aes(x = ..., y = .pred))
+```
+
+<!-- PK: Don't know why its throwing an error here. -->
+```{r include = FALSE}
+# ames_test_res |>
+#   ggplot(aes(x = Sale_Price, y = .pred))
+```
+
+### 
+
+In R, `geom_abline()` is a function from the **ggplot2** package used to add reference lines to a plot created using the `ggplot()` function. These reference lines can be horizontal, vertical, or diagonal, and they are typically used to highlight specific relationships or patterns in the data.
+
+### Exercise 8
+
+We want to add a regression line to the plot by using `geom_abline()`. Copy the previous code and add `geom_abline()`. Set the line type `lty` to `2` and hit "Run Code".
+
+```{r regression-metrics-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regression-metrics-8-hint-1, eval = FALSE}
+... +
+  geom_abline(lty = ...)
+```
+
+```{r include = FALSE}
+ames_test_res |>
+  ggplot(aes(x = Sale_Price, y = .pred)) +
+    geom_abline(lty = 2)
+```
+
+### 
+
+`geom_point()` is a function in the R programming language that is part of the **ggplot2** package. It is used to create scatter plots in data visualization, where individual data points are represented as points on a Cartesian coordinate system.
+
+### Exercise 9
+
+Copy the previous code and add `geom_point()`. Set `alpha = 0.5`. Hit "Run Code".
+
+```{r regression-metrics-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regression-metrics-9-hint-1, eval = FALSE}
+... +
+  geom_point(... = 0.5)
+```
+
+<!-- PK: Don't know why its throwing an error here. -->
+```{r include = FALSE}
+# ames_test_res |>
+#   ggplot(aes(x = Sale_Price, y = .pred)) +
+#     geom_abline(lty = 2) +
+#     geom_point(alpha = 0.5)
+```
+
+### 
+
+A model optimized for RMSE has more variability but has relatively uniform accuracy across the range of the outcome.
+
+### Exercise 10
+
+Copy the previous code and add the correct labels to the graph.
+
+x: "Sale_Price (log10)"
+
+y: "Predicted Sale Price (log10)"
+
+```{r regression-metrics-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regression-metrics-10-hint-1, eval = FALSE}
+... + 
+  labs(y = "...", x = "...")
+```
+
+<!-- PK: Don't know why its throwing an error here. -->
+```{r include = FALSE}
+# ames_test_res |>
+#   ggplot(aes(x = Sale_Price, y = .pred)) + 
+#     geom_abline(lty = 2) + 
+#     geom_point(alpha = 0.5) + 
+#     labs(y = "Predicted Sale Price (log10)", x = "Sale Price (log10)")
+```
+
+### 
+
+For regression models, `coord_obs_pred()` can be used in a **ggplot** to make the x- and y-axes have the same exact scale along with an aspect ratio of one.
+
+### Exercise 11
+
+Copy the previous code and add `coord_obs_pred()`. Also add `theme_classic()` to make the graph look more presentable. Hit "Run Code".
+
+```{r regression-metrics-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regression-metrics-11-hint-1, eval = FALSE}
+... +
+    coord_obs_pred() +
+    theme_classic()
+```
+
+<!-- PK: Don't know why its throwing an error here. -->
+
+```{r include = FALSE}
+# ames_test_res |>
+#   ggplot(aes(x = Sale_Price, y = .pred)) + 
+#     geom_abline(lty = 2) + 
+#     geom_point(alpha = 0.5) + 
+#     labs(y = "Predicted Sale Price (log10)", x = "Sale Price (log10)") +
+#     coord_obs_pred() +
+#     theme_classic()
+```
+
+### 
+
+`rmse()` is the square root of the mean of the square of all of the error. RMSE is a good measure of accuracy, but only to compare prediction errors of different models or model configurations for a particular variable and not between variables, as it is scale-dependent.
+
+### Exercise 12
+
+We will be using `rmse()` to compute the Root-Mean Square Error of `ames_test_res`. Pipe `rsme()` to `ames_test_res`. This might throw an error.
+
+```{r regression-metrics-12, exercise = TRUE}
+
+```
+
+```{r regression-metrics-12-hint-1, eval = FALSE}
+ames_test_res |>
+  rmse()
+```
+
+### Exercise 13
+
+Copy the previous code. We need to add the parameters `truth` and `estimate`. `truth` is our independent variable and `estimate` is our dependent, therefore, set `truth = Sale_Price` and `estimate = .pred`.
+
+```{r regression-metrics-13, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regression-metrics-13-hint-1, eval = FALSE}
+ames_test_res |>
+  rmse(truth = ..., ...= .pred)
+```
+
+```{r include = FALSE}
+rmse(ames_test_res, truth = Sale_Price, estimate = .pred)
+```
+
+### 
+
+`metric_set()` allows you to combine multiple metric functions together into a new function that calculates all of them at once.
+
+### Exercise 14
+
+Let's create a metric set consistent of these functions: Root-Mean Square Error (rmse), R-Squared (rsq), and Mean Absolute Error (mae). Type `metric_set()` and add `rmse`, `rsq`, and `mae`. Set this expression <- to `ames_metrics`.
+
+```{r regression-metrics-14, exercise = TRUE}
+
+```
+
+```{r regression-metrics-14-hint-1, eval = FALSE}
+ames_metrics <- metric_set(..., ..., ...)
+```
+
+```{r include = FALSE}
+ames_metrics <- metric_set(rmse, rsq, mae)
+```
+
+### 
+
+An inferential model is used primarily to understand relationships, and typically emphasizes the choice (and validity) of probabilistic distributions and other generative qualities that define the model. 
+
+### Exercise 15
+
+Now lets use the same parameters as seen in Exercise 14. Use the parameters in the function created in the previous exercise, `ames_metrics`. 
+
+```{r regression-metrics-15, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regression-metrics-15-hint-1, eval = FALSE}
+ames_metrics(ames_test_res, truth = ..., estimate = ...)
+```
+
+```{r include = FALSE}
+ames_metrics(ames_test_res, truth = Sale_Price, estimate = .pred)
+```
+
+### 
+
+The root mean squared error and mean absolute error metrics are both on the scale of the outcome (so `log10(Sale_Price)` for our example) and measure the difference between the predicted and observed values. The value for  R2 measures the squared correlation between the predicted and observed values, so values closer to one are better.
+
+### 
+
+Great job! You now know how to calculate and analyze regression metrics.
+
+## Binay Classification Metrics
+### 
+
+In binary classification, we are dealing with problems where the target variable has two classes or categories. Commonly, these classes are denoted as "positive" and "negative." 
+
+### Exercise 1
+
+The data set we will be looking at in this section is `two_class_example`. Type `tibble(two_class_example)` to get a sense of what the data looks like.
+
+```{r binay-classification-1, exercise = TRUE}
+
+```
+
+```{r binay-classification-1-hint-1, eval = FALSE}
+tibble(...)
+```
+
+```{r include = FALSE}
+tibble(two_class_example)
+```
+
+### 
+
+The second and third columns are the predicted class probabilities for the test set while predicted are the discrete predictions.
+
+### Exercise 2
+
+A confusion matrix, `conf_math()`, also known as an error matrix, is a table used to evaluate the performance of a classification model in machine learning. It summarizes the results of a binary classification task by comparing the predicted class labels to the actual class labels in the test data.
+
+Type `conf_math()` and add the parameters, `two_class_example`, `truth`, and `predicted`. Hit "Run Code".
+
+```{r binay-classification-2, exercise = TRUE}
+
+```
+
+```{r binay-classification-2-hint-1, eval = FALSE}
+conf_mat(two_class_example, ..., predicted)
+```
+
+```{r include = FALSE}
+conf_mat(two_class_example, truth, predicted)
+```
+
+### 
+
+Returns range of summary measures of the forecast accuracy. If *x* is provided, the function measures test set forecast accuracy based on *x-f*. If x is not provided, the function only produces training set accuracy measures of the forecasts based on *f["x"]-fitted(f)*. 
+
+### Exercise 3
+
+Copy the previous code and change `conf_mat()` to `accuracy()`. Hit "Run Code".
+
+```{r binay-classification-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r binay-classification-3-hint-1, eval = FALSE}
+accuracy(two_class_example, truth, ...)
+```
+
+```{r include = FALSE}
+accuracy(two_class_example, truth, predicted)
+```
+
+### 
+
+The term "MCC" typically refers to the Matthews Correlation Coefficient, which is a metric commonly used to evaluate the performance of binary classification models. The Matthews Correlation Coefficient takes into account true positives, true negatives, false positives, and false negatives and provides a balanced metric even for imbalanced data sets.
+
+### Exercise 4
+
+Copy the previous code and change `accuracy()` to `mcc()`. Hit "Run Code".
+
+```{r binay-classification-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r binay-classification-4-hint-1, eval = FALSE}
+mcc(two_class_example, ..., predicted)
+```
+
+```{r include = FALSE}
+mcc(two_class_example, truth, predicted)
+```
+
+### 
+
+The term "F-measure" (also known as F1-score) is a commonly used metric in binary classification to evaluate the performance of a model. The F-measure is the harmonic mean of precision and recall, providing a balanced metric that takes both false positives and false negatives into account.
+
+### Exercise 5
+
+Copy the previous code and change the previous function name to `f_meas()`. Hit "Run code".
+
+```{r binay-classification-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r binay-classification-5-hint-1, eval = FALSE}
+f_meas(two_class_example, ..., predicted)
+```
+
+```{r include = FALSE}
+f_meas(two_class_example, truth, predicted)
+```
+
+### 
+
+The Matthews correlation coefficient and F1 score both summarize the confusion matrix, but compared to `mcc()`, which measures the quality of both positive and negative examples, the `f_meas()` metric emphasizes the positive class, i.e., the event of interest.
+
+### Exercise 6
+
+Now lets create a metric set of the functions `accuracy`, `mcc`, `f_meas`. Within `metric_set()`, add the parameters `accuracy, mcc, f_meas`. Set this expression equal to `classification_metrics` using the `<-` operator.
+
+```{r binay-classification-6, exercise = TRUE}
+
+```
+
+```{r binay-classification-6-hint-1, eval = FALSE}
+classification_metrics <- ...(accuracy, mcc, f_meas)
+```
+
+```{r include = FALSE}
+classification_metrics <- metric_set(accuracy, mcc, f_meas)
+```
+
+### 
+
+There is some heterogeneity in R functions in this regard; some use the first level and others the second to denote the event of interest. We consider it more intuitive that the first level is the most important.
+
+### Exercise 7
+
+Now lets call the method created in the previous exercise using the parameters from Exercise 5. Within `classification_metrics()`, set `truth = truth` and `estimate = predicted` and hit "Run Code".  
+
+```{r binay-classification-7, exercise = TRUE}
+
+```
+
+```{r binay-classification-7-hint-1, eval = FALSE}
+classification_metrics(two_class_example, truth, ...)
+```
+
+```{r include = FALSE}
+classification_metrics(two_class_example, truth = truth, estimate = predicted)
+```
+
+### 
+
+The second level logic is borne of encoding the outcome as 0/1 (in which case the second value is the event) and unfortunately remains in some packages. However, **tidymodels** (along with many other R packages) require a categorical outcome to be encoded as a factor and, for this reason, the legacy justification for the second level as the event becomes irrelevant.
+
+### Exercise 8
+
+As an example where the second level is the event below. Hit "Run Code".
+
+
+```{r binay-classification-8, exercise = TRUE}
+f_meas(two_class_example, truth, predicted, event_level = "second")
+```
+
+```{r include = FALSE}
+f_meas(two_class_example, truth, predicted, event_level = "second")
+```
+
+In this output, the .estimator value of “binary” indicates that the standard formula for binary classes will be used.
+
+### Exercise 9
+
+The term "ROC curve" refers to the Receiver Operating Characteristic curve, which is a graphical representation of the performance of a binary classification model at various classification thresholds. We will use the `roc_curve()` to represent the performance of the binary classification model used in this section.
+
+Within `roc_curve()`, add the parameters `two_class_example`, `truth`, and `Class1`. Set this expression equal to `two_class_curve` and hit "Run Code". 
+
+```{r binay-classification-9, exercise = TRUE}
+
+```
+
+```{r binay-classification-9-hint-1, eval = FALSE}
+two_class_curve <- roc_curve(..., truth, Class1)
+```
+
+```{r include = FALSE}
+two_class_curve <- roc_curve(two_class_example, truth, Class1)
+```
+
+### 
+
+The ROC curve plots the True Positive Rate (TPR) against the False Positive Rate (FPR) for different threshold values, and it helps to visualize the trade-off between sensitivity and specificity.
+
+### Exercise 10
+
+The term "ROC AUC" refers to the Area Under the Receiver Operating Characteristic Curve, which is a commonly used metric to evaluate the performance of binary classification models. 
+
+Now lets call the function `roc_auc()` and add the same parameters as the parameters in `roc_curve()` from the previous exercise.
+
+```{r binay-classification-10, exercise = TRUE}
+
+```
+
+```{r binay-classification-10-hint-1, eval = FALSE}
+roc_auc(two_class_example, truth, ...)
+```
+
+```{r include = FALSE}
+roc_auc(two_class_example, truth, Class1)
+```
+
+### 
+
+The ROC AUC provides a single value that represents the overall performance of the model across different classification thresholds.
+
+### 
+
+`autoplot()` is a generic function in **ggfortify** that is used to automatically generate visualizations (plots) for various objects or data types. The purpose of `autoplot()` is to provide an easy way to create high-quality, informative plots without having to manually specify all the details.
+
+### Exercise 11
+
+We will be using the `autoplot()` function to graph the roc curve created in the previous exercises. Within `autoplot()`, add the parameter `two_class_curve`.
+
+```{r binay-classification-11, exercise = TRUE}
+
+```
+
+```{r binay-classification-11-hint-1, eval = FALSE}
+autoplot()
+```
+
+```{r include = FALSE}
+autoplot(two_class_curve)
+```
+
+### 
+
+Great Job! You now know the basics of binary classification metrics and how to analyze these metrics using functions such as `accuracy()`, `f_meas()`, `roc_curve()`, etc.
+
+## Multiclass Classification Metrics
+### 
+
+In multiclass classification, we are dealing with problems where the target variable has more than two classes or categories. Unlike binary classification, where we have true positive, true negative, false positive, and false negative, multiclass classification introduces additional complexity in evaluating the performance of the model.
+
+### Exercise 1
+
+The data set we will be using is `hpc_cv`. Type `tibble(hpc_cv)` to get a sense of how the data looks.
+
+```{r multiclass-classific-1, exercise = TRUE}
+
+```
+
+```{r multiclass-classific-1-hint-1, eval = FALSE}
+tibble(...)
+```
+
+```{r include = FALSE}
+tibble(hpc_cv)
+```
+
+### 
+
+As before, there are factors for the observed and predicted outcomes along with four other columns of predicted probabilities for each class. (These data also include a Resample column. These `hpc_cv` results are for out-of-sample predictions associated with 10-fold cross-validation.)
+
+### Exercise 2
+
+The functions for metrics that use the discrete class predictions are identical to their binary counterparts and the functions we will be using are `accuracy()` and `mcc()`. First, within `accuracy()`, add the parameters `hpc_cv`, `obs`, and `pred`.
+
+```{r multiclass-classific-2, exercise = TRUE}
+
+```
+
+```{r multiclass-classific-2-hint-1, eval = FALSE}
+accuracy(hpc_cv, obs, ...)
+```
+
+```{r include = FALSE}
+accuracy(hpc_cv, obs, pred)
+```
+
+### 
+
+The Matthews correlation coefficient (mcc) was originally designed for two classes but has been extended to cases with more class levels.
+
+### Exercise 3
+
+Copy the previous code and switch the function to `mcc()`.
+
+```{r multiclass-classific-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r multiclass-classific-3-hint-1, eval = FALSE}
+mcc(hpc_cv, obs, ...)
+```
+
+```{r include = FALSE}
+mcc(hpc_cv, obs, pred)
+```
+
+### 
+
+Note that, in these results, a “multiclass” .estimator is listed. Like “binary,” this indicates that the formula for outcomes with three or more class levels was used. 
+
+### Exercise 4
+
+Using sensitivity as an example, the usual two-class calculation is the ratio of the number of correctly predicted events divided by the number of true events. **yardstick** functions can automatically apply these methods via the estimator argument.
+
+Copy the previous code and switch the function to `sensitivity` and add the parameter `estimated = "macro"`
+
+```{r multiclass-classific-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r multiclass-classific-4-hint-1, eval = FALSE}
+sensitivity(hpc_cv, obs, pred, estimated = "...")
+```
+
+```{r include = FALSE}
+sensitivity(hpc_cv, obs, pred, estimated = "macro")
+```
+
+### 
+
+"macro" estimator refers to a method of calculating performance metrics that treats all classes equally, regardless of their size or frequency in the dataset. 
+
+### Exercise 5
+
+Copy the previous code and swithc the `estimated` parameter to `"macro-weighted"`.
+
+```{r multiclass-classific-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r multiclass-classific-5-hint-1, eval = FALSE}
+sensitivity(hpc_cv, obs, pred, estimated = "...")
+```
+
+```{r include = FALSE}
+sensitivity(hpc_cv, obs, pred, estimated = "macro-weighted")
+```
+
+### 
+
+A "macro-weighted" strategy is a combination of both "macro" and "weighted", where the metrics are first computed separately for each class using the "macro" approach and then weighted by class size to provide a balanced metric that considers both class equality and class size.
+
+### Exercise 6
+
+Copy the previous code and switch the `estimated` parameter to `"micro"`.
+
+```{r multiclass-classific-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r multiclass-classific-6-hint-1, eval = FALSE}
+sensitivity(hpc_cv, obs, pred, estimated = "...")
+```
+
+```{r include = FALSE}
+sensitivity(hpc_cv, obs, pred, estimated = "micro")
+```
+
+### 
+
+The term "micro" refers to a method of calculating performance metrics that aggregates the true positives, false positives, and false negatives across all classes and then computes the metrics.
+
+### Exercise 7
+
+Hand and Till (2001) determined a multiclass technique for ROC curves. In this case, all of the class probability columns must be given to the function. Type `roc_auc` and add the parameters `hpc_cv` and `obs`. This will throw an error.
+
+```{r multiclass-classific-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r multiclass-classific-7-hint, eval = FALSE}
+roc_auc(hpc_cv, ...)
+```
+
+```{r, include = FALSE}
+roc_auc(hpc_cv, obs)
+```
+
+
+We need to select at least one item from the data set, which are the columns `VF, F, M, L`.
+
+### Exercise 8
+
+Copy the previous code and add `VF, F, M, L` as parameters to the function `roc_auc`.
+
+```{r multiclass-classific-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r multiclass-classific-8-hint, eval = FALSE}
+roc_auc(hpc_cv, obs, VF, ..., M, ...)
+```
+
+```{r, include = FALSE}
+roc_auc(hpc_cv, obs, VF, F, M, L)
+```
+
+###
+
+Recall that these data have a column for the resampling groups. We haven’t yet discussed resampling in detail, but notice how we can pass a grouped data frame to the metric function to compute the metrics for each group using `group_by()`.
+
+### Exercise 9
+
+Pipe `group_by(Resample)` to `hpc_cv` and hit "Run Code".
+
+```{r multiclass-classific-9, exercise = TRUE}
+
+```
+
+```{r multiclass-classific-9-hint, eval = FALSE}
+hpc_cv |>
+  group_by(...)
+```
+
+```{r, include = FALSE}
+hpc_cv |>
+  group_by(Resample)
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 10
+
+Copy the previous code and pipe `accuracy()` with the parameters being `obs, pred`. Hit "Run Code".
+
+```{r multiclass-classific-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r multiclass-classific-10-hint, eval = FALSE}
+... |>
+  accuracy(obs, ...)
+```
+
+```{r, include = FALSE}
+hpc_cv |>
+  group_by(Resample) |>
+  accuracy(obs, pred)
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 11
+
+Now we will plot the data to get a better visual understanding of the grouping of the data. Copy the previous code and delete the `accuracy()` function. Instead, pipe `roc_curve()` and add the parameters `obs, VF, F, M, L`. 
+
+```{r multiclass-classific-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r multiclass-classific-11-hint, eval = FALSE}
+... |>
+  roc_curve(obs, VF, F, M, ...)
+```
+
+```{r, include = FALSE}
+hpc_cv |>
+  group_by(Resample) |>
+  roc_curve(obs, VF, F, M, L)
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 12
+
+Copy the previous code and pipe `autoplot()`. Hit "Run Code."
+
+```{r multiclass-classific-12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r multiclass-classific-12-hint, eval = FALSE}
+hpc_cv |>
+  group_by(Resample) |>
+  roc_curve(obs, VF, F, M, L) |>
+  ...()
+```
+
+```{r, include = FALSE}
+hpc_cv |>
+  group_by(Resample) |>
+  roc_curve(obs, VF, F, M, L) |>
+  autoplot()
+```
+
+###
+
+Great job! You now know how to calculate and analyze multiclass classification metrics using methods such as `roc_curve()` and multiclass estimator such as `macro, macro-weighted, and micro".
+
+
+
+## Summary
+### 
+
+<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+
+```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
+```
