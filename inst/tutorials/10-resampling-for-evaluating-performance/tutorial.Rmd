@@ -53,6 +53,8 @@ rf_wflow <- workflow() |>
   add_formula(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude) |>
   add_model(rf_model)
 
+rf_fit <- rf_wflow |>
+  fit(data = ames_train)
 
 ```
 
@@ -408,14 +410,137 @@ Lets create a function that will create predictions and format the results. In t
 ```
 
 ```{r the-resubstitution-a-15-hint-1, eval = FALSE}
-function(..., ...) {}
+function(..., ...) {
+  
+}
 ```
 
 ```{r include = FALSE}
-function(model, dat) {}
+function(model, dat) {
+  
+}
 ```
 
 ### 
+
+The "A Tidyverse Primer" tutorial teaches the structure and functionality of `function()`. 
+
+### Exercise 16
+
+Copy the previous code. Inside the function, create a new variable called `cl` and assign it to `match.call()`
+
+```{r the-resubstitution-a-16, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r the-resubstitution-a-16-hint, eval = FALSE}
+function(model, dat) {
+  cl <- ...()
+}
+```
+
+```{r, include = FALSE}
+function(model, dat) {
+  cl <- match.call()
+}
+```
+
+###
+
+`match.call()` returns a call in which all of the specified arguments are specified by their full names.
+
+### Exercise 17
+
+Copy the previous code. Create a new variable called `obj_name` and assign it to `as.character()`. Inside `as.character()`, type in `cl$model`.
+
+```{r the-resubstitution-a-17, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r the-resubstitution-a-17-hint, eval = FALSE}
+function(model, dat) {
+  cl <- match.call()
+  obj_name <- ...(cl$...)
+}
+```
+
+```{r, include = FALSE}
+function(model, dat) {
+  cl <- match.call()
+  obj_name <- as.character(cl$model)
+}
+```
+
+###
+
+`as.character()` is used to explicitly convert an object of any data type into a character (string).
+
+### Exercise 18
+
+Copy the previous code. Create a new variable called `data_name` and assign it to `as.character()`. Inside `as.character()`, type in `cl$dat`.
+
+```{r the-resubstitution-a-18, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r the-resubstitution-a-18-hint, eval = FALSE}
+function(model, dat) {
+  cl <- match.call()
+  obj_name <- as.character(cl$model)
+  data_name <- ...(cl$...)
+}
+```
+
+```{r, include = FALSE}
+function(model, dat) {
+  cl <- match.call()
+  obj_name <- as.character(cl$model)
+  data_name <- as.character(cl$dat)
+}
+```
+
+###
+
+As of now, this code extracts all of the arguments that are specified by their full names, extracts the `model` and `dat` columns, and turns their names into characters/strings.
+
+### Exercise 19
+
+Copy the previous code. Create a variable also called `data_name` and assign it to `gsub()`. Inside `gsub()`, type in `"ames_", "", data_name`.
+
+```{r the-resubstitution-a-19, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r the-resubstitution-a-19-hint, eval = FALSE}
+function(model, dat) {
+  cl <- match.call()
+  obj_name <- as.character(cl$model)
+  data_name <- as.character(cl$dat)
+  data_name <- ...("ames_", "", ...)
+}
+```
+
+```{r, include = FALSE}
+function(model, dat) {
+  cl <- match.call()
+  obj_name <- as.character(cl$model)
+  data_name <- as.character(cl$dat)
+  data_name <- gsub("ames_", "", data_name)
+}
+```
+
+###
+
+`gsub()`, which stands for "Global Substitution", is used to replace occurrences of a pattern (substring) with a specified replacement string in a character vector.
+
 
 ## Summary
 ### 
