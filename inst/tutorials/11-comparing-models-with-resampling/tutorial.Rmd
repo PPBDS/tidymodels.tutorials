@@ -17,7 +17,6 @@ library(tutorial.helpers)
 library(tidyverse)
 library(tidymodels)
 library(tune)
-library(ranger)
 library(ggrepel)
 
 knitr::opts_chunk$set(echo = FALSE)
