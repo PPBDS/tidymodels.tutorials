@@ -15,6 +15,7 @@ RoxygenNote: 7.2.3
 Suggests:
     censored,
     learnr,
+    ranger,
     rsconnect,
     testthat (>= 3.0.0),
     tutorial.helpers,
