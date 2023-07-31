@@ -3,10 +3,10 @@ title: Resampling for Evaluating Performance
 author: Aryan Kancherla and David Kane
 tutorial:
   id: resampling-for-evaluating-performance
-output: 
+output:
   learnr::tutorial:
-    progressive: true
-    allow_skip: true
+    progressive: yes
+    allow_skip: yes
 runtime: shiny_prerendered
 description: 'Tutorial for Chapter 10: Resampling for Evaluating Performance'
 ---
@@ -63,12 +63,12 @@ rf_wflow <- workflow() |>
 ```
 
 ## Introduction
-###
+### 
 
 This tutorial covers [Chapter 10: Resampling for Evaluating Performance](https://www.tmwr.org/resampling.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. 
 
 ## The Resubstitution Approach
-###
+### 
 
 Typically it isn't possible to decide on which final model to use with the test set before first assessing model performance. There is a gap between the need to measure performance reliably and the data splits (training and testing) that are available. However, resampling can fill this gap. *Resampling* estimates of performance can generalize to new data in a similar way as estimates from a test set.
 
@@ -81,15 +81,15 @@ Load the **tidymodels** library using `library()`
 
 ```
 
-```{r the-resubstitution-a-1-hint, eval = FALSE}
+```{r the-resubstitution-a-1-hint-1, eval = FALSE}
 library(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 library(tidymodels)
 ```
 
-###
+### 
 
 Note that before using the test set, you need to understand the performance of a model or even multiple model.
 
@@ -101,15 +101,15 @@ Type in `tidymodels_prefer()` to get rid of the naming conflicts.
 
 ```
 
-```{r the-resubstitution-a-2-hint, eval = FALSE}
+```{r the-resubstitution-a-2-hint-1, eval = FALSE}
 ...()
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 tidymodels_prefer()
 ```
 
-###
+### 
 
 As a reminder, several pieces that must be put together to evaluate the performance of a model have already been covered. The "Judging Model Effectiveness" tutorial described statistics for measuring model performance and the "Spending our Data" tutorial introduced the idea of data spending (the test set is recommended for obtaining an unbiased estimate of performance).
 
@@ -123,15 +123,15 @@ Type in `ames_train` and press "Run Code".
 
 ```
 
-```{r the-resubstitution-a-3-hint, eval = FALSE}
+```{r the-resubstitution-a-3-hint-1, eval = FALSE}
 ...
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 ames_train
 ```
 
-###
+### 
 
 In the "Feature Engineering with `recipes`" tutorial, you have created `ames_rec`, a linear model and a workflow using that recipe and model called `lm_wflow`. This workflow was fit on the training set, resulting in `lm_fit`.
 
@@ -150,7 +150,7 @@ question_text(NULL,
 	rows = 3)
 ```
 
-###
+### 
 
 This collection of trees makes up the ensemble. When predicting a new sample, each ensemble member makes a separate prediction. These are averaged to create the final ensemble prediction for the new data point.
 
@@ -164,15 +164,16 @@ Type in `rand_forest()` and set `trees` to `1000`.
 
 ```
 
-```{r the-resubstitution-a-5-hint, eval = FALSE}
+```{r the-resubstitution-a-5-hint-1, eval = FALSE}
 rand_forest(... = ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rand_forest(trees = 1000)
 ```
 
-###
+### 
+
  
 Random forest models are very powerful, and they can emulate the underlying data patterns very closely. While this model can be computationally intensive, it is very low maintenance; very little preprocessing is required.
 
@@ -186,17 +187,17 @@ Copy the previous code and pipe it to `set_engine()`. Inside this function, type
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r the-resubstitution-a-6-hint, eval = FALSE}
+```{r the-resubstitution-a-6-hint-1, eval = FALSE}
 rand_forest(trees = 1000) |>
   set_engine("...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rand_forest(trees = 1000) |>
   set_engine("ranger")
 ```
 
-###
+### 
 
 As a reminder, this [table](https://www.tmwr.org/pre-proc-table.html#pre-proc-table) provides information on preprocessing methods for different models.
 
@@ -210,19 +211,19 @@ Copy the previous code and pipe it to `set_mode()`. In this function, pass in `"
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r the-resubstitution-a-7-hint, eval = FALSE}
+```{r the-resubstitution-a-7-hint-1, eval = FALSE}
 rand_forest(trees = 1000) |>
   set_engine("ranger") |>
   set_mode("...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rand_forest(trees = 1000) |>
   set_engine("ranger") |>
   set_mode("regression")
 ```
 
-###
+### 
 
 The next tutorial complements this one by demonstrating statistical methods that compare resampling results.
 
@@ -236,19 +237,19 @@ Copy the previous code and assign it to a new variable called `rf_model`.
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r the-resubstitution-a-8-hint, eval = FALSE}
+```{r the-resubstitution-a-8-hint-1, eval = FALSE}
 ... <- rand_forest(trees = 1000) |>
   set_engine("ranger") |>
   set_mode("regression")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rf_model <- rand_forest(trees = 1000) |>
   set_engine("ranger") |>
   set_mode("regression")
 ```
 
-###
+### 
 
 The predictive capacity of a model can be used to evaluate relationships in data, even when its main goal is not prediction. Modeling itself sits within the broader data analysis process, and exploratory data analysis is a key part of building high-quality models.
 
@@ -260,17 +261,17 @@ Next, lets create a workflow for this model. Type in `workflow()` and pipe it to
 
 ```
 
-```{r the-resubstitution-a-9-hint, eval = FALSE}
+```{r the-resubstitution-a-9-hint-1, eval = FALSE}
 workflow() |>
   ...()
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 #workflow() |>
 #  add_formula()
 ```
 
-###
+### 
 
 `add_formula()` specifies the terms of the model through the usage of a formula. This code throws an error because the formula hasn't been passed in.
 
@@ -284,17 +285,17 @@ Copy the previous code. Inside `add_formula()`, type in `Sale_Price ~ Neighborho
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r the-resubstitution-a-10-hint, eval = FALSE}
+```{r the-resubstitution-a-10-hint-1, eval = FALSE}
 workflow() |>
   add_formula(Sale_Price ~ Neighborhood + ... + ... + ... + ... + ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 workflow() |>
   add_formula(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude)
 ```
 
-###
+### 
 
 As you can see, this code produces the preprocessor section, which contains all of the terms that have been passed in the `add_formula()` function. However, the *Model* section displays "None".
 
@@ -308,19 +309,19 @@ Lets fix that. Copy the previous code and pipe it to `add_model()`. Inside this 
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r the-resubstitution-a-11-hint, eval = FALSE}
+```{r the-resubstitution-a-11-hint-1, eval = FALSE}
 workflow() |>
   add_formula(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude) |>
   add_model(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 workflow() |>
   add_formula(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude) |>
   add_model(rf_model)
 ```
 
-###
+### 
 
 As described in the name, `add_model()` adds a parsnip model to a workflow. In this case, the `rf_model` that was created earlier is being passed into the workflow. 
 
@@ -334,19 +335,19 @@ Copy the previous code and assign it to a new variable called `rf_wflow`.
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r the-resubstitution-a-12-hint, eval = FALSE}
+```{r the-resubstitution-a-12-hint-1, eval = FALSE}
 ... <- workflow() |>
   add_formula(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude) |>
   add_model(rf_model)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rf_wflow <- workflow() |>
   add_formula(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude) |>
   add_model(rf_model)
 ```
 
-###
+### 
 
 Random forests are an example of an ensemble method, meaning they combines the predictions of multiple base models (decision trees) to make final predictions. The ensemble approach typically improves prediction accuracy and generalization.
 
@@ -358,17 +359,17 @@ Now, lets fit the model. Pipe `rf_wflow` to `fit()`. Inside this function, set `
 
 ```
 
-```{r the-resubstitution-a-13-hint, eval = FALSE}
+```{r the-resubstitution-a-13-hint-1, eval = FALSE}
 rf_wflow |>
   fit(... = ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rf_wflow |>
   fit(data = ames_train)
 ```
 
-###
+### 
 
 Model fitting involves finding a mathematical representation that best describes the relationship between the input variables (features) and the output variable (target) in the data. In this case, a linear regression is the mathematical representation.
 
@@ -382,47 +383,42 @@ Copy the previous code and assign it to a new variable called `rf_fit`
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r the-resubstitution-a-14-hint, eval = FALSE}
+```{r the-resubstitution-a-14-hint-1, eval = FALSE}
 ... <- rf_wflow |>
   fit(data = ames_train)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rf_fit <- rf_wflow |>
   fit(data = ames_train)
 ```
 
-###
+### 
 
 <!-- AK: Add knowledge drop -->
 
-### Exercise 14
+### Exercise 15
 
 How should the linear and random forest models be compared? In this scenario, the training set to produce what is known as an *apparent metric* or *resubstitution metric* will be predicted. 
 
 Lets create a function that will create predictions and format the results. In the code chunk below, type in `function() {}`. Inside the parenthesis, pass in `model` and `dat`.
 
-```{r the-resubstitution-a-14, exercise = TRUE}
+```{r the-resubstitution-a-15, exercise = TRUE}
 
 ```
 
-```{r the-resubstitution-a-14-hint, eval = FALSE}
+```{r the-resubstitution-a-15-hint-1, eval = FALSE}
 function(..., ...) {}
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 function(model, dat) {}
 ```
 
-###
-
-
-
-
-
+### 
 
 ## Summary
-###
+### 
 
 <!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
 
