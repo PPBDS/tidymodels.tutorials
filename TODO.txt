@@ -12,3 +12,6 @@ Chapters 5 (Done), 6 (Done), 8.
 By July 28, done through chapter 9
 By August 4, done through chapter 15
 By August 11, done through chapter 21
+
+
+Deal with censored issue.
