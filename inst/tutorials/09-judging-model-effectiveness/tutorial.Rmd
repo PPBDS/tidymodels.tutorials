@@ -222,8 +222,8 @@ ames_test_res |>
 
 <!-- PK: Don't know why its throwing an error here. -->
 ```{r include = FALSE}
-# ames_test_res |>
-#   ggplot(aes(x = Sale_Price, y = .pred))
+ames_test_res |>
+  ggplot(aes(x = Sale_Price, y = .pred))
 ```
 
 ### 
@@ -272,10 +272,10 @@ Copy the previous code and add `geom_point()`. Set `alpha = 0.5`. Hit "Run Code"
 
 <!-- PK: Don't know why its throwing an error here. -->
 ```{r include = FALSE}
-# ames_test_res |>
-#   ggplot(aes(x = Sale_Price, y = .pred)) +
-#     geom_abline(lty = 2) +
-#     geom_point(alpha = 0.5)
+ames_test_res |>
+  ggplot(aes(x = Sale_Price, y = .pred)) +
+    geom_abline(lty = 2) +
+    geom_point(alpha = 0.5)
 ```
 
 ### 
@@ -303,11 +303,11 @@ y: "Predicted Sale Price (log10)"
 
 <!-- PK: Don't know why its throwing an error here. -->
 ```{r include = FALSE}
-# ames_test_res |>
-#   ggplot(aes(x = Sale_Price, y = .pred)) + 
-#     geom_abline(lty = 2) + 
-#     geom_point(alpha = 0.5) + 
-#     labs(y = "Predicted Sale Price (log10)", x = "Sale Price (log10)")
+ames_test_res |>
+  ggplot(aes(x = Sale_Price, y = .pred)) +
+    geom_abline(lty = 2) +
+    geom_point(alpha = 0.5) +
+    labs(y = "Predicted Sale Price (log10)", x = "Sale Price (log10)")
 ```
 
 ### 
@@ -333,13 +333,13 @@ Copy the previous code and add `coord_obs_pred()`. Also add `theme_classic()` to
 <!-- PK: Don't know why its throwing an error here. -->
 
 ```{r include = FALSE}
-# ames_test_res |>
-#   ggplot(aes(x = Sale_Price, y = .pred)) + 
-#     geom_abline(lty = 2) + 
-#     geom_point(alpha = 0.5) + 
-#     labs(y = "Predicted Sale Price (log10)", x = "Sale Price (log10)") +
-#     coord_obs_pred() +
-#     theme_classic()
+ames_test_res |>
+  ggplot(aes(x = Sale_Price, y = .pred)) +
+    geom_abline(lty = 2) +
+    geom_point(alpha = 0.5) +
+    labs(y = "Predicted Sale Price (log10)", x = "Sale Price (log10)") +
+    coord_obs_pred() +
+    theme_classic()
 ```
 
 ### 
@@ -375,7 +375,8 @@ ames_test_res |>
 ```
 
 ```{r include = FALSE}
-rmse(ames_test_res, truth = Sale_Price, estimate = .pred)
+ames_test_res |>
+  rmse(truth = Sale_Price, estimate = .pred)
 ```
 
 ### 

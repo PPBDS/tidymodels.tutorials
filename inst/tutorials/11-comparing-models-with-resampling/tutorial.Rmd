@@ -1,0 +1,637 @@
+---
+title: "Comparing Models with Resampling"
+author: Pratham Kancherla and David Kane
+tutorial:
+  id: comparing-models-with-resampling
+output: 
+  learnr::tutorial:
+    progressive: true
+    allow_skip: true
+runtime: shiny_prerendered
+description: 'Tutorial for Chapter 11: Comparing Models with Resampling'
+---
+
+```{r setup, include = FALSE}
+library(learnr)
+library(tutorial.helpers)
+library(tidyverse)
+library(tidymodels)
+library(tune)
+library(ranger)
+library(ggrepel)
+
+knitr::opts_chunk$set(echo = FALSE)
+options(tutorial.exercise.timelimit = 60, 
+        tutorial.storage = "local") 
+
+ames <- mutate(ames, Sale_Price = log10(Sale_Price))
+
+set.seed(502)
+ames_split <- initial_split(ames, prop = 0.80, strata = Sale_Price)
+ames_train <- training(ames_split)
+ames_test  <-  testing(ames_split)
+
+ames_rec <- 
+  recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + 
+           Latitude + Longitude, data = ames_train) %>%
+  step_log(Gr_Liv_Area, base = 10) %>% 
+  step_other(Neighborhood, threshold = 0.01) %>% 
+  step_dummy(all_nominal_predictors()) %>% 
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_") ) %>% 
+  step_ns(Latitude, Longitude, deg_free = 20)
+
+lm_model <- linear_reg() %>% set_engine("lm")
+
+lm_wflow <- 
+  workflow() %>% 
+  add_model(lm_model) %>% 
+  add_recipe(ames_rec)
+
+lm_fit <- fit(lm_wflow, ames_train)
+
+rf_model <- 
+  rand_forest(trees = 1000) %>% 
+  set_engine("ranger") %>% 
+  set_mode("regression")
+
+rf_wflow <- 
+  workflow() %>% 
+  add_formula(
+    Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + 
+      Latitude + Longitude) %>% 
+  add_model(rf_model) 
+
+set.seed(1001)
+ames_folds <- vfold_cv(ames_train, v = 10)
+
+keep_pred <- control_resamples(save_pred = TRUE, save_workflow = TRUE)
+
+set.seed(1003)
+rf_res <- rf_wflow %>% fit_resamples(resamples = ames_folds, control = keep_pred)
+
+basic_rec <- recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, threshold = 0.01) |>
+  step_dummy(all_nominal_predictors())
+
+interaction_rec <- 
+  basic_rec |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_") ) 
+
+spline_rec <- 
+  interaction_rec |> 
+  step_ns(Latitude, Longitude, deg_free = 50)
+
+preproc <- 
+  list(basic = basic_rec, 
+       interact = interaction_rec, 
+       splines = spline_rec
+  )
+
+lm_models <- workflow_set(preproc, list(lm = linear_reg()), cross = FALSE)
+
+lm_models <- 
+  lm_models |>
+  workflow_map("fit_resamples", 
+               seed = 1101, 
+               verbose = TRUE,
+               resamples = ames_folds, 
+               control = keep_pred)
+
+four_models <- 
+  as_workflow_set(random_forest = rf_res) |> 
+  bind_rows(lm_models)
+```
+
+```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
+```
+
+```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
+```
+
+
+## Introduction
+###
+
+<!-- Two to four sentence about the main topics covered in this tutorial. Why are we here? What will students get out of giving you 90 minutes of their lives? How does this tutorial connect to other tutorials? -->
+
+## Creating Mulitple Models with Workflow Sets
+###
+
+Once we create two or more models, the next step is to compare them to understand which one is best. In some cases, comparisons might be within-model, where the same model might be evaluated with different features or preprocessing methods. Alternatively, between-model comparisons, such as when we compared linear regression and random forest models are the more common scenario.
+
+### Exercise 1
+
+Load the library **tidymodels** using `library()`.
+
+```{r creating-mulitple-mo-1, exercise = TRUE}
+
+```
+
+```{r creating-mulitple-mo-1-hint, eval = FALSE}
+library(...)
+```
+
+```{r, include = FALSE}
+library(tidymodels)
+```
+
+###
+
+To demonstrate more with workflow sets, let’s create three different linear models that add these preprocessing steps incrementally; we can test whether these additional terms improve the model results. 
+
+### Exercise 2
+
+We have seen similar recipes in the previous tutorial, but lets create them again for good practice. Within `recipe()`, add the parameters `Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude` and `data = ames_train`.
+
+```{r creating-mulitple-mo-2, exercise = TRUE}
+
+```
+
+```{r creating-mulitple-mo-2-hint, eval = FALSE}
+...(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train)
+```
+
+```{r, include = FALSE}
+recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train)
+```
+
+###
+
+The `recipe()` function is part of the recipes package, which is used for creating pre-processing and feature engineering pipelines for machine learning models. It allows you to define a series of data pre-processing steps to be applied to your data before training a model.
+
+### Exercise 3
+
+Copy the previous code. Pipe it to the `step_log()` function. Add the parameters `Gr_Live_Area` and `base = 10`.
+
+```{r creating-mulitple-mo-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-mulitple-mo-3-hint, eval = FALSE}
+... |>
+  step_log(..., base = ...)
+```
+
+```{r, include = FALSE}
+recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10)
+
+```
+
+###
+
+The `step_log()` function is used to apply the natural logarithm transformation to specified numeric variables in the data set. This transformation can be helpful when dealing with data that has a right-skewed distribution, as taking the logarithm can make the distribution more symmetric.
+
+### Exercise 4
+
+Copy the previous code and pipe it to  `step_other()`. Add the parameters `Neighborhood` and `threshold = 0.01`. 
+
+```{r creating-mulitple-mo-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-mulitple-mo-4-hint, eval = FALSE}
+... |> 
+  step_other(Neighborhood, threshold = 0.01)
+```
+
+```{r, include = FALSE}
+recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, threshold = 0.01)
+```
+
+###
+
+`step_other()` creates a specification of a **recipe** step that will potentially pool infrequently occurring values into an "other" category.
+
+### Exercise 5
+
+Copy the previous code and pipe it to `step_dummy()`. Add the parameters `all_nominal_predictors()`. Then, set the entire expression to `basic_rec` using `<-`.
+
+```{r creating-mulitple-mo-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-mulitple-mo-5-hint, eval = FALSE}
+basic_rec <- ... |>
+  step_dummy(...())
+```
+
+```{r, include = FALSE}
+basic_rec <- recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, threshold = 0.01) |>
+  step_dummy(all_nominal_predictors())
+```
+
+###
+
+`step_dummy()` will create a set of binary dummy variables from a factor variable. For example, if an unordered factor column in the data set has levels of "red", "green", "blue", the dummy variable bake will create two additional columns of 0/1 data for two of those three values (and remove the original column).
+
+### Exercise 6
+
+Now we will create an interaction using `step_interact()`. Pipe `basic_rec` to `step_interact()`. Add the parameter `~ Gr_Liv_Area:starts_with("Bldg_Type_")`. Save this entire expression to `interaction_rec`.
+
+```{r creating-mulitple-mo-6, exercise = TRUE}
+
+```
+
+```{r creating-mulitple-mo-6-hint, eval = FALSE}
+interaction_rec <- 
+  ... |>
+  ...(~ Gr_Liv_Area:starts_with("Bldg_Type_"))
+```
+
+```{r, include = FALSE}
+interaction_rec <- 
+  basic_rec |>
+  step_interact(~ Gr_Liv_Area:starts_with("Bldg_Type_"))
+```
+
+###
+
+`step_interact()` can create interactions between variables. It is primarily intended for numeric data; categorical variables should probably be converted to dummy variables using `step_dummy()` prior to being used for interactions.
+
+### Exercise 7
+
+Pipe `interaction_rec` to `step_ns()`. Add the parameters `Latitude, Longitude, deg_free = 50`. Then, set the entire expression to `spline_rec` using `<-`.
+
+```{r creating-mulitple-mo-7, exercise = TRUE}
+
+```
+
+```{r creating-mulitple-mo-7-hint, eval = FALSE}
+spline_rec <- 
+  ... |> 
+  ...(Latitude, Longitude, deg_free = 50)
+```
+
+```{r, include = FALSE}
+spline_rec <- 
+  interaction_rec |>
+  step_ns(Latitude, Longitude, deg_free = 50)
+```
+
+###
+
+Spline is a special function defined piece-wise by polynomials. The term “spline” is used to refer to a wide class of functions that are used in applications requiring data interpolation and/or smoothing. 
+
+### Exercise 8
+
+Now we will create the pre-processor using a list. Create a list with the three previous variables created in the previous exercises and set them equal to `basic`, `interact`, and `splines`. Set the entire expression to `preproc`.
+
+```{r creating-mulitple-mo-8, exercise = TRUE}
+
+```
+
+```{r creating-mulitple-mo-8-hint, eval = FALSE}
+... <- 
+  list(basic = basic_rec,
+       interact = ...,
+       splines = spline_rec)
+```
+
+```{r, include = FALSE}
+preproc <- 
+  list(basic = basic_rec,
+       interact = interaction_rec,
+       splines = spline_rec)
+```
+
+###
+
+
+`linear_reg()` is a function from the parsnip package, which is used for modeling linear regression. The **parsnip** package provides a consistent interface for specifying machine learning models, making it easy to interchange between different model implementations in R.
+
+### Exercise 9
+
+Now lets create a workflow set of the pre-processor we created. Within `workflow_set()`, add the parameters `preproc`, the model `list(lm = linear_reg())`, and `cross = FALSE`. Set the entire expression to `lm_models` using `<-`. Run `lm_models` to view the set.
+
+```{r creating-mulitple-mo-9, exercise = TRUE}
+
+```
+
+```{r creating-mulitple-mo-9-hint, eval = FALSE}
+lm_models <- ...(preproc, list(lm = linear_reg()), ... = FALSE)
+```
+
+```{r, include = FALSE}
+lm_models <- workflow_set(preproc, list(lm = linear_reg()), cross = FALSE)
+
+lm_models
+```
+
+###
+
+`workflow_map()` will execute the same function across the workflows in the set.
+
+### Exercise 10
+
+We will use a workflow map to resample the linear models created in the previous exercise. Pipe `lm_models` to `workflow_map()` and add the parameter `"fit_resamples"`.
+
+```{r creating-mulitple-mo-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-mulitple-mo-10-hint, eval = FALSE}
+lm_models |>
+  ...("...")
+```
+
+```{r, include = FALSE}
+lm_models |>
+  workflow_map("fit_resamples")
+```
+
+###
+
+We also set a `verbose` argument that will print the progress as well as a `seed` argument that makes sure that each model uses the same random number stream as the others.
+
+### Exercise 11
+
+Copy the previous code and add the parameters `seed = 1101` and `verbose = TRUE` to the 
+
+```{r creating-mulitple-mo-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-mulitple-mo-11-hint, eval = FALSE}
+
+```
+
+```{r, include = FALSE}
+lm_models |>
+  workflow_map("fit_resamples",
+               seed = 1101,
+               verbose = TRUE)
+```
+
+###
+
+You might see that there is an error message that is prompted after running this code. This is because the `resamples` and `control` parameters are missing.
+
+### Exercise 12
+
+Copy the previous code and add the parameters `resamples = ames_folds` and `control = keep_pred`. Then, set the entire expression to `lm_models` and run it on the next line.
+
+```{r creating-mulitple-mo-12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-mulitple-mo-12-hint, eval = FALSE}
+... <- 
+  lm_models |>
+  workflow_map("fit_resamples", 
+               seed = ..., 
+               verbose = ...,
+               ... = ames_folds, 
+               control = ...)
+```
+
+```{r, include = FALSE}
+lm_models <- 
+  lm_models |>
+  workflow_map("fit_resamples", 
+               seed = 1101, 
+               verbose = TRUE,
+               resamples = ames_folds, 
+               control = keep_pred)
+
+lm_models
+```
+
+###
+
+Notice that the `option` and `result` columns are now populated. The former includes the options to `fit_resamples()` that were given (for reproducibility), and the latter column contains the results produced by `fit_resamples()`.
+
+### Exercise 13
+
+There are a few convenience functions for workflow sets, including collect_metrics() to collate the performance statistics. Within `collect_metrics()`, add the parameter `lm_models`. 
+
+```{r creating-mulitple-mo-13, exercise = TRUE}
+
+```
+
+```{r creating-mulitple-mo-13-hint, eval = FALSE}
+collect_metrics(...)
+```
+
+```{r, include = FALSE}
+collect_metrics(lm_models)
+```
+
+###
+
+For `collect_metrics()`, when unsummarized, there are columns for each tuning parameter (using the `id` from `tune()`, if any). `collect_metrics(`) also has columns `.metric`, and `.estimator`.
+
+### Exercise 14
+
+Now we need to filter by the metric of Root Mean Squared Error (RMSE). Copy the previous code and pipe it to `filter()`. Add the parameter `.metric == "rmse"`.
+
+```{r creating-mulitple-mo-14, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-mulitple-mo-14-hint, eval = FALSE}
+... |>
+  filter(.metric == "...")
+```
+
+```{r, include = FALSE}
+collect_metrics(lm_models) |>
+  filter(.metric == "rmse")
+```
+
+###
+
+A Random Forest model is an ensemble learning method used for both classification and regression tasks in machine learning. It is based on the idea of combining multiple decision trees to make more accurate and robust predictions.
+
+### Exercise 15
+
+We will be using `as_workflow_set()` to change the random forest model created in a previous tutorial to a workflow set and then binding the rows. Within `as_workflow_set()`, add the parameter `random_forest`, setting it equal to `rf_res`.
+
+```{r creating-mulitple-mo-15, exercise = TRUE}
+
+```
+
+```{r creating-mulitple-mo-15-hint, eval = FALSE}
+as_workflow_set(random_fores = ...)
+```
+
+```{r, include = FALSE}
+as_workflow_set(random_fores = rf_res)
+```
+
+###
+
+`as_workflow_set()` uses existing objects to create a workflow set. A list of objects that are either simple workflows or objects that have class "tune_results" can be converted into a workflow set.
+
+### Exercise 16
+
+Copy the previous code and pipe it to `bind_rows()`. Add the parameter `lm_models` and set the entire expression to `four_models` using `<-`. Run `four_models` on the next line.
+
+```{r creating-mulitple-mo-16, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-mulitple-mo-16-hint, eval = FALSE}
+four_models <-
+  ... |> 
+  bind_rows(lm_models)
+```
+
+```{r, include = FALSE}
+four_models <- 
+  as_workflow_set(random_forest = rf_res) |> 
+  bind_rows(lm_models)
+
+four_models
+```
+
+###
+
+In R, `bind_rows()` is a function from the **dplyr** package, which is part of the **tidyverse**. It is used to combine multiple data frames vertically (i.e., row-wise). It is particularly useful when you have multiple data frames with the same columns and want to stack them on top of each other.
+
+### Exercise 17
+
+Now lets `autoplot()` the four models. Pipe `four_models` to `autoplot()` and add the parameter `metric = "rsq"`. (R-Squared)
+
+```{r creating-mulitple-mo-17, exercise = TRUE}
+
+```
+
+```{r creating-mulitple-mo-17-hint, eval = FALSE}
+... |>
+  autoplot(metric = "...")
+```
+
+```{r, include = FALSE}
+four_models |>
+  autoplot(metric = "rsq")
+```
+
+###
+
+`geom_text_repel()` is a function provided by the **ggrepel** package, an extension to **ggplot2**. It is used to add text labels to a plot in a way that automatically avoids overlapping with other data points or labels, making the text labels more readable and visually appealing.
+
+
+### Exercise 18
+
+Copy the previous code and add `geom_text_repel()`. Within aes() of `geom_text_repel()`, set `label` to `wflow_id`.
+
+```{r creating-mulitple-mo-18, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-mulitple-mo-18-hint, eval = FALSE}
+... +
+  geom_text_repel(aes(label = ...))
+```
+
+```{r, include = FALSE}
+four_models |>
+  autoplot(metric = "rsq") +
+    geom_text_repel(aes(label = wflow_id))
+```
+
+###
+
+The coefficient of determination, often denoted as R-squared (R²), is a statistical measure that represents the proportion of the variance in the dependent variable (target) that is predictable from the independent variables (predictors) in a regression model.
+
+### Exercise 19
+
+Copy the previous code and add `nudge_x` and `nudge_y` (outside of `aes()`), setting them equal to `1/8` and `1/100` respectfully.
+
+```{r creating-mulitple-mo-19, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-mulitple-mo-19-hint, eval = FALSE}
+... +
+  geom_text_repel(aes(label = wflow_id), nudge_x = ..., nudge_y = ...)
+```
+
+```{r, include = FALSE}
+four_models |>
+  autoplot(metric = "rsq") +
+    geom_text_repel(
+      aes(label = wflow_id), 
+      nudge_x = 1/8, 
+      nudge_y = 1/100) 
+```
+
+###
+
+`nudge_x` and `nudge_y` are parameters that can be used to move graphical elements (points, text labels, etc.) horizontally (`nudge_x`) or vertically (`nudge_y`) from their original positions.
+
+### Exercise 20
+
+Copy the previous code and add `theme_classic()`. Then add `theme()` and set the parameter `legend.position` to "none".
+
+```{r creating-mulitple-mo-20, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-mulitple-mo-20-hint, eval = FALSE}
+... +
+  theme_classic() +
+  theme(... = "none")
+```
+
+```{r, include = FALSE}
+four_models |>
+  autoplot(metric = "rsq") +
+    geom_text_repel(
+      aes(label = wflow_id), 
+      nudge_x = 1/8, 
+      nudge_y = 1/100) +
+    theme_classic() +
+    theme(legend.position = "none")
+```
+
+###
+
+From this plot of R2 confidence intervals, we can see that the random forest method is doing the best job and there are minor improvements in the linear models as we add more recipe steps.
+
+Now that we have 10 re-sampled performance estimates for each of the four models, these summary statistics can be used to make between-model comparisons.
+
+###
+
+Great Job! You now know how to create multiple models using workflow sets by using functions such as `recipe()`, `workflow_sets()`, `as_workflow_sets()`, random forest model, etc.
+
+## Comparing Resampled Performance statistics
+###
+
+
+
+## Summary
+###
+
+<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+
+```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
+```
