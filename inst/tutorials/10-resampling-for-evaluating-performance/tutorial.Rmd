@@ -1,0 +1,227 @@
+---
+title: Resampling for Evaluating Performance
+author: Aryan Kancherla and David Kane
+tutorial:
+  id: resampling-for-evaluating-performance
+output: 
+  learnr::tutorial:
+    progressive: true
+    allow_skip: true
+runtime: shiny_prerendered
+description: 'Tutorial for Chapter 10: Resampling for Evaluating Performance'
+---
+
+```{r setup, include = FALSE}
+library(learnr)
+library(tutorial.helpers)
+library(tidymodels)
+tidymodels_prefer()
+knitr::opts_chunk$set(echo = FALSE)
+options(tutorial.exercise.timelimit = 60, 
+        tutorial.storage = "local") 
+
+
+ames_update <- ames |>
+  mutate(Sale_Price = log10(Sale_Price))
+
+set.seed(502)
+ames_strata_split <- initial_split(ames_update, prop = 0.80, strata = Sale_Price)
+ames_train <- training(ames_strata_split)
+ames_test  <-  testing(ames_strata_split)
+
+ames_rec <- recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, threshold = 0.01, id = "my_id") |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+  step_ns(Latitude, Longitude, deg_free = 20)
+  
+lm_model <- linear_reg() |> set_engine("lm")
+
+lm_wflow <- 
+  workflow() |>
+  add_model(lm_model) |> 
+  add_recipe(ames_rec)
+
+lm_fit <- fit(lm_wflow, ames_train)
+
+
+```
+
+```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
+```
+
+```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
+```
+
+## Introduction
+###
+
+This tutorial covers [Chapter 10: Resampling for Evaluating Performance](https://www.tmwr.org/resampling.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. 
+
+## The Resubstitution Approach
+###
+
+Typically it isn't possible to decide on which final model to use with the test set before first assessing model performance. There is a gap between the need to measure performance reliably and the data splits (training and testing) that are available. However, resampling can fill this gap. *Resampling* estimates of performance can generalize to new data in a similar way as estimates from a test set.
+
+
+### Exercise 1
+
+Load the **tidymodels** library using `library()`
+
+```{r the-resubstitution-a-1, exercise = TRUE}
+
+```
+
+```{r the-resubstitution-a-1-hint, eval = FALSE}
+library(...)
+```
+
+```{r, include = FALSE}
+library(tidymodels)
+```
+
+###
+
+Note that before using the test set, you need to understand the performance of a model or even multiple model.
+
+### Exercise 2
+
+Type in `tidymodels_prefer()` to get rid of the naming conflicts.
+
+```{r the-resubstitution-a-2, exercise = TRUE}
+
+```
+
+```{r the-resubstitution-a-2-hint, eval = FALSE}
+...()
+```
+
+```{r, include = FALSE}
+tidymodels_prefer()
+```
+
+###
+
+As a reminder, several pieces that must be put together to evaluate the performance of a model have already been covered. The "Judging Model Effectiveness" tutorial described statistics for measuring model performance and the "Spending our Data" tutorial introduced the idea of data spending (the test set is recommended for obtaining an unbiased estimate of performance).
+
+### Exercise 3
+
+When the performance was measured on the same data that was used for training (as opposed to new data or testing data), that means the data has been *resubstituted*. Lets use the Ames housing data.
+
+Type in `ames_train` and press "Run Code".
+
+```{r the-resubstitution-a-3, exercise = TRUE}
+
+```
+
+```{r the-resubstitution-a-3-hint, eval = FALSE}
+...
+```
+
+```{r, include = FALSE}
+ames_train
+```
+
+###
+
+In the "Feature Engineering with `recipes`" tutorial, you have created `ames_rec`, a linear model and a workflow using that recipe and model called `lm_wflow`. This workflow was fit on the training set, resulting in `lm_fit`.
+
+### Exercise 4
+
+For a comparison to this linear model, a different type of model can be used. *Random forests` are a tree ensemble method that operates by creating a large number of decision trees from slightly different versions of the training set.
+
+Type `?rand_forest()` in the Console and look at the *Description* section. CP/CR.
+
+```{r the-resubstitution-a-4}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+###
+
+This collection of trees makes up the ensemble. When predicting a new sample, each ensemble member makes a separate prediction. These are averaged to create the final ensemble prediction for the new data point.
+
+### Exercise 5
+
+Using the same predictor set as the linear model (without the extra preprocessing steps), lets fit a random forest model to the training set via the `"ranger"` engine (which uses the ranger R package for computation). This model requires no preprocessing, so a simple formula can be used.
+
+Type in `rand_forest()` and set `trees` to `1000`. 
+
+```{r the-resubstitution-a-5, exercise = TRUE}
+
+```
+
+```{r the-resubstitution-a-5-hint, eval = FALSE}
+rand_forest(... = ...)
+```
+
+```{r, include = FALSE}
+rand_forest(trees = 1000)
+```
+
+###
+ 
+Random forest models are very powerful, and they can emulate the underlying data patterns very closely. While this model can be computationally intensive, it is very low maintenance; very little preprocessing is required.
+
+### Exercise 6
+
+Copy the previous code and pipe it to `set_engine()`. Inside this function, type in `"ranger"`
+
+```{r the-resubstitution-a-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r the-resubstitution-a-6-hint, eval = FALSE}
+rand_forest(trees = 1000) |>
+  set_engine("...")
+```
+
+```{r, include = FALSE}
+rand_forest(trees = 1000) |>
+  set_engine("ranger")
+```
+
+###
+
+As a reminder, this [table](https://www.tmwr.org/pre-proc-table.html#pre-proc-table) provides information on preprocessing methods for different models.
+
+### Exercise 7
+
+Copy the previous code and pipe it to `set_mode()`. In this function, pass in `"regression"`. 
+
+```{r the-resubstitution-a-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r the-resubstitution-a-7-hint, eval = FALSE}
+rand_forest(trees = 1000) |>
+  set_engine("ranger") |>
+  set_mode("...")
+```
+
+```{r, include = FALSE}
+rand_forest(trees = 1000) |>
+  set_engine("ranger") |>
+  set_mode("regression")
+```
+
+###
+
+The next tutorial complements this one by demonstrating statistical methods that compare resampling results.
+
+## Summary
+###
+
+<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+
+```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
+```
