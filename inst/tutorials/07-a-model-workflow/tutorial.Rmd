@@ -22,6 +22,8 @@ library(multilevelmod)
 library(nlme)
 library(workflowsets)
 
+tidymodels_prefer()
+
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
         tutorial.storage = "local") 

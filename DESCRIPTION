@@ -14,13 +14,16 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Suggests:
     censored,
+    ggrepel,
+    lme4,
     learnr,
+    multilevelmod,
+    nlme,
+    roxygen,
+    roxygen2,
     rsconnect,
     testthat (>= 3.0.0),
     tutorial.helpers,
     tidyverse,
-    tidymodels,
-    lme4,
-    multilevelmod,
-    nlme
+    tidymodels
 Config/testthat/edition: 3
