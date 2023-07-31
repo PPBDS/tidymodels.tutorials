@@ -435,19 +435,19 @@ Copy the previous code. Inside the function, create a new variable called `cl` a
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r the-resubstitution-a-16-hint, eval = FALSE}
+```{r the-resubstitution-a-16-hint-1, eval = FALSE}
 function(model, dat) {
   cl <- ...()
 }
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 function(model, dat) {
   cl <- match.call()
 }
 ```
 
-###
+### 
 
 `match.call()` returns a call in which all of the specified arguments are specified by their full names.
 
@@ -461,21 +461,21 @@ Copy the previous code. Create a new variable called `obj_name` and assign it to
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r the-resubstitution-a-17-hint, eval = FALSE}
+```{r the-resubstitution-a-17-hint-1, eval = FALSE}
 function(model, dat) {
   cl <- match.call()
   obj_name <- ...(cl$...)
 }
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 function(model, dat) {
   cl <- match.call()
   obj_name <- as.character(cl$model)
 }
 ```
 
-###
+### 
 
 `as.character()` is used to explicitly convert an object of any data type into a character (string).
 
@@ -489,7 +489,7 @@ Copy the previous code. Create a new variable called `data_name` and assign it t
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r the-resubstitution-a-18-hint, eval = FALSE}
+```{r the-resubstitution-a-18-hint-1, eval = FALSE}
 function(model, dat) {
   cl <- match.call()
   obj_name <- as.character(cl$model)
@@ -497,7 +497,7 @@ function(model, dat) {
 }
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 function(model, dat) {
   cl <- match.call()
   obj_name <- as.character(cl$model)
@@ -505,7 +505,7 @@ function(model, dat) {
 }
 ```
 
-###
+### 
 
 As of now, this code extracts all of the arguments that are specified by their full names, extracts the `model` and `dat` columns, and turns their names into characters/strings.
 
@@ -519,7 +519,7 @@ Copy the previous code. Create a variable also called `data_name` and assign it 
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r the-resubstitution-a-19-hint, eval = FALSE}
+```{r the-resubstitution-a-19-hint-1, eval = FALSE}
 function(model, dat) {
   cl <- match.call()
   obj_name <- as.character(cl$model)
@@ -528,7 +528,7 @@ function(model, dat) {
 }
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 function(model, dat) {
   cl <- match.call()
   obj_name <- as.character(cl$model)
@@ -537,7 +537,7 @@ function(model, dat) {
 }
 ```
 
-###
+### 
 
 `gsub()`, which stands for "Global Substitution", is used to replace occurrences of a pattern (substring) with a specified replacement string in a character vector.
 
