@@ -15,6 +15,7 @@ description: 'Tutorial for Chapter 10: Resampling for Evaluating Performance'
 library(learnr)
 library(tutorial.helpers)
 library(tidymodels)
+library(ranger)
 tidymodels_prefer()
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
