@@ -19,6 +19,7 @@ Suggests:
     learnr,
     multilevelmod,
     nlme,
+    ranger,
     roxygen,
     roxygen2,
     rsconnect,
