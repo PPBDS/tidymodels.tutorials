@@ -91,6 +91,13 @@ data_range <- function(x){
   summarize(x, first = min(x), last = max(x))
 }
 
+keep_pred <- control_resamples(save_pred = TRUE, save_workflow = TRUE)
+
+rf_res <- rf_wflow |> 
+  fit_resamples(resamples = ames_folds, control = keep_pred)
+
+assess_res <- collect_predictions(rf_res)
+
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -1629,6 +1636,238 @@ map_dfr(time_slices$splits, ~   assessment(.x) |> data_range())
 ### 
 
 Congrats! You have learned about the different resampling methods and how to implement them.
+
+## Estimating Performance
+### 
+
+To reiterate, the process to use resampling is:
+
+- During resampling, the analysis set is used to preprocess the data, apply the preprocessing to itself, and use these processed data to fit the model.
+
+- The preprocessing statistics produced by the analysis set are applied to the assessment set. The predictions from the assessment set estimate performance on new data.
+
+### Exercise 1
+
+Click on this [link](https://tune.tidymodels.org/reference/fit_resamples.html) and copy/paste the first paragraph which explains `fit_resamples()`.
+
+```{r estimating-performan-1}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+This resampling sequence repeats for every resample. If there are `B` resamples, there are `B` replicates of each of the performance metrics. The final resampling estimate is the average of these `B` statistics. If `B` = 1, as with a validation set, the individual statistics represent overall performance.
+
+### Exercise 2
+
+Lets save the predictions of the `rf_wflow` object in order to visualize the model fit and residuals. In the code chunk below, type in `control_resamples()`, setting `save_pred` to `TRUE` and `save_workflow` to `TRUE`. 
+
+```{r estimating-performan-2, exercise = TRUE}
+
+```
+
+```{r estimating-performan-2-hint-1, eval = FALSE}
+control_resamples(save_pred = ..., save_workflow = ...)
+```
+
+```{r include = FALSE}
+control_resamples(save_pred = TRUE, save_workflow = TRUE)
+```
+
+### 
+
+The `fit_resamples()` function is analogous to `fit()`, but instead of having a data argument, `fit_resamples()` has `resamples`, which expects an `rset` object like the ones shown in this tutorial.
+
+### Exercise 3
+
+Copy the previous code and assign it to a new variable called `keep_pred`.
+
+```{r estimating-performan-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r estimating-performan-3-hint-1, eval = FALSE}
+... <- control_resamples(save_pred = ..., save_workflow = ...)
+```
+
+```{r include = FALSE}
+keep_pred <- control_resamples(save_pred = TRUE, save_workflow = TRUE)
+```
+
+### 
+
+The `fit_resamples()` function has a number of optional arguments, such as:
+
+- `metrics`: A metric set of performance statistics to compute
+- `control`: A list created by `control_resamples()` with various options
+
+### Exercise 4
+
+Now, type in `set.seed()` and pass in `1003`.
+
+```{r estimating-performan-4, exercise = TRUE}
+
+```
+
+```{r estimating-performan-4-hint-1, eval = FALSE}
+set.seed(...)
+```
+
+```{r include = FALSE}
+set.seed(1003)
+```
+
+### 
+
+As a reminder, `set.seed()` ensures that you get the same sequence of numbers every time you run your code.
+
+### Exercise 5
+
+Pipe `rf_wflow` to `fit_resamples()`. Inside this function, set `resamples` to `ames_fold` and `control` to `keep_pred`.
+
+```{r estimating-performan-5, exercise = TRUE}
+
+```
+
+```{r estimating-performan-5-hint-1, eval = FALSE}
+... |> 
+  fit_resamples(resamples = ..., control = ...)
+```
+
+```{r include = FALSE}
+rf_wflow |> 
+  fit_resamples(resamples = ames_folds, control = keep_pred)
+```
+
+### 
+
+The return value is a tibble similar to the input resamples, along with some extra columns:
+
+- .`metrics` is a list column of tibbles containing the assessment set performance statistics.
+
+- `.notes` is another list column of tibbles cataloging any warnings or errors generated during resampling. Note that errors will not stop subsequent execution of resampling.
+
+- `.predictions` is present when save_pred = TRUE. This list column contains tibbles with the out-of-sample predictions.
+ 
+### Exercise 6
+
+Copy the previous code and assign it to a new variable called `rf_res`.
+
+```{r estimating-performan-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r estimating-performan-6-hint-1, eval = FALSE}
+... <- rf_wflow |> 
+  fit_resamples(resamples = ames_folds, control = keep_pred)
+```
+
+```{r include = FALSE}
+rf_res <- rf_wflow |> 
+  fit_resamples(resamples = ames_folds, control = keep_pred)
+```
+
+### 
+
+While these list columns may look daunting, they can be easily reconfigured using `collect_metrics()` or with convenience functions that tidymodels provides. `collect_metrics()` is a function that formats results that are produced by **tune** functions (`fit_resamples()` is a **tune** function).
+
+### Exercise 7
+
+Lets reconfigure the output of `rf_res`. In the code chunk below, type in `collect_metrics()`, passing in `rf_res`.
+
+```{r estimating-performan-7, exercise = TRUE}
+
+```
+
+```{r estimating-performan-7-hint-1, eval = FALSE}
+collect_metrics(...)
+```
+
+```{r include = FALSE}
+collect_metrics(rf_res)
+```
+
+### 
+
+These are the resampling estimates averaged over the individual replicates. To get the metrics for each resample, use the option `summarize = FALSE`.
+
+### Exercise 8
+
+Now, lets obtain the assessment set predictions using `collect_predictions()`. In the code chunk below, type in `collect_predictions()`, passing in `rf_res`.
+
+```{r estimating-performan-8, exercise = TRUE}
+
+```
+
+```{r estimating-performan-8-hint-1, eval = FALSE}
+collect_predictions(...)
+```
+
+```{r include = FALSE}
+collect_predictions(rf_res)
+```
+
+### 
+
+The prediction column names follow the conventions discussed for **parsnip** models in Chapter [6](https://www.tmwr.org/models.html#models), for consistency and ease of use. The observed outcome column always uses the original column name from the source data. The `.row` column is an integer that matches the row of the original training set so that these results can be properly arranged and joined with the original data.
+
+### Exercise 9
+
+Copy the previous code and assign it to a new variable called `assess_res`. 
+
+```{r estimating-performan-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r estimating-performan-9-hint-1, eval = FALSE}
+... <- collect_predictions(rf_res)
+```
+
+```{r include = FALSE}
+assess_res <- collect_predictions(rf_res)
+```
+
+### 
+
+For some resampling methods, such as the bootstrap or repeated cross-validation, there will be multiple predictions per row of the original training set. To obtain summarized values (averages of the replicate predictions) use `collect_predictions(object, summarize = TRUE)`.
+
+### Exercise 10
+
+Since this analysis used 10-fold cross-validation, there is one unique prediction for each training set sample. This data can generate helpful plots of the model to understand where it potentially failed.
+
+Lets create a plot. Start by piping `assess_res` to `ggplot()`. 
+
+```{r estimating-performan-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r estimating-performan-10-hint-1, eval = FALSE}
+assess_res |>
+  ...()
+```
+
+```{r include = FALSE}
+assess_res |>
+  ggplot()
+```
+
+### 
+
+<!-- AK: Add knowledge drop -->
+
 
 
 ## Summary
