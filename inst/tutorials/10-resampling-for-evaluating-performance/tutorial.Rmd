@@ -1,6 +1,6 @@
 ---
 title: Resampling for Evaluating Performance
-author: Aryan Kancherla and David Kane
+author: Aryan Kancherla
 tutorial:
   id: resampling-for-evaluating-performance
 output:
@@ -1059,6 +1059,8 @@ Using V = 3 is a good choice to illustrate cross-validation, but it is a poor ch
 ```
 
 ### 
+
+
 
 ## Summary
 ### 

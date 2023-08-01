@@ -1,6 +1,6 @@
 ---
 title: Feature Engineering with recipes
-author: Aryan Kancherla and David Kane
+author: Aryan Kancherla
 tutorial:
   id: feature-engineering-with-recipes
 output:

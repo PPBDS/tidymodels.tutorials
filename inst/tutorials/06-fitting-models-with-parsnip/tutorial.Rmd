@@ -1,6 +1,6 @@
 ---
 title: Fitting Models with parsnip
-author: Aryan Kancherla and David Kane
+author: Aryan Kancherla
 tutorial:
   id: fitting-models-with-parsnip
 output:
