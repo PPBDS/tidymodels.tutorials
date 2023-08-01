@@ -44,8 +44,8 @@ ames_rec <-
 lm_model <- linear_reg() %>% set_engine("lm")
 
 lm_wflow <- 
-  workflow() %>% 
-  add_model(lm_model) %>% 
+  workflow() |> 
+  add_model(lm_model) |>
   add_recipe(ames_rec)
 
 lm_fit <- fit(lm_wflow, ames_train)
