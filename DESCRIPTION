@@ -20,7 +20,6 @@ Suggests:
     multilevelmod,
     nlme,
     ranger,
-    roxygen,
     roxygen2,
     rsconnect,
     testthat (>= 3.0.0),
