@@ -80,6 +80,17 @@ estimate_perf <- function(model, dat) {
     mutate(object = obj_name, data = data_name)
 }
 
+ames_folds <- vfold_cv(ames_train, v = 10)
+
+val_set <- validation_split(ames_train, prop = 3/4)
+
+time_slices <- tibble(x = 1:365) |> 
+  rolling_origin(initial = 6 * 30, assess = 30, skip = 29, cumulative = FALSE)
+
+data_range <- function(x){
+  summarize(x, first = min(x), last = max(x))
+}
+
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -1044,22 +1055,580 @@ Using V = 3 is a good choice to illustrate cross-validation, but it is a poor ch
 
 ### Exercise 3
 
-```{r resampling-methods-3, exercise = TRUE}
+Lets create a V-fold cross-validation using `vfold_cv()`. Type `vfold_cv()` in the Console and look at the *Description* section. CP/CR.
+
+```{r resampling-methods-3}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+What are the effects of changing V? Larger values result in resampling estimates with small bias but substantial variance. Smaller values of V have large bias but low variance. We prefer 10-fold since noise is reduced by replication, but bias is not.
+
+### Exercise 4
+
+The primary input is the training set data frame as well as the number of folds. 
+
+In the code chunk below, type in `vfold_cv()`, passing in `ames_train` and setting `v` to `10`.
+
+
+```{r resampling-methods-4, exercise = TRUE}
+
+```
+
+```{r resampling-methods-4-hint-1, eval = FALSE}
+vfold_cv(..., ... = 10)
+```
+
+```{r include = FALSE}
+vfold_cv(ames_train, v = 10)
+```
+
+### 
+
+The column named `splits` contains the information on how to split the data (similar to the object used to create the initial training/test partition). While each row of `splits` has an embedded copy of the entire training set, R is smart enough not to make copies of the data in memory.
+
+### Exercise 5
+
+Copy the previous code and assign it to a new variable called `ames_folds`.
+
+```{r resampling-methods-5, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r resampling-methods-3-hint-1, eval = FALSE}
-
+```{r resampling-methods-5-hint-1, eval = FALSE}
+... <- vfold_cv(ames_train, v = 10)
 ```
 
 ```{r include = FALSE}
+ames_folds <- vfold_cv(ames_train, v = 10)
+```
+
+### 
+
+The print method inside of the tibble shows the frequency of each: `[2107/235]` indicates that about two thousand samples are in the analysis set and 235 are in that particular assessment set.
+
+These objects also always contain a character column called `id` that labels the partition.
+
+### Exercise 6
+
+To manually retrieve the partitioned data, the `analysis()` and `dim()` functions return the corresponding data frames.
+
+In the code chunk below, type in `ames_folds$splits[[1]]`
+
+```{r resampling-methods-6, exercise = TRUE}
+
+```
+
+```{r resampling-methods-6-hint-1, eval = FALSE}
+ames_folds$...[[...]]
+```
+
+```{r include = FALSE}
+ames_folds$splits[[1]]
+```
+
+### 
+
+As you can see, the code displays the analysis & assess split, which is 2107 and 235, respectively. 
+
+### Exercise 7
+
+The most important variation on cross-validation is repeated V-fold cross-validation. Depending on data size or other characteristics, the resampling estimate produced by V-fold cross-validation may be excessively noisy. As with many statistical problems, one way to reduce noise is to gather more data. For cross-validation, this means averaging more than V statistics.
+
+Press "Run Code"
+
+```{r resampling-methods-7, exercise = TRUE}
+y_lab <- expression(Multiplier ~ on ~ sigma)
+
+cv_info <- 
+  tibble(replicates = rep(1:10, 2), V = 10) %>% 
+  mutate(B = V * replicates, reduction = 1/B, V = format(V))
+
+ggplot(cv_info, aes(x = replicates, y = reduction)) + 
+  geom_line() + 
+  geom_point() + 
+  labs(
+    y = y_lab,
+    x = "Number of 10F-CV Replicates"
+  ) +
+  theme_bw() + 
+  scale_x_continuous(breaks = 1:10)
+```
+
+```{r include = FALSE}
+y_lab <- expression(Multiplier ~ on ~ sigma)
+
+cv_info <- 
+  tibble(replicates = rep(1:10, 2), V = 10) %>% 
+  mutate(B = V * replicates, reduction = 1/B, V = format(V))
+
+ggplot(cv_info, aes(x = replicates, y = reduction)) + 
+  geom_line() + 
+  geom_point() + 
+  labs(
+    y = y_lab,
+    x = "Number of 10F-CV Replicates"
+  ) +
+  theme_bw() + 
+  scale_x_continuous(breaks = 1:10)
+```
+
+### 
+
+Take a look at this graph, whick looks at the relationship between the relative variance in performance estimates versus the number of cross-validation repeats. As you can see, larger numbers of replicates tend to have less impact on the standard error. However, if the baseline value of σ (which stands for the estimate’s standard deviation) is impractically large, the diminishing returns on replication may still be worth the extra computational costs.
+
+### Exercise 8
+
+To create repeats, the `repeats` argument must be passed into `vfold_cv()`. Type in `vfold_cv()`. Inside this function, type `ames_train`, set `v` to `10`. 
+
+```{r resampling-methods-8, exercise = TRUE}
+
+```
+
+```{r resampling-methods-8-hint-1, eval = FALSE}
+vfold_cv(..., v = ...)
+```
+
+```{r include = FALSE}
+vfold_cv(ames_train, v = 10)
 
 ```
 
 ### 
 
+To create _R_ repeats of _V_-fold cross-validation, the same fold generation process is done _R_ times to generate _R_ collections of _V_ partitions. Now, instead of averaging _V_ statistics, $V \times R$ statistics produce the final resampling estimate. Due to the Central Limit Theorem, the summary statistics from each model tend toward a normal distribution, as long as we have a lot of data relative to $V \times R$. 
+
+### Exercise 9
+
+Now, lets add the `repeats` argument. Copy the previous code and set `repeats` to `5`.
+
+```{r resampling-methods-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r resampling-methods-9-hint-1, eval = FALSE}
+vfold_cv(ames_train, v = 10, repeats = ...)
+```
+
+```{r include = FALSE}
+vfold_cv(ames_train, v = 10, repeats = 5)
+```
+
+### 
+
+The **tidymodels** packages, such as **tune**, contain high-level user interfaces so that functions like `analysis()` are not generally needed for day-to-day work.
+
+### Exercise 10
+
+Another variant of V-fold cross-validation is *Monte Carlo* cross-validation. Like V-fold cross-validation, it allocates a fixed proportion of data to the assessment sets.
+
+Type `?mc_cv()` in the Console and look at the *Description* section. CP/CR.
+
+```{r resampling-methods-10}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+The difference between MCCV and regular cross-validation is that, for MCCV, this proportion of the data is randomly selected each time. This results in assessment sets that are not mutually exclusive.
+
+### Exercise 11
+
+Lets create these resampling objects. Type in `mc_cv()`. Type in `ames_train`, set `prop` to `9/10`, and set `times` to `20`. 
+
+```{r resampling-methods-11, exercise = TRUE}
+
+```
+
+```{r resampling-methods-11-hint-1, eval = FALSE}
+mc_cv(..., prop = ..., times = ...)
+```
+
+```{r include = FALSE}
+mc_cv(ames_train, prop = 9/10, times = 20)
+```
+
+### 
+
+The "splits" column contains a list of data splits for each resample. Each entry in the "splits" column represents a different resample, and it shows the number of observations in the training set followed by the number of observations in the testing set. For example, "split [2107/235]" means that there are 2107 observations in the training set and 235 observations in the testing set for that particular resample. 
+
+### Exercise 12
+
+Type in `?validation_split()` in the Console and look at the *Description* section. CP/CR.
+
+```{r resampling-methods-12}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+A validation set is a single partition that is set aside to estimate performance separate from the test set. When using a validation set, the initial available data set is split into a training set, a validation set, and a test set, as shown below:
+
+```{r}
+knitr::include_graphics("images/fig-ten-point-five.png")
+```
+
+### Exercise 13
+
+Validation sets are often used when the original pool of data is very large. In this case, a single large partition may be adequate to characterize model performance without having to do multiple resampling iterations.
+
+Lets create a validation set object that uses 3/4 of the data for model fitting. In the code chunk below, type in `validation_set()`, passing in `ames_train` and setting `prop` to `3/4`.
+
+```{r resampling-methods-13, exercise = TRUE}
+
+```
+
+```{r resampling-methods-13-hint-1, eval = FALSE}
+validation_split(..., prop = ...)
+```
+
+```{r include = FALSE}
+validation_split(ames_train, prop = 3/4)
+```
+
+### 
+
+With the **rsample** package, a validation set is like any other resampling object; this type is different only in that it has a single iteration. The diagram below shows this scheme:
+
+```{r}
+knitr::include_graphics("images/fig-ten-point-six.png")
+```
+
+### Exercise 14
+
+Copy the previous code and assign it to a new variable called `val_set`.
+
+```{r resampling-methods-14, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r resampling-methods-14-hint-1, eval = FALSE}
+.__C__.environment <- validation_split(ames_train, prop = 3/4)
+```
+
+```{r include = FALSE}
+val_set <- validation_split(ames_train, prop = 3/4)
+```
+
+### 
+
+One variation of cross-validation is leave-one-out (LOO) cross-validation. If there are $n$ training set samples, $n$ models are fit using $n-1$ rows of the training set. Each model predicts the single excluded data point. At the end of resampling, the $n$ predictions are pooled to produce a single performance statistic.
+
+### Exercise 15
+
+Bootstrap resampling was originally invented as a method for approximating the sampling distribution of statistics whose theoretical properties are intractable. Using it to estimate model performance is a secondary application of the method.
+
+Type `?bootstraps()` in the Console and look at the *Description* section. CP/CR.
+
+```{r resampling-methods-15}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+A bootstrap sample of the training set is a sample that is the same size as the training set but is drawn *with replacement*. This means that some training set data points are selected multiple times for the analysis set. Each data point has a 63.2% chance of inclusion in the training set at least once. The assessment set contains all of the training set samples that were not selected for the analysis set (on average, with 36.8% of the training set). When bootstrapping, the assessment set is often called the *out-of-bag* sample.
+
+For a training set of 30 samples, a schematic of three bootstrap samples is shown below:
+
+```{r}
+knitr::include_graphics("images/fig-ten-point-seven.png")
+```
+
+### Exercise 16
+
+Now, lets use `bootstraps()` to create such bootstrap resamples. In the code chunk below, type `bootstraps()`, passing in `ames_train` and setting `times` to `5`.
+
+```{r resampling-methods-16, exercise = TRUE}
+
+```
+
+```{r resampling-methods-16-hint-1, eval = FALSE}
+bootstraps(..., times = ...)
+```
+
+```{r include = FALSE}
+bootstraps(ames_train, times = 5)
+```
+
+### 
+
+Bootstrap samples produce performance estimates that have very low variance (unlike cross-validation) but have significant pessimistic bias. This means that, if the true accuracy of a model is 90%, the bootstrap would tend to estimate the value to be less than 90%.
+
+### Exercise 17
+
+When the data has a strong time component, a resampling method should support modeling to estimate seasonal and other temporal trends within the data. A technique that randomly samples values from the training set can disrupt the model’s ability to estimate these patterns.
+
+Type `?rolling_origin()` in the Console and look at the *Description* section. CP/CR.
+
+```{r resampling-methods-17}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+Rolling forecast origin resampling provides a method that emulates how time series data is often partitioned in practice, estimating the model with historical data and evaluating it with the most recent data. For this type of resampling, the size of the initial analysis and assessment sets are specified.
+
+### Exercise 18
+
+To illustrate, a training set of fifteen samples was resampled with an analysis size of eight samples and an assessment set size of three. The second iteration discards the first training set sample and both data sets shift forward by one. This configuration results in five resamples, as shown below:
+
+```{r}
+knitr::include_graphics("images/fig-ten-point-eight.png")
+```
+
+### 
+
+Here are two different configurations of this method:
+
+- The analysis set can cumulatively grow (as opposed to remaining the same size). After the first initial analysis set, new samples can accrue without discarding the earlier data.
+
+- The resamples need not increment by one. For example, for large data sets, the incremental block could be a week or month instead of a day.
+
+### Exercise 19
+
+For a year’s worth of data, suppose that six sets of 30-day blocks define the analysis set. For assessment sets of 30 days with a 29-day skip, the **rsample** package can be used to specify this.
+
+In the code chunk below, type in `tibble()`. In this function, set `x` to `1:365`
+
+```{r resampling-methods-19, exercise = TRUE}
+
+```
+
+```{r resampling-methods-19-hint-1, eval = FALSE}
+tibble(x = ...)
+```
+
+```{r include = FALSE}
+tibble(x = 1:365)
+```
+
+### 
+
+The first iteration of resampling uses these sizes, starting from the beginning of the series. The second iteration uses the same data sizes but shifts over by a set number of samples.
+
+### Exercise 20
+
+Copy the previous code and pipe it to `rolling_origin()`. Inside this function, set `initial` to `6 * 30` and set `assess` to `30`.
+
+```{r resampling-methods-20, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r resampling-methods-20-hint-1, eval = FALSE}
+tibble(x = 1:365) |>
+  rolling_origin(initial = ..., assess = ...)
+```
+
+```{r include = FALSE}
+tibble(x = 1:365) |>
+  rolling_origin(initial = 6 * 30, assess = 30)
+```
+
+### 
+
+The amount of bias in a bootstrap cannot be empirically determined with sufficient accuracy. Additionally, the amount of bias changes over the scale of the performance metric. For example, the bias is likely to be different when the accuracy is 90% versus when it is 70%.
+
+### Exercise 21
+
+Copy the previous code. Inside `rolling_origin()`, set `skip` to `29` and set `cumulative` to `FALSE`.  
+
+```{r resampling-methods-21, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r resampling-methods-21-hint-1, eval = FALSE}
+tibble(x = 1:365) |> 
+  rolling_origin(initial = 6 * 30, assess = 30, skip = ..., cumulative = ...)
+```
+
+```{r include = FALSE}
+tibble(x = 1:365) |> 
+  rolling_origin(initial = 6 * 30, assess = 30, skip = 29, cumulative = FALSE)
+```
+
+### 
+
+Each row in the tibble represents one iteration of the rolling origin forecast resampling process. In this process, the time series data is divided into training and testing (forecast) sets.
+
+### Exercise 22
+
+Copy the previous code and assign it to a new variable called `time_slices`.
+
+```{r resampling-methods-22, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r resampling-methods-22-hint-1, eval = FALSE}
+... <- tibble(x = 1:365) |> 
+  rolling_origin(initial = 6 * 30, assess = 30, skip = 29, cumulative = FALSE)
+```
+
+```{r include = FALSE}
+time_slices <- tibble(x = 1:365) |> 
+  rolling_origin(initial = 6 * 30, assess = 30, skip = 29, cumulative = FALSE)
+```
+
+### 
+
+The bootstrap is also used inside of many models. For example, the random forest model mentioned earlier contained 1,000 individual decision trees. Each tree was the product of a different bootstrap sample of the training set.
+
+### Exercise 23
+
+Next, lets create a function. In the code chunk below, type in `function(x){}`
+
+```{r resampling-methods-23, exercise = TRUE}
+
+```
+
+```{r resampling-methods-23-hint-1, eval = FALSE}
+function(...){
+  
+}
+```
+
+```{r include = FALSE}
+function(x){
+  
+}
+```
+
+### 
+
+The `summarize()` function creates a new data frame. It returns one row for each combination of grouping variables; if there are no grouping variables, the output will have a single row summarising all observations in the input. It will contain one column for each grouping variable and one column for each of the summary statistics that you have specified.
+
+### Exercise 24
+
+Copy the previous code. Inside the function, type in `summarize()`. Inside `summarize()`, type in `x`, set `first` to `min(x)`, and set `last` to `max(x)`.
+
+```{r resampling-methods-24, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r resampling-methods-24-hint-1, eval = FALSE}
+function(x){
+  summarize(x, first = ...(x), last = ...(x))
+}
+```
+
+```{r include = FALSE}
+function(x){
+  summarize(x, first = min(x), last = max(x))
+}
+```
+
+### 
+
+Rolling origin forecast resampling is particularly useful for time series data because it accounts for the temporal order and captures the model's ability to generalize to future time points, making it a suitable technique for evaluating the performance of time series forecasting models
+
+### Exercise 25
+
+Copy the previous code and assign the entire function to a new variable called `data_range`
+
+```{r resampling-methods-25, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r resampling-methods-25-hint-1, eval = FALSE}
+... <- function(x){
+  summarize(x, first = min(x), last = max(x))
+}
+```
+
+```{r include = FALSE}
+data_range <- function(x){
+  summarize(x, first = min(x), last = max(x))
+}
+```
+
+### 
+
+Common performance metrics used in rolling forecasting origin resampling include Mean Squared Error (MSE), Root Mean Squared Error (RMSE), and Mean Absolute Error (MAE).
+
+### Exercise 26
+
+Now, lets utilize this function to do a rolling forecast origin resample. In the code chunk below, type in `map_dfr()`. Inside this function, pass in `time_slices$splits, ~   analysis(.x) |> data_range()`.
+
+```{r resampling-methods-26, exercise = TRUE}
+
+```
+
+```{r resampling-methods-26-hint-1, eval = FALSE}
+map_dfr(...)
+```
+
+```{r include = FALSE}
+map_dfr(time_slices$splits, ~   analysis(.x) |> data_range())
+```
+
+### 
+
+This code iterates over each element in `time_slices$splits` and applies the `analysis()` function to it. Then, it is piped to `data_range()`, which computes the minimum and maximum values.
+
+The `map_dfr()` function itself is used to apply a function to each element of a list or vector and then bind the results together into a single data frame.
+
+### Exercise 27
+
+Copy the previous code and change `analysis` to `assessment`. Then, press "Run Code".
+
+```{r resampling-methods-27, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r resampling-methods-27-hint-1, eval = FALSE}
+map_dfr(time_slices$splits, ~   ...(.x) |> data_range())
+```
+
+```{r include = FALSE}
+map_dfr(time_slices$splits, ~   assessment(.x) |> data_range())
+```
+
+### 
+
+Congrats! You have learned about the different resampling methods and how to implement them.
 
 
 ## Summary
