@@ -14,6 +14,7 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Suggests:
     censored,
+    corrr,
     ggrepel,
     lme4,
     learnr,
@@ -22,8 +23,10 @@ Suggests:
     ranger,
     roxygen2,
     rsconnect,
+    rstanarm,
     testthat (>= 3.0.0),
     tutorial.helpers,
-    tidyverse,
-    tidymodels
+    tidymodels,
+    tidyposterior,
+    tidyverse
 Config/testthat/edition: 3
