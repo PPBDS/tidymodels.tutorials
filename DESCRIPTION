@@ -24,9 +24,9 @@ Suggests:
     roxygen2,
     rsconnect,
     rstanarm,
-    testthat (>= 3.0.0),
-    tutorial.helpers,
     tidymodels,
     tidyposterior,
-    tidyverse
+    tidyverse,
+    testthat (>= 3.0.0),
+    tutorial.helpers
 Config/testthat/edition: 3
