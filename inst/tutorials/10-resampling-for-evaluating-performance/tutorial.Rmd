@@ -98,6 +98,13 @@ rf_res <- rf_wflow |>
 
 assess_res <- collect_predictions(rf_res)
 
+plot1 <- assess_res |>
+  ggplot(aes(x = Sale_Price, y = .pred)) + 
+  geom_point(alpha = .15) +
+  geom_abline(color = "red") + 
+  coord_obs_pred() + 
+  ylab("Predicted")
+
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -1846,7 +1853,14 @@ For some resampling methods, such as the bootstrap or repeated cross-validation,
 
 Since this analysis used 10-fold cross-validation, there is one unique prediction for each training set sample. This data can generate helpful plots of the model to understand where it potentially failed.
 
-Lets create a plot. Start by piping `assess_res` to `ggplot()`. 
+Lets create a plot, which will look like this:
+
+
+```{r}
+plot1
+```
+
+Start by piping `assess_res` to `ggplot()`. 
 
 ```{r estimating-performan-10, exercise = TRUE}
 
@@ -1866,9 +1880,173 @@ assess_res |>
 
 ### 
 
-<!-- AK: Add knowledge drop -->
+This [link](https://ggplot2.tidyverse.org/reference/) provides all of the functions that can be used on a **ggplot2** plot.
 
+### Exercise 11
 
+Copy the previous code. Inside `ggplot()`, type in `aes()`. Inside `aes()`, set `x` to `Sale_Price` and `y` to `.pred`.
+
+```{r estimating-performan-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r estimating-performan-11-hint-1, eval = FALSE}
+assess_res |>
+  ggplot(aes(x = ..., y = ...))
+```
+
+```{r include = FALSE}
+assess_res |>
+  ggplot(aes(x = Sale_Price, y = .pred))
+```
+
+### 
+
+The R packages with parallel backends for **foreach** start with the prefix `"do"`.
+
+### Exercise 12
+
+Copy the previous code and add `geom_point()`. Inside this function, set `alpha` to `0.15`.
+
+```{r estimating-performan-12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r estimating-performan-12-hint-1, eval = FALSE}
+assess_res |>
+  ggplot(aes(x = Sale_Price, y = .pred)) +
+  geom_point(alpha = ...)
+```
+
+```{r include = FALSE}
+assess_res |>
+  ggplot(aes(x = Sale_Price, y = .pred)) +
+  geom_point(alpha = 0.15)
+```
+
+### 
+
+As a reminder, the `alpha` argument controls the opacity of the points plotted on the graph. 
+
+### Exercise 13
+
+Copy the previous code and add `geom_abline()`. Inside this function, set `color` to `"red"`.
+
+```{r estimating-performan-13, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r estimating-performan-13-hint-1, eval = FALSE}
+assess_res |>
+  ggplot(aes(x = Sale_Price, y = .pred)) +
+  geom_point(alpha = 0.15) +
+  geom_abline(... = "...")
+```
+
+```{r include = FALSE}
+assess_res |>
+  ggplot(aes(x = Sale_Price, y = .pred)) +
+  geom_point(alpha = 0.15) +
+  geom_abline(color = "red")
+```
+
+### 
+
+`geom_abline()` adds a straight line to a plot. The basic idea of this function is to display the linear relationship between two variables.
+
+### Exercise 14
+
+Copy the previous code and add `coord_obs_pred()`.
+
+```{r estimating-performan-14, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r estimating-performan-14-hint-1, eval = FALSE}
+assess_res |>
+  ggplot(aes(x = Sale_Price, y = .pred)) +
+  geom_point(alpha = 0.15) +
+  geom_abline(color = "red") +
+  ...()
+```
+
+```{r include = FALSE}
+assess_res |>
+  ggplot(aes(x = Sale_Price, y = .pred)) +
+  geom_point(alpha = 0.15) +
+  geom_abline(color = "red") +
+  coord_obs_pred()
+```
+
+### 
+
+The `coord_obs_pred()` function sets the x and y-axes to the same exact scale (aspect ratio of one).
+
+### Exercise 15
+
+Copy the previous code and add `labs()`. As a reminder, your graph should look like this:
+
+```{r}
+plot1
+```
+
+```{r estimating-performan-15, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r estimating-performan-15-hint-1, eval = FALSE}
+assess_res |>
+  ggplot(aes(x = Sale_Price, y = .pred)) +
+  geom_point(alpha = 0.15) +
+  geom_abline(color = "red") +
+  coord_obs_pred() + 
+  labs(
+    y = "..."
+  )
+```
+
+```{r include = FALSE}
+assess_res |>
+  ggplot(aes(x = Sale_Price, y = .pred)) +
+  geom_point(alpha = 0.15) +
+  geom_abline(color = "red") +
+  coord_obs_pred() + 
+  labs(
+    y = "Predicted"
+  )
+```
+
+### 
+
+### Exercise 16
+
+There are two houses in the training set with a low observed sale price that are significantly overpredicted by the model. Lets use `assess_res` to find out. 
+
+```{r estimating-performan-16, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r estimating-performan-16-hint-1, eval = FALSE}
+
+```
+
+```{r include = FALSE}
+
+```
+
+### 
 
 ## Summary
 ### 
