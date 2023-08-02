@@ -17,6 +17,8 @@ library(tutorial.helpers)
 library(tidyverse)
 library(tidymodels)
 
+tidymodels_prefer()
+
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
         tutorial.storage = "local") 
@@ -67,12 +69,11 @@ two_class_curve <- roc_curve(two_class_example, truth, Class1)
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
-<!-- PK: Having trouble with the column `Sale_Price` in data set `ames_test_res` -->
-
 ## Introduction
 ### 
 
-<!-- Two to four sentence about the main topics covered in this tutorial. Why are we here? What will students get out of giving you 90 minutes of their lives? How does this tutorial connect to other tutorials? -->
+This tutorial covers [Chapter 9: Judging Model Effectiveness](https://www.tmwr.org/compare.html#workflow-set) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This tutorial will demonstrate the **yardstick** package, a core **tidymodels** packages with the focus of measuring model performance. Before illustrating syntax, let’s explore whether empirical validation using performance metrics is worthwhile when a model is focused on inference rather than prediction.
+
 
 ## Regression Metrics
 ### 
@@ -118,8 +119,6 @@ predict(lm_fit, new_data = ames_test)
 ### 
 
 Now we need to add `-Sale_Price` to ignore that column in the data set `ames_test`. 
-
-<!-- PK: Not sure what this does -->
 
 ### Exercise 3
 
@@ -220,10 +219,9 @@ ames_test_res |>
   ggplot(aes(x = ..., y = .pred))
 ```
 
-<!-- PK: Don't know why its throwing an error here. -->
 ```{r include = FALSE}
-# ames_test_res |>
-#   ggplot(aes(x = Sale_Price, y = .pred))
+ames_test_res |>
+  ggplot(aes(x = Sale_Price, y = .pred))
 ```
 
 ### 
@@ -270,12 +268,11 @@ Copy the previous code and add `geom_point()`. Set `alpha = 0.5`. Hit "Run Code"
   geom_point(... = 0.5)
 ```
 
-<!-- PK: Don't know why its throwing an error here. -->
 ```{r include = FALSE}
-# ames_test_res |>
-#   ggplot(aes(x = Sale_Price, y = .pred)) +
-#     geom_abline(lty = 2) +
-#     geom_point(alpha = 0.5)
+ames_test_res |>
+  ggplot(aes(x = Sale_Price, y = .pred)) +
+    geom_abline(lty = 2) +
+    geom_point(alpha = 0.5)
 ```
 
 ### 
@@ -301,13 +298,12 @@ y: "Predicted Sale Price (log10)"
   labs(y = "...", x = "...")
 ```
 
-<!-- PK: Don't know why its throwing an error here. -->
 ```{r include = FALSE}
-# ames_test_res |>
-#   ggplot(aes(x = Sale_Price, y = .pred)) + 
-#     geom_abline(lty = 2) + 
-#     geom_point(alpha = 0.5) + 
-#     labs(y = "Predicted Sale Price (log10)", x = "Sale Price (log10)")
+ames_test_res |>
+  ggplot(aes(x = Sale_Price, y = .pred)) +
+    geom_abline(lty = 2) +
+    geom_point(alpha = 0.5) +
+    labs(y = "Predicted Sale Price (log10)", x = "Sale Price (log10)")
 ```
 
 ### 
@@ -330,16 +326,14 @@ Copy the previous code and add `coord_obs_pred()`. Also add `theme_classic()` to
     theme_classic()
 ```
 
-<!-- PK: Don't know why its throwing an error here. -->
-
 ```{r include = FALSE}
-# ames_test_res |>
-#   ggplot(aes(x = Sale_Price, y = .pred)) + 
-#     geom_abline(lty = 2) + 
-#     geom_point(alpha = 0.5) + 
-#     labs(y = "Predicted Sale Price (log10)", x = "Sale Price (log10)") +
-#     coord_obs_pred() +
-#     theme_classic()
+ames_test_res |>
+  ggplot(aes(x = Sale_Price, y = .pred)) +
+    geom_abline(lty = 2) +
+    geom_point(alpha = 0.5) +
+    labs(y = "Predicted Sale Price (log10)", x = "Sale Price (log10)") +
+    coord_obs_pred() +
+    theme_classic()
 ```
 
 ### 
@@ -375,7 +369,8 @@ ames_test_res |>
 ```
 
 ```{r include = FALSE}
-rmse(ames_test_res, truth = Sale_Price, estimate = .pred)
+ames_test_res |>
+  rmse(truth = Sale_Price, estimate = .pred)
 ```
 
 ### 
@@ -809,14 +804,13 @@ Hand and Till (2001) determined a multiclass technique for ROC curves. In this c
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r multiclass-classific-7-hint, eval = FALSE}
+```{r multiclass-classific-7-hint-1, eval = FALSE}
 roc_auc(hpc_cv, ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 # roc_auc(hpc_cv, obs)
 ```
-
 
 We need to select at least one item from the data set, which are the columns `VF, F, M, L`.
 
@@ -830,15 +824,15 @@ Copy the previous code and add `VF, F, M, L` as parameters to the function `roc_
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r multiclass-classific-8-hint, eval = FALSE}
+```{r multiclass-classific-8-hint-1, eval = FALSE}
 roc_auc(hpc_cv, obs, VF, ..., M, ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 roc_auc(hpc_cv, obs, VF, F, M, L)
 ```
 
-###
+### 
 
 Recall that these data have a column for the resampling groups. We haven’t yet discussed resampling in detail, but notice how we can pass a grouped data frame to the metric function to compute the metrics for each group using `group_by()`.
 
@@ -850,17 +844,17 @@ Pipe `group_by(Resample)` to `hpc_cv` and hit "Run Code".
 
 ```
 
-```{r multiclass-classific-9-hint, eval = FALSE}
+```{r multiclass-classific-9-hint-1, eval = FALSE}
 hpc_cv |>
   group_by(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 hpc_cv |>
   group_by(Resample)
 ```
 
-###
+### 
 
 <!-- PK: Knowledge Drop -->
 
@@ -874,18 +868,18 @@ Copy the previous code and pipe `accuracy()` with the parameters being `obs, pre
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r multiclass-classific-10-hint, eval = FALSE}
+```{r multiclass-classific-10-hint-1, eval = FALSE}
 ... |>
   accuracy(obs, ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 hpc_cv |>
   group_by(Resample) |>
   accuracy(obs, pred)
 ```
 
-###
+### 
 
 <!-- PK: Knowledge Drop -->
 
@@ -899,18 +893,18 @@ Now we will plot the data to get a better visual understanding of the grouping o
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r multiclass-classific-11-hint, eval = FALSE}
+```{r multiclass-classific-11-hint-1, eval = FALSE}
 ... |>
   roc_curve(obs, VF, F, M, ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 hpc_cv |>
   group_by(Resample) |>
   roc_curve(obs, VF, F, M, L)
 ```
 
-###
+### 
 
 <!-- PK: Knowledge Drop -->
 
@@ -924,21 +918,21 @@ Copy the previous code and pipe `autoplot()`. Hit "Run Code."
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r multiclass-classific-12-hint, eval = FALSE}
+```{r multiclass-classific-12-hint-1, eval = FALSE}
 hpc_cv |>
   group_by(Resample) |>
   roc_curve(obs, VF, F, M, L) |>
   ...()
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 hpc_cv |>
   group_by(Resample) |>
   roc_curve(obs, VF, F, M, L) |>
   autoplot()
 ```
 
-###
+### 
 
 Great job! You now know how to calculate and analyze multiclass classification metrics using methods such as `roc_curve()` and multiclass estimator such as `macro, macro-weighted, and micro".
 
@@ -947,7 +941,7 @@ Great job! You now know how to calculate and analyze multiclass classification m
 ## Summary
 ### 
 
-<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+This tutorial covered [Chapter 9: Judging Model Effectiveness](https://www.tmwr.org/compare.html#workflow-set) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This tutorial demonstrated the **yardstick** package, a core **tidymodels** packages with the focus of measuring model performance. Before illustrating syntax, we explored whether empirical validation using performance metrics is worthwhile when a model is focused on inference rather than prediction. Empirical validation can provide valuable insights into the model's goodness of fit and reliability. However, it's essential to keep in mind that the choice of performance metrics may differ from those commonly used in prediction models. Metrics like R-squared, which are popular for predictive models, may not be as informative for inferential models.
 
 ```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
 ```
