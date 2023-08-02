@@ -80,7 +80,11 @@ estimate_perf <- function(model, dat) {
     mutate(object = obj_name, data = data_name)
 }
 
+set.seed(1001)
+
 ames_folds <- vfold_cv(ames_train, v = 10)
+
+set.seed(1002)
 
 val_set <- validation_split(ames_train, prop = 3/4)
 
@@ -93,6 +97,8 @@ data_range <- function(x){
 
 keep_pred <- control_resamples(save_pred = TRUE, save_workflow = TRUE)
 
+set.seed(1003)
+
 rf_res <- rf_wflow |> 
   fit_resamples(resamples = ames_folds, control = keep_pred)
 
@@ -104,6 +110,11 @@ plot1 <- assess_res |>
   geom_abline(color = "red") + 
   coord_obs_pred() + 
   ylab("Predicted")
+
+over_predicted <- assess_res |>
+  mutate(residual = Sale_Price - .pred) |>
+  arrange(desc(abs(residual))) |>
+  slice(1:2)
 
 ```
 
@@ -1088,18 +1099,20 @@ What are the effects of changing V? Larger values result in resampling estimates
 
 The primary input is the training set data frame as well as the number of folds. 
 
-In the code chunk below, type in `vfold_cv()`, passing in `ames_train` and setting `v` to `10`.
+In the code chunk below, on a new line, type in `vfold_cv()`, passing in `ames_train` and setting `v` to `10`.
 
 
 ```{r resampling-methods-4, exercise = TRUE}
-
+set.seed(1001)
 ```
 
 ```{r resampling-methods-4-hint-1, eval = FALSE}
+set.seed(1001)
 vfold_cv(..., ... = 10)
 ```
 
 ```{r include = FALSE}
+set.seed(1001)
 vfold_cv(ames_train, v = 10)
 ```
 
@@ -1118,10 +1131,12 @@ Copy the previous code and assign it to a new variable called `ames_folds`.
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r resampling-methods-5-hint-1, eval = FALSE}
+set.seed(1001)
 ... <- vfold_cv(ames_train, v = 10)
 ```
 
 ```{r include = FALSE}
+set.seed(1001)
 ames_folds <- vfold_cv(ames_train, v = 10)
 ```
 
@@ -1306,17 +1321,19 @@ knitr::include_graphics("images/fig-ten-point-five.png")
 
 Validation sets are often used when the original pool of data is very large. In this case, a single large partition may be adequate to characterize model performance without having to do multiple resampling iterations.
 
-Lets create a validation set object that uses 3/4 of the data for model fitting. In the code chunk below, type in `validation_set()`, passing in `ames_train` and setting `prop` to `3/4`.
+Lets create a validation set object that uses 3/4 of the data for model fitting. In the code chunk below, on a new line, type in `validation_set()`, passing in `ames_train` and setting `prop` to `3/4`.
 
 ```{r resampling-methods-13, exercise = TRUE}
-
+set.seed(1002)
 ```
 
 ```{r resampling-methods-13-hint-1, eval = FALSE}
+set.seed(1002)
 validation_split(..., prop = ...)
 ```
 
 ```{r include = FALSE}
+set.seed(1002)
 validation_split(ames_train, prop = 3/4)
 ```
 
@@ -1339,7 +1356,7 @@ Copy the previous code and assign it to a new variable called `val_set`.
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r resampling-methods-14-hint-1, eval = FALSE}
-.__C__.environment <- validation_split(ames_train, prop = 3/4)
+... <- validation_split(ames_train, prop = 3/4)
 ```
 
 ```{r include = FALSE}
@@ -2032,21 +2049,242 @@ assess_res |>
 
 There are two houses in the training set with a low observed sale price that are significantly overpredicted by the model. Lets use `assess_res` to find out. 
 
+Start by piping `assess_res` to `mutate()`. Inside this function, set `residual` to `Sale_Price - .pred`.
+
 ```{r estimating-performan-16, exercise = TRUE}
+
+```
+
+```{r estimating-performan-16-hint-1, eval = FALSE}
+... |>
+  mutate(... = Sale_Price - .pred)
+```
+
+```{r include = FALSE}
+assess_res |>
+  mutate(residual = Sale_Price - .pred)
+```
+
+### 
+
+As a reminder, `mutate()` is used to create, modify, and delete columns in a data frame. In this case, the `mutate()` function is being used to create a new column called `residual`, which is equal to the difference of `Sale_Price` and `.pred`. 
+
+### Exercise 17
+
+Copy the previous code and pipe it to `arrange()`. 
+
+```{r estimating-performan-17, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r estimating-performan-16-hint-1, eval = FALSE}
-
+```{r estimating-performan-17-hint-1, eval = FALSE}
+assess_res |>
+  mutate(residual = Sale_Price - .pred) |>
+  ...()
 ```
 
 ```{r include = FALSE}
-
+assess_res |>
+  mutate(residual = Sale_Price - .pred) |>
+  arrange()
 ```
 
 ### 
+
+The `arrange()` function is used to reorder and sort rows in a data frame.
+
+### Exercise 18
+
+Copy the previous code. Inside `arrange()`, type `desc()`. Inside `desc()`, type in `abs(residual)`.
+
+```{r estimating-performan-18, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r estimating-performan-18-hint-1, eval = FALSE}
+assess_res |>
+  mutate(residual = Sale_Price - .pred) |>
+  arrange(...(abs(...)))
+```
+
+```{r include = FALSE}
+assess_res |>
+  mutate(residual = Sale_Price - .pred) |>
+  arrange(desc(abs(residual)))
+```
+
+### 
+
+`desc()` is a function that reorders data in a descending manner. `abs()` is used to calculate the absolute value of a specified value. What `arrange(desc(abs(residual)))` does is that it arranges the absolute values of the `residual` column in descending order.
+
+### Exercise 19
+
+Copy the previous code and pipe it to `slice()`. Inside this function, type in `1:2`.
+
+```{r estimating-performan-19, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r estimating-performan-19-hint-1, eval = FALSE}
+assess_res |>
+  mutate(residual = Sale_Price - .pred) |>
+  arrange(desc(abs(residual))) |>
+  ...(1:2)
+```
+
+```{r include = FALSE}
+assess_res |>
+  mutate(residual = Sale_Price - .pred) |>
+  arrange(desc(abs(residual))) |>
+  slice(1:2)
+```
+
+### 
+
+As a reminder, `slice()`, which is part of the **dplyr** package, lets you index rows by their locations.
+
+### Exercise 20
+
+Copy the previous code and assign it to a new variable named `over_predicted`.
+
+```{r estimating-performan-20, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r estimating-performan-20-hint-1, eval = FALSE}
+... <- assess_res |>
+  mutate(residual = Sale_Price - .pred) |>
+  arrange(desc(abs(residual))) |>
+  slice(1:2)
+```
+
+```{r include = FALSE}
+over_predicted <- assess_res |>
+  mutate(residual = Sale_Price - .pred) |>
+  arrange(desc(abs(residual))) |>
+  slice(1:2)
+```
+
+### 
+
+The `residual` column contains the differences between the actual sale prices and the predicted values. Residuals provide insight into how well the model's predictions match the actual data. Positive residuals indicate the model under-predicted, and negative residuals indicate over-predictions.
+
+In this case, since the numbers are negative, the data has been over predicted, hence the variable name `over_predicted`.
+
+
+### Exercise 21
+
+Pipe `ames_train` to `slice()`. Inside this function, pass in `over_predicted$.row`.
+
+```{r estimating-performan-21, exercise = TRUE}
+
+```
+
+```{r estimating-performan-21-hint-1, eval = FALSE}
+ames_train |>
+  ...(over_predicted$...)
+```
+
+```{r include = FALSE}
+ames_train |>
+  slice(over_predicted$.row)
+```
+
+### 
+
+This code extracts two houses from the `ames_train` data set that are overpredicted.
+
+### Exercise 22
+
+Copy the previous code and pipe it to `select()`. Inside this function, pass in `Gr_Liv_Area, Neighborhood, Year_Built, Bedroom_AbvGr, Full_Bath`. 
+
+```{r estimating-performan-22, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r estimating-performan-22-hint-1, eval = FALSE}
+ames_train |>
+  slice(over_predicted$.row) |>
+  select(..., ..., ..., ... ,...)
+```
+
+```{r include = FALSE}
+ames_train |>
+  slice(over_predicted$.row) |>
+  select(Gr_Liv_Area, Neighborhood, Year_Built, Bedroom_AbvGr, Full_Bath)
+```
+
+### 
+
+Identifying examples like these with especially poor performance can help follow up and investigate why these specific predictions are so poor.
+
+### Exercise 23
+
+Let’s move back to the homes overall. How can we use a validation set instead of cross-validation?
+
+Start by piping `rf_wflow` to `fit_resamples()`, setting `resamples` to `val_set`
+
+```{r estimating-performan-23, exercise = TRUE}
+
+```
+
+```{r estimating-performan-23-hint-1, eval = FALSE}
+rf_wflow |>
+  fit_resamples(... = ...)
+```
+
+```{r include = FALSE}
+rf_wflow |>
+  fit_resamples(resamples = val_set)
+```
+
+### 
+
+As you can see, this code outputs the resampling results.
+
+### Exercise 24
+
+Copy the previous code and pipe it to `collect_metrics()`
+
+```{r estimating-performan-24, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r estimating-performan-24-hint-1, eval = FALSE}
+rf_wflow |>
+  fit_resamples(resamples = val_set) |>
+  ...()
+```
+
+```{r include = FALSE}
+rf_wflow |>
+  fit_resamples(resamples = val_set) |>
+  collect_metrics()
+```
+
+### 
+
+In these analyses, the resampling results are very close to the test set results. The two types of estimates tend to be well correlated. However, this could be from random chance. A seed value of `55` fixed the random numbers before creating the resamples. Try changing this value and re-running the analyses to investigate whether the resampled estimates match the test set results as well.
+
+### 
+
+Congrats! You have learned how to estimate the performance of a model.
+
+## Parallel Processing
+### 
+
 
 ## Summary
 ### 
