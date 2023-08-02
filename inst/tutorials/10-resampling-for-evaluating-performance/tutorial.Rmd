@@ -142,6 +142,9 @@ get_model <- function(x){
 
 ctrl <- control_resamples(extract = get_model)
 
+lm_res <- lm_wflow1 |>
+  fit_resamples(resamples = ames_folds, control = ctrl)
+
 
 ```
 
@@ -955,7 +958,7 @@ For each iteration of resampling, the data are partitioned into two subsamples:
 - The model is fit with the *analysis* set.
 - The model is evaluated with the *assessment* set.
 
-These two subsamples are somewhat analogous to training and test sets. Our language of *analysis* and *assessment* avoids confusion with the initial split of the data. These data sets are mutually exclusive. The partitioning scheme used to create the analysis and assessment sets is usually the defining characteristic of the method.
+These two subsamples are somewhat analogous to training and test sets. The language of *analysis* and *assessment* avoids confusion with the initial split of the data. These data sets are mutually exclusive. The partitioning scheme used to create the analysis and assessment sets is usually the defining characteristic of the method.
 
 ### Exercise 27
 
@@ -1103,7 +1106,7 @@ knitr::include_graphics("images/fig-ten-point-three.png")
 
 When V = 3, the analysis sets are 2/3 of the training set and each assessment set is a distinct 1/3. The final resampling estimate of performance averages each of the V replicates.
 
-Using V = 3 is a good choice to illustrate cross-validation, but it is a poor choice in practice because it is too low to generate reliable estimates. In practice, values of V are most often 5 or 10; we generally prefer 10-fold cross-validation as a default because it is large enough for good results in most situations.
+Using V = 3 is a good choice to illustrate cross-validation, but it is a poor choice in practice because it is too low to generate reliable estimates. In practice, values of V are most often 5 or 10; generally, a 10-fold cross-validation is preferred as a default because it is large enough for good results in most situations.
 
 ### Exercise 3
 
@@ -1120,7 +1123,7 @@ question_text(NULL,
 
 ### 
 
-What are the effects of changing V? Larger values result in resampling estimates with small bias but substantial variance. Smaller values of V have large bias but low variance. We prefer 10-fold since noise is reduced by replication, but bias is not.
+What are the effects of changing V? Larger values result in resampling estimates with small bias but substantial variance. Smaller values of V have large bias but low variance. A 10-fold is preferred since noise is reduced by replication, but bias is not.
 
 ### Exercise 4
 
@@ -1260,7 +1263,7 @@ vfold_cv(ames_train, v = 10)
 
 ### 
 
-To create _R_ repeats of _V_-fold cross-validation, the same fold generation process is done _R_ times to generate _R_ collections of _V_ partitions. Now, instead of averaging _V_ statistics, $V \times R$ statistics produce the final resampling estimate. Due to the Central Limit Theorem, the summary statistics from each model tend toward a normal distribution, as long as we have a lot of data relative to $V \times R$. 
+To create _R_ repeats of _V_-fold cross-validation, the same fold generation process is done _R_ times to generate _R_ collections of _V_ partitions. Now, instead of averaging _V_ statistics, $V \times R$ statistics produce the final resampling estimate. Due to the Central Limit Theorem, the summary statistics from each model tend toward a normal distribution, as long as there is a lot of data relative to $V \times R$. 
 
 ### Exercise 9
 
@@ -2257,7 +2260,7 @@ Identifying examples like these with especially poor performance can help follow
 
 ### Exercise 23
 
-Let’s move back to the homes overall. How can we use a validation set instead of cross-validation?
+Let’s move back to the homes overall. How can a validation set be used instead of cross-validation?
 
 Start by piping `rf_wflow` to `fit_resamples()`, setting `resamples` to `val_set`
 
@@ -2450,7 +2453,7 @@ Let’s wrap up with one final note about parallelism. For each of these technol
 ## Saving the Resampled Objects
 ### 
 
-The models created during resampling are not retained. These models are trained for the purpose of evaluating performance, and you typically do not need them after you have computed performance statistics. If a particular modeling approach does turn out to be the best option for our data set, then the best choice is to fit again to the whole training set so the model parameters can be estimated with more data.
+The models created during resampling are not retained. These models are trained for the purpose of evaluating performance, and you typically do not need them after you have computed performance statistics. If a particular modeling approach does turn out to be the best option for y data set, then the best choice is to fit again to the whole training set so the model parameters can be estimated with more data.
 
 ### Exercise 1
 
@@ -2498,7 +2501,7 @@ extract_recipe(lm_fit1, estimated = TRUE)
 
 ### 
 
-While these models created during resampling are not preserved, there is a method for keeping them or some of their components. The `extract` option of `control_resamples()` specifies a function that takes a single argument; we’ll use `x`. When executed, `x `results in a fitted workflow object, regardless of whether you provided `fit_resamples()` with a workflow. 
+While these models created during resampling are not preserved, there is a method for keeping them or some of their components. The `extract` option of `control_resamples()` specifies a function that takes a single argument; in this case, `x` will be used. When executed, `x `results in a fitted workflow object, regardless of whether you provided `fit_resamples()` with a workflow. 
 
 ### Exercise 3
 
@@ -2620,12 +2623,126 @@ ctrl <- control_resamples(extract = get_model)
 
 ### 
 
+Resampling techniques can be computationally expensive, especially when performing exhaustive cross-validation or bootstrapping on large datasets. However, they provide valuable insights into model performance and uncertainties.
 
+### Exercise 8
+
+Now, lets use `ctrl` in `fit_resamples()`. Pipe `lm_wflow1` to `fit_resamples()`. Inside this function, set `resamples` to `ames_folds` and set `control` to `ctrl`.
+
+```{r saving-the-resampled-8, exercise = TRUE}
+
+```
+
+```{r saving-the-resampled-8-hint-1, eval = FALSE}
+... |>
+  fit_resamples(resamples = ..., control = ...)
+```
+
+```{r include = FALSE}
+lm_wflow1 |>
+  fit_resamples(resamples = ames_folds, control = ctrl)
+```
+
+### 
+
+As you can see, this code produces the results of the 10-fold cross-validation. However, there is now a `.extracts` column. 
+
+### Exercise 9
+
+Copy the previous code and assign it to a new variable named `lm_res`.
+
+```{r saving-the-resampled-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r saving-the-resampled-9-hint-1, eval = FALSE}
+... <- lm_wflow1 |>
+  fit_resamples(resamples = ames_folds, control = ctrl)
+```
+
+```{r include = FALSE}
+lm_res <- lm_wflow1 |>
+  fit_resamples(resamples = ames_folds, control = ctrl)
+```
+
+### 
+
+Notice how the `.extracts` column has nested tibbles. What do these contain? 
+
+### Exercise 10
+
+Lets use subsetting to find out. In the code chunk below, type in `lm_res$.extracts` followed by the double bracket operator, `[[]]`. Inside the inner bracket, type in `1`.
+
+```{r saving-the-resampled-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r saving-the-resampled-10-hint-1, eval = FALSE}
+lm_res$.extracts[[...]]
+```
+
+```{r include = FALSE}
+lm_res$.extracts[[1]]
+```
+
+### 
+
+As you can see, this code outputs a `.extracts` and a `.config` column. However, even after subsetting, the `.extracts` has a `<list>` and `<tibble>`, meaning that you will need to subset another layer.
+
+### Exercise 11
+
+Copy the previous code. Right after `[[1]]`, type `[[1]]` again (Note: view the hint if you are confused).
+
+```{r saving-the-resampled-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r saving-the-resampled-11-hint-1, eval = FALSE}
+lm_res$.extracts[[1]][[...]]
+```
+
+```{r include = FALSE}
+lm_res$.extracts[[1]][[1]]
+```
+
+### 
+
+This might appear to be a convoluted method for saving the model results. However, `extract` is flexible and does not assume that the user will only save a single tibble per resample. For example, the `tidy()` method might be run on the recipe as well as the model. In this case, a list of two tibbles will be returned.
+
+### Exercise 12
+
+Press "Run Code"
+
+```{r saving-the-resampled-12, exercise = TRUE}
+all_coef <- map_dfr(lm_res$.extracts, ~ .x[[1]][[1]])
+
+filter(all_coef, term == "Year_Built")
+```
+
+### 
+
+For a more simple example, all of the results can be flattened and collected using a combination of `map_dfr()` and `filter()`, as shown above.
+
+### 
+
+Congrats! You now know how to save a resampled object.
 
 ## Summary
 ### 
 
-<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+In this tutorial, you have learned:
+
+- The redistribution approach using `rand_forests()` and the `estimated_perf` function you created
+- The different methods of resampling through the use of `vfold_cv()`, `mc_cv()`, `bootstraps()`, and `rolling_origin()`
+- How to estimate the performance of a model using `fit_resamples()`, `control_resamples()`, `collect_metrics()`, and `collect_predictions()`
+- How to parallel process using `makePSOCKcluster()` and `registerDoParallel()`
+- How to save a resampled object using a combination of functions and subsetting
 
 ```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
 ```
