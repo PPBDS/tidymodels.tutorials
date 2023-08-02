@@ -1,6 +1,6 @@
 ---
 title: Spending our Data
-author: Aryan Kancherla and David Kane
+author: Aryan Kancherla
 tutorial:
   id: spending-our-data
 output:
