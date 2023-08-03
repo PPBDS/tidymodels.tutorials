@@ -539,7 +539,8 @@ rf_fit <- rf_wflow |>
 
 ### 
 
-<!-- AK: Add knowledge drop -->
+As a reminder, the **tidymodels** package is a “meta-package” for modeling and statistical analysis that shares many similarities to its sister package, the **tidyverse**.
+
 
 ### Exercise 16
 
