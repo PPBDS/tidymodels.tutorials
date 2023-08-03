@@ -536,7 +536,7 @@ The `predict()` method applies the same preprocessing that was used on the train
 
 Type in `predict()`, passing in `lm_fit` and `ames_train`.
 
-<!-- AK: Getting a warning message here and unsure of how to fix it.  -->
+<!-- AK: Getting a warning message here and unsure of how to fix it. DK: Explain it when it happens. -->
 
 ```{r using-recipes-7, exercise = TRUE}
 
@@ -546,7 +546,7 @@ Type in `predict()`, passing in `lm_fit` and `ames_train`.
 predict(..., ...)
 ```
 
-```{r include = FALSE}
+```{r include = FALSE, warning=FALSE}
 predict(lm_fit, ames_test)
 ```
 
