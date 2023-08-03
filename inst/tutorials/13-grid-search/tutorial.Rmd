@@ -31,6 +31,13 @@ tidymodels_prefer()
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
         tutorial.storage = "local") 
+
+mlp_spec <- 
+  mlp(hidden_units = tune(), penalty = tune(), epochs = tune()) |>
+  set_engine("nnet", trace = 0) |> 
+  set_mode("classification")
+
+mlp_param <- extract_parameter_set_dials(mlp_spec)
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -45,8 +52,250 @@ options(tutorial.exercise.timelimit = 60,
 
 <!-- Two to four sentence about the main topics covered in this tutorial. Why are we here? What will students get out of giving you 90 minutes of their lives? How does this tutorial connect to other tutorials? -->
 
-## First section (use sentence case)
+## Regular and Non-Regular Grids
 ###
+
+There are two main types of grids. A regular grid combines each parameter (with its corresponding set of possible values) factorially, i.e., by using all combinations of the sets. Alternatively, a nonregular grid is one where the parameter combinations are not formed from a small set of points.
+
+### Exercise 1
+
+"MLP" stands for Multi-Layer Perceptron, which is a type of artificial neural network. MLPs are a class of feedforward neural networks that consist of multiple layers of interconnected nodes (neurons). They are commonly used for various machine learning tasks, including classification and regression.
+
+Type `mlp()` and hit "Run Code".
+
+```{r regular-and-nonregul-1, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-1-hint, eval = FALSE}
+mlp()
+```
+
+```{r, include = FALSE}
+mlp()
+```
+
+###
+
+This produces the output of a single layer neural network model specification with the computational engine of **nnet**.
+
+### Exercise 2
+
+Copy the previous code and add the parameter `hidden_units`, setting it equal to `tune()`.
+
+```{r regular-and-nonregul-2, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-2-hint, eval = FALSE}
+mlp(hidden_units = ...())
+```
+
+```{r, include = FALSE}
+mlp(hidden_units = tune())
+```
+
+###
+
+In R, the `tune()` function is typically used in conjunction with the **caret** package to perform hyperparameter tuning for machine learning models.
+
+### Exercise 3
+
+Copy the previous code add the parameters `penalty` and `epochs`, setting them both equal to `tune()`.
+
+```{r regular-and-nonregul-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-3-hint, eval = FALSE}
+mlp(hidden_units = tune(), ... = tune(), epochs = ...())
+```
+
+```{r, include = FALSE}
+mlp(hidden_units = tune(), penalty = tune(), epochs = tune())
+```
+
+###
+
+`penalty`	is a non-negative numeric value for the amount of weight decay and `epochs` is an integer for the number of training iterations.
+
+### Exercise 4
+
+Copy the previous code and pipe it to `set_engine()`. Add the parameters `"nnet"` and `trace = 0`. 
+
+```{r regular-and-nonregul-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-4-hint, eval = FALSE}
+... |>
+  set_engine("...", trace = ...)
+```
+
+```{r, include = FALSE}
+ mlp(hidden_units = tune(), penalty = tune(), epochs = tune()) |> 
+  set_engine("nnet", trace = 0)
+```
+
+###
+
+Now the main arguments and Engine-Specific Arguments have been set. All that needs to be done is add the model.
+
+### Exercise 5
+
+Copy the previous code and pipe it to `set_mode()`. Add the parameter `"classification"`. Then, set the entire expression to `mlp_spec` using `<-`.
+
+```{r regular-and-nonregul-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-5-hint, eval = FALSE}
+mlp_sec <-
+  ... |>
+  set_mode("...")
+```
+
+```{r, include = FALSE}
+mlp_spec <- 
+  mlp(hidden_units = tune(), penalty = tune(), epochs = tune()) |>
+  set_engine("nnet", trace = 0) |> 
+  set_mode("classification")
+```
+
+###
+
+The argument `trace = 0` prevents extra logging of the training process. The `extract_parameter_set_dials()` function can extract the set of arguments with unknown values and sets their **dials** objects.
+
+### Exercise 6
+
+Set `mlp_param` to the expression `extract_parameter_set_dials(mlp_spec)` using `<-`.
+
+```{r regular-and-nonregul-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-6-hint, eval = FALSE}
+mlp_param <- ...(mlp_spec)
+```
+
+```{r, include = FALSE}
+mlp_param <- extract_parameter_set_dials(mlp_spec)
+```
+
+###
+
+`extract_parameter_set_dials()` returns a set of dials parameter objects. Many models contain tuning parameters (i.e. parameters that cannot be directly estimated from the data). These tools can be used to define objects for creating, simulating, or validating values for such parameters.
+
+### Exercise 7
+
+Now pipe `mlp_param` to `extract_parameter_dials()`. Add the parameter `"hidden_units"` and hit "Run Code".
+
+```{r regular-and-nonregul-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-7-hint, eval = FALSE}
+mlp_param |>
+  extract_parameter_dials("...")
+```
+
+```{r, include = FALSE}
+mlp_param |>
+  extract_parameter_dials("hidden_units")
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 8
+
+Copy the previous exercise and switch `"hidden_units"` to `"penalty"`.
+
+```{r regular-and-nonregul-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-8-hint, eval = FALSE}
+mlp_param |>
+  extract_parameter_dials("...")
+```
+
+```{r, include = FALSE}
+mlp_param |>
+  extract_parameter_dials("penalty")
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 9
+
+Copy the previous code and switch `"penalty"` to `"epochs"`.
+
+```{r regular-and-nonregul-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-9-hint, eval = FALSE}
+mlp_param %>% extract_parameter_dials("...")
+```
+
+```{r, include = FALSE}
+mlp_param |>
+  extract_parameter_dials("epochs")
+```
+
+###
+
+Regular grids are combinations of separate sets of parameter values. The number of possible values need not be the same for each parameter. The **tidyr** function `crossing()` is one way to create a regular grid.
+
+### Exercise 10
+
+Type `crossing()` and add the parameters `hidden_units = 1:3`, `penalty = c(0.0, 0.1)`, and `epochs = c(100, 200)`.
+
+```{r regular-and-nonregul-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-10-hint, eval = FALSE}
+crossing(... = 1:3,
+         penalty = ...(0.0, 0.1),
+         epochs = c(..., ...)
+         )
+```
+
+```{r, include = FALSE}
+crossing(hidden_units = 1:3,
+         penalty = c(0.0, 0.1),
+         epochs = c(100, 200)
+         )
+```
+
+###
+
+
 
 ## Summary
 ###
