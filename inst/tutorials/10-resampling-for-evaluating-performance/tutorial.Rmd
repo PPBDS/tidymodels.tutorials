@@ -16,6 +16,8 @@ library(learnr)
 library(tutorial.helpers)
 library(tidymodels)
 library(ranger)
+library(doParallel)
+
 tidymodels_prefer()
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
@@ -116,6 +118,34 @@ over_predicted <- assess_res |>
   arrange(desc(abs(residual))) |>
   slice(1:2)
 
+ames_rec1 <- 
+  recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, threshold = 0.01) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+  step_ns(Latitude, Longitude, deg_free = 20)
+
+lm_wflow1 <-  
+  workflow() |> 
+  add_recipe(ames_rec1) |>
+  add_model(linear_reg() |> set_engine("lm")) 
+
+lm_fit1 <- 
+  lm_wflow1 |>
+  fit(data = ames_train)
+
+get_model <- function(x){
+  extract_fit_parsnip(x) |>
+    tidy()
+}
+
+ctrl <- control_resamples(extract = get_model)
+
+lm_res <- lm_wflow1 |>
+  fit_resamples(resamples = ames_folds, control = ctrl)
+
+
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -127,7 +157,7 @@ over_predicted <- assess_res |>
 ## Introduction
 ### 
 
-This tutorial covers [Chapter 10: Resampling for Evaluating Performance](https://www.tmwr.org/resampling.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. 
+This tutorial covers [Chapter 10: Resampling for Evaluating Performance](https://www.tmwr.org/resampling.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. In this tutorial, you will learn about the resubstitution approach, a series of resampling methods (with the use of functions such as `mc_cv()` and `vcov_cv()`), estimating the performance of model (with the use of functions such as `control_resamples()`), parallel processing, and how to save a resampled object (with the use of functions and subsetting). These functions come from a series of packages, including [**tidymodels**](https://www.tidymodels.org/packages/) and [**ranger**](https://parsnip.tidymodels.org/reference/details_rand_forest_ranger.html).
 
 ## The Resubstitution Approach
 ### 
@@ -928,7 +958,7 @@ For each iteration of resampling, the data are partitioned into two subsamples:
 - The model is fit with the *analysis* set.
 - The model is evaluated with the *assessment* set.
 
-These two subsamples are somewhat analogous to training and test sets. Our language of *analysis* and *assessment* avoids confusion with the initial split of the data. These data sets are mutually exclusive. The partitioning scheme used to create the analysis and assessment sets is usually the defining characteristic of the method.
+These two subsamples are somewhat analogous to training and test sets. The language of *analysis* and *assessment* avoids confusion with the initial split of the data. These data sets are mutually exclusive. The partitioning scheme used to create the analysis and assessment sets is usually the defining characteristic of the method.
 
 ### Exercise 27
 
@@ -1076,7 +1106,7 @@ knitr::include_graphics("images/fig-ten-point-three.png")
 
 When V = 3, the analysis sets are 2/3 of the training set and each assessment set is a distinct 1/3. The final resampling estimate of performance averages each of the V replicates.
 
-Using V = 3 is a good choice to illustrate cross-validation, but it is a poor choice in practice because it is too low to generate reliable estimates. In practice, values of V are most often 5 or 10; we generally prefer 10-fold cross-validation as a default because it is large enough for good results in most situations.
+Using V = 3 is a good choice to illustrate cross-validation, but it is a poor choice in practice because it is too low to generate reliable estimates. In practice, values of V are most often 5 or 10; generally, a 10-fold cross-validation is preferred as a default because it is large enough for good results in most situations.
 
 ### Exercise 3
 
@@ -1093,7 +1123,7 @@ question_text(NULL,
 
 ### 
 
-What are the effects of changing V? Larger values result in resampling estimates with small bias but substantial variance. Smaller values of V have large bias but low variance. We prefer 10-fold since noise is reduced by replication, but bias is not.
+What are the effects of changing V? Larger values result in resampling estimates with small bias but substantial variance. Smaller values of V have large bias but low variance. A 10-fold is preferred since noise is reduced by replication, but bias is not.
 
 ### Exercise 4
 
@@ -1233,7 +1263,7 @@ vfold_cv(ames_train, v = 10)
 
 ### 
 
-To create _R_ repeats of _V_-fold cross-validation, the same fold generation process is done _R_ times to generate _R_ collections of _V_ partitions. Now, instead of averaging _V_ statistics, $V \times R$ statistics produce the final resampling estimate. Due to the Central Limit Theorem, the summary statistics from each model tend toward a normal distribution, as long as we have a lot of data relative to $V \times R$. 
+To create _R_ repeats of _V_-fold cross-validation, the same fold generation process is done _R_ times to generate _R_ collections of _V_ partitions. Now, instead of averaging _V_ statistics, $V \times R$ statistics produce the final resampling estimate. Due to the Central Limit Theorem, the summary statistics from each model tend toward a normal distribution, as long as there is a lot of data relative to $V \times R$. 
 
 ### Exercise 9
 
@@ -2230,7 +2260,7 @@ Identifying examples like these with especially poor performance can help follow
 
 ### Exercise 23
 
-Let’s move back to the homes overall. How can we use a validation set instead of cross-validation?
+Let’s move back to the homes overall. How can a validation set be used instead of cross-validation?
 
 Start by piping `rf_wflow` to `fit_resamples()`, setting `resamples` to `val_set`
 
@@ -2285,11 +2315,434 @@ Congrats! You have learned how to estimate the performance of a model.
 ## Parallel Processing
 ### 
 
+The models created during resampling are independent of one another. Computations of this kind are sometimes called *embarrassingly parallel*; each model could be fit simultaneously without issues. The **tune** package uses the **foreach** package to facilitate parallel computations. These computations could be split across processors on the same computer or across different computers, depending on the chosen technology.
+
+### Exercise 1
+
+For computations conducted on a single computer, the number of possible worker processes is determined by the `detectCores()` function in the **parallel** package.
+
+Go to your Console and type in `parallel::detectCores()`. Inside the parenthesis, set `logical` to `FALSE`. CP/CR.
+
+```{r parallel-processing-1}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+This code returns the number of physical cores in your computer. By setting `logical` to `TRUE`, the code returns the number of possible independent processes that can be simultaneously used.
+
+### Exercise 2
+
+Run the same code as above, but change `logical` to `TRUE`. CP/CR.
+
+```{r parallel-processing-2}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+The difference between these two values is related to the computer’s processor. For example, most Intel processors use hyperthreading, which creates two virtual cores for each physical core. While these extra resources can improve performance, most of the speed-ups produced by parallel processing occur when processing uses fewer than the number of physical cores.
+
+### Exercise 3
+
+For `fit_resamples()` and other functions in tune, parallel processing occurs when the user registers a parallel backend package. These R packages define how to execute parallel processing. On Unix and macOS operating systems, one method of splitting computations is by forking threads. To enable this, you load the doMC package and register the number of parallel cores with **foreach**, which would look like this:
+
+````
+library(doMC)
+registerDoMC(cores = 2)
+
+# Now run fit_resamples()...
+````
+
+### 
+
+This instructs `fit_resamples()` to run half of the computations on each of two cores. To reset the computations to sequential processing, run `registerDoSEQ()`.
+
+### Exercise 4
+
+Alternatively, a different approach to parallelizing computations uses network sockets. The **doParallel** package enables this method (usable by all operating systems).
+
+Load the **doParallel** library using `library()`.
+
+```{r parallel-processing-4, exercise = TRUE}
+
+```
+
+```{r parallel-processing-4-hint, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(doParallel)
+```
+
+### 
+
+The R packages with parallel backends for **foreach** start with the prefix `"do"`.
+
+### Exercise 5
+
+The `makePSOCKcluster()` function will be used to parallelize computations. Run `?makePSOCKcluster()` in the Console and look at the *Description* section. CP/CR.
+
+```{r parallel-processing-5}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+Parallel processing with the **tune** package tends to provide linear speed-ups for the first few cores. This means that, with two cores, the computations are twice as fast. Depending on the data and model type, the linear speed-up deteriorates after four to five cores. Using more cores will still reduce the time it takes to complete the task; there are just diminishing returns for the additional cores.
+
+### Exercise 6
+
+The `registerDoParallel()` function will also be used. Click on this [link](https://search.r-project.org/CRAN/refmans/doParallel/html/registerDoParallel.html) and look at the *Description* section. Copy/Paste.
+
+```{r parallel-processing-6}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+Another R package that facilitates parallel processing is the **future** package. Like **foreach**, it provides a framework for parallelism. This package is used in conjunction with **foreach** via the **doFuture** package.
+
+### Exercise 7
+
+In the code chunk below, pipe `makePSOCKcluster(2)` to `registerDoParallel()` and press "Run Code"
+
+```{r parallel-processing-7, exercise = TRUE}
+
+```
+
+```{r parallel-processing-7-hint, eval = FALSE}
+makePSOCKcluster(2) |>
+  ...()
+```
+
+```{r include = FALSE}
+makePSOCKcluster(2) |>
+  registerDoParallel()
+```
+
+### 
+
+This code creates a cluster of parallel processing with 2 worker processes. `registerDoParallel()` then registers the parallel cluster. To stop the cluster, run `stopCluster()` and pass in the code you used to create the cluster (which in this case is `makePSOCKcluster(2)`).
+
+### 
+
+Let’s wrap up with one final note about parallelism. For each of these technologies, the memory requirements multiply for each additional core used. For example, if the current data set is 2 GB in memory and three cores are used, the total memory requirement is 8 GB (2 for each worker process plus the original). Using too many cores might cause the computations (and the computer) to slow considerably.
+
+## Saving the Resampled Objects
+### 
+
+The models created during resampling are not retained. These models are trained for the purpose of evaluating performance, and you typically do not need them after you have computed performance statistics. If a particular modeling approach does turn out to be the best option for y data set, then the best choice is to fit again to the whole training set so the model parameters can be estimated with more data.
+
+### Exercise 1
+
+Press "Run Code"
+
+```{r saving-the-resampled-1, exercise = TRUE}
+ames_rec1 <- 
+  recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_other(Neighborhood, threshold = 0.01) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+  step_ns(Latitude, Longitude, deg_free = 20)
+
+lm_wflow1 <-  
+  workflow() |> 
+  add_recipe(ames_rec1) |>
+  add_model(linear_reg() |> set_engine("lm")) 
+
+lm_fit1 <- 
+  lm_wflow1 |>
+  fit(data = ames_train)
+
+```
+
+### 
+
+This is the code for `ames_rec1`, `lm_wflow1`, and `lm_fit1`, which have been created in the "Feature Engineering with recipes" tutorial. Feel free to revisit that tutorial or read the [Chapter](https://www.tmwr.org/recipes.html#recipes) associated with it.
+
+### Exercise 2
+
+Lets select the recipe using `extract_recipe()`. In the code chunk below, type in `extract_recipe()`, passing in `lm_fit1` and setting `estimated` to `TRUE`.
+
+```{r saving-the-resampled-2, exercise = TRUE}
+
+```
+
+```{r saving-the-resampled-2-hint-1, eval = FALSE}
+extract_recipe(..., estimated = ...)
+```
+
+```{r include = FALSE}
+extract_recipe(lm_fit1, estimated = TRUE)
+```
+
+### 
+
+While these models created during resampling are not preserved, there is a method for keeping them or some of their components. The `extract` option of `control_resamples()` specifies a function that takes a single argument; in this case, `x` will be used. When executed, `x `results in a fitted workflow object, regardless of whether you provided `fit_resamples()` with a workflow. 
+
+### Exercise 3
+
+Now, the linear model coefficients for a fitted model object from a workflow can be saved. In the code chunk below, create a function with a parameter named `x`.
+
+```{r saving-the-resampled-3, exercise = TRUE}
+
+```
+
+```{r saving-the-resampled-3-hint-1, eval = FALSE}
+function(...){
+  
+}
+```
+
+```{r include = FALSE}
+function(x){
+  
+}
+```
+
+### 
+
+Recall that the **workflows** package has functions that can pull the different components of the objects (e.g., the model, recipe, etc.).
+
+### Exercise 4
+
+Copy the previous code. Inside the body of the function, pipe `extract_fit_parsnip(x)` to `tidy()` 
+
+```{r saving-the-resampled-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r saving-the-resampled-4-hint-1, eval = FALSE}
+function(x){
+  ...(...) |>
+    tidy()
+}
+```
+
+```{r include = FALSE}
+function(x){
+  extract_fit_parsnip(x) |>
+    tidy()
+}
+```
+
+### 
+
+As a reminder, this tutorial is based off of [Chapter 10: Resampling for Evaluating Performance](https://www.tmwr.org/resampling.html) from the [*Tidy Modeling with R*](https://www.tmwr.org/index.html) textbook.
+
+### Exercise 5
+
+Copy the previous code and assign it to a new variable called `get_model`.
+
+```{r saving-the-resampled-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r saving-the-resampled-5-hint-1, eval = FALSE}
+... <- function(x){
+  extract_fit_parsnip(x) |>
+    tidy()
+}
+```
+
+```{r include = FALSE}
+get_model <- function(x){
+  extract_fit_parsnip(x) |>
+    tidy()
+}
+```
+
+### 
+
+To test this function, try running `get_model(lm_fit1)`.
+
+### Exercise 6
+
+Now let’s apply this function to the ten resampled fits. In the code chunk below, type in `control_resamples()`, setting `extract` to `get_model`.
+
+```{r saving-the-resampled-6, exercise = TRUE}
+
+```
+
+```{r saving-the-resampled-6-hint-1, eval = FALSE}
+control_resamples(extract = ...)
+```
+
+```{r include = FALSE}
+control_resamples(extract = get_model)
+```
+
+### 
+
+The results of the extraction function is wrapped in a list object and returned in a tibble.
+
+### Exercise 7
+
+Copy the previous code and assign it to a new variable called `ctrl`.
+
+```{r saving-the-resampled-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r saving-the-resampled-7-hint-1, eval = FALSE}
+... <- control_resamples(extract = get_model)
+```
+
+```{r include = FALSE}
+ctrl <- control_resamples(extract = get_model)
+```
+
+### 
+
+Resampling techniques can be computationally expensive, especially when performing exhaustive cross-validation or bootstrapping on large datasets. However, they provide valuable insights into model performance and uncertainties.
+
+### Exercise 8
+
+Now, lets use `ctrl` in `fit_resamples()`. Pipe `lm_wflow1` to `fit_resamples()`. Inside this function, set `resamples` to `ames_folds` and set `control` to `ctrl`.
+
+```{r saving-the-resampled-8, exercise = TRUE}
+
+```
+
+```{r saving-the-resampled-8-hint-1, eval = FALSE}
+... |>
+  fit_resamples(resamples = ..., control = ...)
+```
+
+```{r include = FALSE}
+lm_wflow1 |>
+  fit_resamples(resamples = ames_folds, control = ctrl)
+```
+
+### 
+
+As you can see, this code produces the results of the 10-fold cross-validation. However, there is now a `.extracts` column. 
+
+### Exercise 9
+
+Copy the previous code and assign it to a new variable named `lm_res`.
+
+```{r saving-the-resampled-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r saving-the-resampled-9-hint-1, eval = FALSE}
+... <- lm_wflow1 |>
+  fit_resamples(resamples = ames_folds, control = ctrl)
+```
+
+```{r include = FALSE}
+lm_res <- lm_wflow1 |>
+  fit_resamples(resamples = ames_folds, control = ctrl)
+```
+
+### 
+
+Notice how the `.extracts` column has nested tibbles. What do these contain? 
+
+### Exercise 10
+
+Lets use subsetting to find out. In the code chunk below, type in `lm_res$.extracts` followed by the double bracket operator, `[[]]`. Inside the inner bracket, type in `1`.
+
+```{r saving-the-resampled-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r saving-the-resampled-10-hint-1, eval = FALSE}
+lm_res$.extracts[[...]]
+```
+
+```{r include = FALSE}
+lm_res$.extracts[[1]]
+```
+
+### 
+
+As you can see, this code outputs a `.extracts` and a `.config` column. However, even after subsetting, the `.extracts` has a `<list>` and `<tibble>`, meaning that you will need to subset another layer.
+
+### Exercise 11
+
+Copy the previous code. Right after `[[1]]`, type `[[1]]` again (Note: view the hint if you are confused).
+
+```{r saving-the-resampled-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r saving-the-resampled-11-hint-1, eval = FALSE}
+lm_res$.extracts[[1]][[...]]
+```
+
+```{r include = FALSE}
+lm_res$.extracts[[1]][[1]]
+```
+
+### 
+
+This might appear to be a convoluted method for saving the model results. However, `extract` is flexible and does not assume that the user will only save a single tibble per resample. For example, the `tidy()` method might be run on the recipe as well as the model. In this case, a list of two tibbles will be returned.
+
+### Exercise 12
+
+Press "Run Code"
+
+```{r saving-the-resampled-12, exercise = TRUE}
+all_coef <- map_dfr(lm_res$.extracts, ~ .x[[1]][[1]])
+
+filter(all_coef, term == "Year_Built")
+```
+
+### 
+
+For a more simple example, all of the results can be flattened and collected using a combination of `map_dfr()` and `filter()`, as shown above.
+
+### 
+
+Congrats! You now know how to save a resampled object.
 
 ## Summary
 ### 
 
-<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+In this tutorial, you have learned:
+
+- The redistribution approach using `rand_forests()` and the `estimated_perf` function you created
+- The different methods of resampling through the use of `vfold_cv()`, `mc_cv()`, `bootstraps()`, and `rolling_origin()`
+- How to estimate the performance of a model using `fit_resamples()`, `control_resamples()`, `collect_metrics()`, and `collect_predictions()`
+- How to parallel process using `makePSOCKcluster()` and `registerDoParallel()`
+- How to save a resampled object using a combination of functions and subsetting
 
 ```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
 ```

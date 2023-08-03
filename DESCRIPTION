@@ -15,6 +15,7 @@ RoxygenNote: 7.2.3
 Suggests:
     censored,
     corrr,
+    doParallel,
     ggrepel,
     lme4,
     learnr,
