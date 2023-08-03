@@ -450,9 +450,9 @@ The second and third columns are the predicted class probabilities for the test 
 
 ### Exercise 2
 
-A confusion matrix, `conf_math()`, also known as an error matrix, is a table used to evaluate the performance of a classification model in machine learning. It summarizes the results of a binary classification task by comparing the predicted class labels to the actual class labels in the test data.
+A confusion matrix, `conf_mat()`, also known as an error matrix, is a table used to evaluate the performance of a classification model in machine learning. It summarizes the results of a binary classification task by comparing the predicted class labels to the actual class labels in the test data.
 
-Type `conf_math()` and add the parameters, `two_class_example`, `truth`, and `predicted`. Hit "Run Code".
+Type `conf_mat()` and add the parameters, `two_class_example`, `truth`, and `predicted`. Hit "Run Code".
 
 ```{r binay-classification-2, exercise = TRUE}
 
@@ -856,7 +856,7 @@ hpc_cv |>
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+In R, the `accuracy()` function is part of the **forecast** package, which is commonly used for time series forecasting and related tasks. The `accuracy()` function is used to compute accuracy measures for a fitted time series forecasting model.
 
 ### Exercise 10
 
@@ -881,7 +881,7 @@ hpc_cv |>
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+Cohen's Kappa is a statistic that measures the agreement between predicted and actual class labels, considering the agreement that could occur by chance. R offers functions like `kappa2()` from the `vcd` package to calculate Cohen's Kappa.
 
 ### Exercise 11
 
@@ -906,7 +906,7 @@ hpc_cv |>
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+When working with multiclass classification, R provides flexibility to use an One-Versus-All (OvA) approach, where you treat each class as the positive class and the rest as the negative class. The **caret** package's `train()` function allows specifying the `classProbs = TRUE` parameter to enable this approach.
 
 ### Exercise 12
 
