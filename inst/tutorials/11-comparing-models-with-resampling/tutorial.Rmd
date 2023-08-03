@@ -133,6 +133,7 @@ rqs_diff <-
                   list_1 = "splines_lm",
                   list_2 = "basic_lm",
                   seed = 1104)
+
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -779,39 +780,17 @@ rsq_wider <-
 
 ### 
 
-The **corrr** package provides functions to compute and visualize correlations with enhanced capabilities compared to base R. It allows for the easy calculation of correlation matrices, partial correlations, and various correlation coefficients.
+`geom_line()` is one of the "geoms" or geometric objects that you can add to the plot to display data points connected by lines. It is commonly used to visualize trends over time or to show the relationship between two continuous variables.
 
 ### Exercise 6
 
-We will use the `correlate()` function to compute calculation across selected columns. Within `corrr::correlate()`, add the parameter `rsq_wider`. Then pipe it to `select(-id)`
+We will the be plotting `rsq_indiv_estimates`. Type `rsq_indiv_estimates` to get a sense of the data we are looking at.
 
 ```{r comparing-resampled--6, exercise = TRUE}
 
 ```
 
 ```{r comparing-resampled--6-hint-1, eval = FALSE}
-corrr::correlate(rsq_wider, quiet = TRUE) |>
-  select(-id)
-```
-
-```{r include = FALSE}
-#corrr::correlate(rsq_wider, quiet = TRUE) |>
-  #select(-id)
-```
-
-### 
-
-`geom_line()` is one of the "geoms" or geometric objects that you can add to the plot to display data points connected by lines. It is commonly used to visualize trends over time or to show the relationship between two continuous variables.
-
-### Exercise 7
-
-We will the be plotting `rsq_indiv_estimates`. Type `rsq_indiv_estimates` to get a sense of the data we are looking at.
-
-```{r comparing-resampled--7, exercise = TRUE}
-
-```
-
-```{r comparing-resampled--7-hint-1, eval = FALSE}
 rsq_indiv_estimates
 ```
 
@@ -823,17 +802,17 @@ rsq_indiv_estimates
 
 `reorder()` is a function in the R programming language that allows you to reorder the levels of a factor based on the values of a specific variable. It is commonly used to control the order of categories in plots and tables, especially when you want to arrange the categories based on some specific criteria, such as their frequencies or their means.
 
-### Exercise 8
+### Exercise 7
 
 Copy the previous code and pipe it to `mutate()`. Add the parameter `wflow_id = reorder(wflow_id, .estimate)`.
 
-```{r comparing-resampled--8, exercise = TRUE}
+```{r comparing-resampled--7, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r comparing-resampled--8-hint-1, eval = FALSE}
+```{r comparing-resampled--7-hint-1, eval = FALSE}
 
 ```
 
@@ -844,19 +823,19 @@ rsq_indiv_estimates |>
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+Resampling is a technique used in statistics and machine learning to assess the performance of models and estimate their generalization error. In R, common types of resampling include cross-validation (e.g., k-fold cross-validation), bootstrapping, and permutation testing.
 
-### Exercise 9
+### Exercise 8
 
 Copy the previous code and pipe it to `ggplot()`. Within `aes()` of `ggplot()`, set `x = wflow_id`, `y = .estimate`.
 
-```{r comparing-resampled--9, exercise = TRUE}
+```{r comparing-resampled--8, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r comparing-resampled--9-hint-1, eval = FALSE}
+```{r comparing-resampled--8-hint-1, eval = FALSE}
 ... |>
   ...(aes(x = ..., y = .estimate))
 ```
@@ -869,19 +848,18 @@ rsq_indiv_estimates |>
 
 ### 
 
-<!-- PK: Knowledge Drop -->
-
-### Exercise 10
+The **caret** (Classification And REgression Training) package in R is a powerful tool for performing various resampling techniques. It provides a consistent interface for cross-validation, bootstrapping, and other resampling methods across different modeling techniques.
+### Exercise 9
 
 Copy the previous code and add `geom_line()`. Add the parameters `alpha` and `linewidth`, equaling `.5` and `1.25` respectfully.
 
-```{r comparing-resampled--10, exercise = TRUE}
+```{r comparing-resampled--9, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r comparing-resampled--10-hint-1, eval = FALSE}
+```{r comparing-resampled--9-hint-1, eval = FALSE}
 ... |>
   geom_line(alpha = ..., linewidth = ...)
 ```
@@ -895,19 +873,19 @@ rsq_indiv_estimates |>
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+k-fold cross-validation is a widely used resampling technique in which the original dataset is divided into k subsets (folds). The model is trained k times, each time using k-1 folds for training and the remaining fold for validation.
 
-### Exercise 11
+### Exercise 10
 
 Finally, let's add the theme to the graph using `theme()`. Within `theme()`, add the parameter `legend.position` and set it to `"none"`.
 
-```{r comparing-resampled--11, exercise = TRUE}
+```{r comparing-resampled--10, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r comparing-resampled--11-hint-1, eval = FALSE}
+```{r comparing-resampled--10-hint-1, eval = FALSE}
 ... |>
   theme(legend.position = "...")
 ```
@@ -924,15 +902,15 @@ rsq_indiv_estimates |>
 
 If the resample-to-resample effect was not real, there would not be any parallel lines. A statistical test for the correlations evaluates whether the magnitudes of these correlations are not simply noise. 
 
-### Exercise 12
+### Exercise 11
 
 We will have to see if the correlations are real. Let's look at `rsq_wider` by typing it below. 
 
-```{r comparing-resampled--12, exercise = TRUE}
+```{r comparing-resampled--11, exercise = TRUE}
 
 ```
 
-```{r comparing-resampled--12-hint-1, eval = FALSE}
+```{r comparing-resampled--11-hint-1, eval = FALSE}
 rsq_wider
 ```
 
@@ -944,17 +922,17 @@ rsq_wider
 
 `cor.test()` is a function used to perform a hypothesis test on the correlation coefficient between two continuous variables. This test helps you determine whether there is a statistically significant linear relationship between the two variables.
 
-### Exercise 13
+### Exercise 12
 
 We will be using the `with()` function to extract the columns from `rsq_wider`. Copy the previous code and pipe it to `with()`. Within the function, use `cor.with()` and add the parameters `basic_lm, splines_lm`.
 
-```{r comparing-resampled--13, exercise = TRUE}
+```{r comparing-resampled--12, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r comparing-resampled--13-hint-1, eval = FALSE}
+```{r comparing-resampled--12-hint-1, eval = FALSE}
 ... |>
   with(...(basic_lm, ...))
 ```
@@ -968,17 +946,17 @@ rsq_wider |>
 
 `starts_with()` is a function provided by the **dplyr** package in R, which is a popular package for data manipulation and transformation. It is used to select columns from a data frame that have names starting with a specified prefix.
 
-### Exercise 14
+### Exercise 13
 
 Copy the previous code and pipe to `tidy()`. Hit "Run Code".
 
-```{r comparing-resampled--14, exercise = TRUE}
+```{r comparing-resampled--13, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r comparing-resampled--14-hint-1, eval = FALSE}
+```{r comparing-resampled--13-hint-1, eval = FALSE}
 ... |>
   ...()
 ```
@@ -999,17 +977,17 @@ X: Independent Variable
 Y: Dependent Variable
 Z: difference of variance between X-Y
 
-### Exercise 15
+### Exercise 14
 
 Copy the previous code and pipe it to `select()`. Select `estimate` and `starts_with("conf")`.
 
-```{r comparing-resampled--15, exercise = TRUE}
+```{r comparing-resampled--14, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r comparing-resampled--15-hint-1, eval = FALSE}
+```{r comparing-resampled--14-hint-1, eval = FALSE}
 ... |>
   select(..., starts_with("conf"))
 ```
@@ -1330,19 +1308,19 @@ Copy the previous code and add the parameters `color = "white"` and `fill = "blu
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r bayesian-methods-9-hint, eval = FALSE}
+```{r bayesian-methods-9-hint-1, eval = FALSE}
 ... |>
   geom_histogram(bins = 50, alpha = 0.4, color = "...", fill = "...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 model_post |> 
   mutate(model = forcats::fct_inorder(model)) |>
   ggplot(aes(x = posterior)) +
   geom_histogram(bins = 50, alpha = 0.4, color = "white", fill = "blue")
 ```
 
-###
+### 
 
 `facet_wrap()` is a function provided by the **ggplot2** package in R that allows you to create a grid of plots (facets) based on one or more categorical variables. The basic idea behind `facet_wrap()` is to split your data into different subsets based on one or more categorical variables, and then create a separate plot for each subset.
 
@@ -1357,11 +1335,11 @@ Copy the previous code and add `facet_wrap()`. Add the parameters `~ model` and 
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r bayesian-methods-10-hint, eval = FALSE}
+```{r bayesian-methods-10-hint-1, eval = FALSE}
 
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 model_post |> 
   mutate(model = forcats::fct_inorder(model)) |>
   ggplot(aes(x = posterior)) +
@@ -1369,7 +1347,7 @@ model_post |>
   facet_wrap(~ model, ncol = 1)
 ```
 
-###
+### 
 
 There is also a basic `autoplot()` method for the model results, shown in Figure 11.4, as well as the tidied object that shows overlaid density plots.
 
@@ -1381,15 +1359,15 @@ Type `autoplot()`. Add the parameter `rsq_anova`.
 
 ```
 
-```{r bayesian-methods-11-hint, eval = FALSE}
+```{r bayesian-methods-11-hint-1, eval = FALSE}
 autoplot(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 autoplot(rsq_anova)
 ```
 
-###
+### 
 
 One wonderful aspect of using resampling with Bayesian models is that, once we have the posteriors for the parameters, it is trivial to get the posterior distributions for combinations of the parameters.
 
@@ -1403,16 +1381,16 @@ Copy the previous code and add `geom_text_repel()`. Within the `aes()` of `geom_
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r bayesian-methods-12-hint, eval = FALSE}
+```{r bayesian-methods-12-hint-1, eval = FALSE}
 
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 autoplot(rsq_anova) +
   geom_text_repel(aes(label = workflow))
 ```
 
-###
+### 
 
 Note that the regression parameters have a pretty wide prior distribution, with a standard deviation of 10. In many cases, we might not have a strong opinion about the prior beyond it being symmetric and bell shaped.
 
@@ -1426,19 +1404,19 @@ Copy the previous code and add the parameters `nudge_x` and `nudge_y` outside of
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r bayesian-methods-13-hint, eval = FALSE}
+```{r bayesian-methods-13-hint-1, eval = FALSE}
 ... +
   geom_text_repel(aes(label = workflow), nudge_x = ..., nudge_y = ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 autoplot(rsq_anova) +
   geom_text_repel(aes(label = workflow), nudge_x = 1/8, nudge_y = 1/100) 
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
+Bootstrapping involves randomly sampling with replacement from the original data set to create multiple "bootstrap samples." Models are trained on these samples to estimate properties of the model, such as confidence intervals for model parameters. The **boot** package in R is often used for bootstrap re-sampling.
 
 ### Exercise 14
 
@@ -1450,18 +1428,18 @@ Copy the previous code and add `theme()`, with the parameter `legend.position`, 
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r bayesian-methods-14-hint, eval = FALSE}
+```{r bayesian-methods-14-hint-1, eval = FALSE}
 ... +
   theme(... = "...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 autoplot(rsq_anova) +
   geom_text_repel(aes(label = workflow), nudge_x = 1/8, nudge_y = 1/100) +
   theme(legend.position = "none")
 ```
 
-###
+### 
 
 `contrast_models()` description: The posterior distributions created by perf_mod() can be used to obtain the posterior distribution of the difference(s) between models. One or more comparisons can be computed at the same time.
 
@@ -1473,7 +1451,7 @@ Type `contrast_models()`. Add the parameters `rsq_anova`, `list_1`, `list_2`, an
 
 ```
 
-```{r bayesian-methods-15-hint, eval = FALSE}
+```{r bayesian-methods-15-hint-1, eval = FALSE}
 rqs_diff <-
   contrast_models(...,
                   list_1 = "splines_lm",
@@ -1481,7 +1459,7 @@ rqs_diff <-
                   seed = ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rqs_diff <-
   contrast_models(rsq_anova,
                   list_1 = "splines_lm",
@@ -1489,7 +1467,7 @@ rqs_diff <-
                   seed = 1104)
 ```
 
-###
+### 
 
 Now lets graph the data using `ggplot()`.
 
@@ -1501,19 +1479,19 @@ Pipe `rqs_diff` to `as_tibble()`. Then pipe the code to `ggplot()`.
 
 ```
 
-```{r bayesian-methods-16-hint, eval = FALSE}
+```{r bayesian-methods-16-hint-1, eval = FALSE}
 rqs_diff |>
   ...() |>
   ...()
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rqs_diff  |>
   as_tibble() |> 
   ggplot()
 ```
 
-###
+### 
 
 In R, `geom_vline()` is a function provided by the **ggplot2** package, which is widely used for creating data visualizations. `geom_vline()` is used to add vertical lines to a ggplot plot. This can be useful for highlighting specific values or dividing the plot into sections.
 
@@ -1527,21 +1505,21 @@ Copy the previous code and within `aes()` of `ggplot()`, add the parameter `x`, 
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r bayesian-methods-17-hint, eval = FALSE}
+```{r bayesian-methods-17-hint-1, eval = FALSE}
 rqs_diff  |>
   as_tibble() |> 
   ggplot(aes(x = ...))
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rqs_diff  |>
   as_tibble() |> 
   ggplot(aes(x = difference))
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
+When performing re-sampling, various metrics can be used to assess model performance, such as accuracy, mean squared error, area under the ROC curve (AUC), and more. These metrics help evaluate how well the model generalizes to new data.
 
 ### Exercise 18
 
@@ -1553,21 +1531,21 @@ Copy the previous code and add `geom_vline()`. Add the parameters `xintercept = 
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r bayesian-methods-18-hint, eval = FALSE}
+```{r bayesian-methods-18-hint-1, eval = FALSE}
 ... +
     geom_vline(xintercept = ..., lty = ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rqs_diff  |>
   as_tibble() |> 
   ggplot(aes(x = difference)) +
     geom_vline(xintercept = 0, lty = 2)
 ```
 
-###
+### 
 
-<!-- PK: Knoweldge Drop -->
+R provides visualization tools to help understand the results of resampling. For instance, you can use the `plot` and `xyplot` functions to create visualizations of cross-validation results, showing how performance varies across different folds or iterations.
 
 ### Exercise 19
 
@@ -1579,12 +1557,12 @@ Copy the previous code and add `geom_histogram()`. Add the parameters `bins = 50
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r bayesian-methods-19-hint, eval = FALSE}
+```{r bayesian-methods-19-hint-1, eval = FALSE}
 ... +
     geom_histogram(bins = 50, ... = "white", ... = "red", alpha = ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rqs_diff  |>
   as_tibble() |> 
   ggplot(aes(x = difference)) +
@@ -1592,7 +1570,7 @@ rqs_diff  |>
     geom_histogram(bins = 50, color = "white", fill = "red", alpha = 0.4)
 ```
 
-###
+### 
 
 The `summary()` method for the `rqs_diff` object computes the mean of the distribution as well as credible intervals, the Bayesian analog to confidence intervals.
 
@@ -1604,17 +1582,17 @@ Type `summary(rqs_diff)` and hit "Run Code".
 
 ```
 
-```{r bayesian-methods-20-hint, eval = FALSE}
+```{r bayesian-methods-20-hint-1, eval = FALSE}
 summary(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 summary(rqs_diff)
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
+How does the number of resamples affect these types of formal Bayesian comparisons? More resamples increases the precision of the overall resampling estimate; that precision propagates to this type of analysis. 
 
 ### Exercise 21
 
@@ -1626,23 +1604,23 @@ Copy the previous code and `select()`. Add the parameter `-starts_with("pract")`
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r bayesian-methods-21-hint, eval = FALSE}
+```{r bayesian-methods-21-hint-1, eval = FALSE}
 ... |>
   ...(-starts_with("..."))
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 summary(rqs_diff) |>
   select(-starts_with("pract"))
 ```
 
-###
+### 
 
 The `probability` column reflects the proportion of the posterior that is greater than zero. This is the probability that the positive difference is real. The value is not close to zero, providing a strong case for statistical significance, i.e., the idea that statistically the actual difference is not zero.
 
 ### Exercise 22
 
-To estimate the probability of being practically significant, the size option will be used in the `summary()` function. Copy the previous code and add `size = 0.02` to `summary()` and add `contrast` to `select()`.
+To estimate the probability of being practically significant, the size option will be used in the `summary()` function. Copy the previous code and add `size = 0.02` to `summary()` and add `contrast` to `select()`. Also, remove `-` from `starts_with()`.
 
 ```{r bayesian-methods-22, exercise = TRUE}
 
@@ -1650,19 +1628,113 @@ To estimate the probability of being practically significant, the size option wi
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r bayesian-methods-22-hint, eval = FALSE}
+```{r bayesian-methods-22-hint-1, eval = FALSE}
 summary(rqs_diff, size = ...) |> 
   select(contrast, starts_with("pract"))
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 summary(rqs_diff, size = 0.02) |> 
   select(contrast, starts_with("pract"))
 ```
 
-###
+### 
 
+Even though the previous plot showed that our difference is likely nonzero, the equivalence test suggests that it is small enough to not be practically meaningful.
 
+### Exercise 23
+
+Type `autoplot()` and add the parameter `rsq_anova`. Hit "Run Code".
+
+```{r bayesian-methods-23, exercise = TRUE}
+
+```
+
+```{r bayesian-methods-23-hint-1, eval = FALSE}
+autoplot(...)
+```
+
+```{r include = FALSE}
+autoplot(rsq_anova)
+```
+
+### 
+
+When `perf_mod()` is used with a workflow set, the `autoplot()` method can show the `pract_equiv` results that compare each workflow to the current best (the random forest model, in this case).
+
+### Exercise 24
+
+Copy the previous code and add the parameters `type`, setting it to `"ROPE"`, and `size`, setting it equal to `0.02`.
+
+```{r bayesian-methods-24, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r bayesian-methods-24-hint-1, eval = FALSE}
+autoplot(rsq_anova, type = "...", size = ...)
+```
+
+```{r include = FALSE}
+autoplot(rsq_anova, type = "ROPE", size = 0.02)
+```
+
+### 
+
+The `type` parameter allows you to choose from a variety of plot types that are suitable for the specific class of the input object. The available `type` options vary depending on the class of the object being plotted.
+
+### Exercise 25
+
+Copy the previous code and add `geom_text_repel()`. Within `aes()` of `geom_text_repel()`, add `label`, setting it equal to `workflow`.
+
+```{r bayesian-methods-25, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r bayesian-methods-25-hint-1, eval = FALSE}
+... +
+  geom_text_repel(aes(... = workflow))
+```
+
+```{r include = FALSE}
+autoplot(rsq_anova, type = "ROPE", size = 0.02) +
+  geom_text_repel(aes(label = workflow))
+```
+
+### 
+
+With a posterior distribution, we can also compute the probability of being practically significant. In Bayesian analysis, this is a *ROPE estimate* (for Region Of Practical Equivalence, Kruschke and Liddell (2018)). 
+
+### Exercise 26
+
+Copy the previous code and add `theme()`. Add the parameter `legend.position` and set it equal to `"none"`.
+
+```{r bayesian-methods-26, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r bayesian-methods-26-hint-1, eval = FALSE}
+... +
+  ...(legend.position = "...")
+```
+
+```{r include = FALSE}
+autoplot(rsq_anova, type = "ROPE", size = 0.02) +
+  geom_text_repel(aes(label = workflow)) +
+  theme(legend.position = "none")
+```
+
+### 
+
+How does the number of resamples affect these types of formal Bayesian comparisons? More resamples increases the precision of the overall resampling estimate; that precision propagates to this type of analysis. 
+
+Great Job! You now know have basic understanding of Bayesian Methods and how to analyze these methods using models and functions to make these models.
+<!-- PK: Skipping a graph because it includes knowledge I am not aware of, therefore cannot explain it well enough. -->
 
 ## Summary
 ### 
