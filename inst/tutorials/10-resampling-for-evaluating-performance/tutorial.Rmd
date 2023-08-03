@@ -157,7 +157,7 @@ lm_res <- lm_wflow1 |>
 ## Introduction
 ### 
 
-This tutorial covers [Chapter 10: Resampling for Evaluating Performance](https://www.tmwr.org/resampling.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. 
+This tutorial covers [Chapter 10: Resampling for Evaluating Performance](https://www.tmwr.org/resampling.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. In this tutorial, you will learn about the resubstitution approach, a series of resampling methods (with the use of functions such as `mc_cv()` and `vcov_cv()`), estimating the performance of model (with the use of functions such as `control_resamples()`), parallel processing, and how to save a resampled object (with the use of functions and subsetting). These functions come from a series of packages, including [**tidymodels**](https://www.tidymodels.org/packages/) and [**ranger**](https://parsnip.tidymodels.org/reference/details_rand_forest_ranger.html).
 
 ## The Resubstitution Approach
 ### 
