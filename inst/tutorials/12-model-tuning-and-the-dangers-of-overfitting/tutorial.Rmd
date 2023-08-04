@@ -11,15 +11,58 @@ runtime: shiny_prerendered
 description: 'Tutorial for Chapter 12: Model Tuning and the Dangers of Overfitting'
 ---
 
-```{r setup, include = FALSE}
+```{r setup, include = FALSE, warning = FALSE}
 library(learnr)
 library(tutorial.helpers)
+library(knitr)
 library(tidymodels)
 tidymodels_prefer()
 
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
         tutorial.storage = "local") 
+
+split <- initial_split(two_class_dat)
+training_set <- training(split)
+testing_set <- testing(split)
+
+llhood <- function(...) {
+  logistic_reg() |> 
+    set_engine("glm", ...) |>
+    fit(Class ~ ., data = training_set) |> 
+    glance() |> 
+    select(logLik)
+}
+
+
+set.seed(1201)
+
+rs <- vfold_cv(training_set, repeats = 10)
+
+lloss <- function(...) {
+  perf_meas <- metric_set(roc_auc, mn_log_loss)
+    
+  logistic_reg() |> 
+    set_engine("glm", ...) |>
+    fit_resamples(Class ~ A + B, rs, metrics = perf_meas) |>
+    collect_metrics(summarize = FALSE) |>
+    select(id, id2, .metric, .estimate)
+}
+
+resampled_res <- bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+) |>
+  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
+  group_by(model, .metric) |>
+  summarize(
+    .groups = "drop",
+    mean = mean(.estimate, na.rm = TRUE),
+    std_err = sd(.estimate, na.rm = TRUE) / sqrt(n())
+  )
+
+
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -184,7 +227,7 @@ training(split)
 To demonstrate, consider the classification data shown in the graph below with two predictors, two classes, and a training set of 593 data points:
 
 ```{r}
-knitr::include_graphics("images/picOne.png")
+knitr::include_graphics("images/pic1.png")
 ```
 
 To start, a linear class boundary to these data could be fitted. The most common method for doing this is to use a generalized linear model in the form of logistic regression. This model relates the log odds of a sample being Class 1 using the logit transformation:
@@ -210,6 +253,996 @@ training_set <- training(split)
 ```
 
 ### 
+
+In the context of generalized linear models, the logit function is the _link function_ between the outcome ($\pi$) and the predictors. There are other link functions that include the _probit_ model: 
+
+$$\Phi^{-1}(\pi) = \beta_0 + \beta_1x_1 + \ldots + \beta_px_p$$
+
+where $\Phi$ is the cumulative standard normal function, as well as the _complementary log-log_ model:
+
+$$\log(-\log(1-\pi)) = \beta_0 + \beta_1x_1 + \ldots + \beta_px_p$$
+
+### Exercise 8
+
+Now, lets create a testing set of `split`. Type in `testing()`, passing in `split`.
+
+```{r what-do-we-optimize-8, exercise = TRUE}
+
+```
+
+```{r what-do-we-optimize-8-hint-1, eval = FALSE}
+testing(...)
+```
+
+```{r include = FALSE}
+testing(split)
+```
+
+### 
+
+Each of these models results in linear class boundaries. Which one should we use? Since, for these data, the number of model parameters does not vary, the statistical approach is to compute the (log) likelihood for each model and determine the model with the largest value. Traditionally, the likelihood is computed using the same data that were used to estimate the parameters, not using approaches like data splitting or resampling.
+
+### Exercise 9
+
+Copy the previous code and assign it to a new variable named `testing_set`.
+
+```{r what-do-we-optimize-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-9-hint-1, eval = FALSE}
+... <- testing(split)
+```
+
+```{r include = FALSE}
+testing_set <- testing(split)
+```
+
+### 
+
+There are many examples of tuning parameters or hyperparameters in different statistical and machine learning models. One of which is boosting. Boosting is an ensemble method that combines a series of base models, each of which is created sequentially and depends on the previous models. The number of boosting iterations is an important tuning parameter that usually requires optimization.
+
+### Exercise 10
+
+Using the `training_set` data frame, let’s create a function to compute the different models and extract the likelihood statistics for the training set. In the code chunk below, type in `function(...){}`.
+
+```{r what-do-we-optimize-10, exercise = TRUE}
+
+```
+
+```{r what-do-we-optimize-10-hint-1, eval = FALSE}
+# Leave the three dots inside the parenthesis of the function
+function(...) {
+  
+}
+```
+
+```{r include = FALSE}
+function(...) {
+  
+}
+```
+
+### 
+
+In the classic single-layer artificial neural network (a.k.a. the multilayer perceptron), the predictors are combined using two or more hidden units. The hidden units are linear combinations of the predictors that are captured in an *activation function* (typically a nonlinear function, such as a sigmoid).
+
+### Exercise 11
+
+Copy the previous code. Inside the funciton, pipe `logistic_reg()` to `set_engine()`. Inside `set_engine()`, pass in `"glm"` and `...`.
+
+```{r what-do-we-optimize-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-11-hint-1, eval = FALSE}
+function(...) {
+  logistic_reg() |>
+    set_engine("...", ...)
+}
+```
+
+```{r include = FALSE}
+function(...) {
+  logistic_reg() |>
+    set_engine("glm", ...)
+}
+```
+
+### 
+
+The hidden units are then connected to the outcome units; one outcome unit is used for regression models, and multiple outcome units are required for classification. The number of hidden units and the type of activation function are important structural tuning parameters.
+
+### Exercise 12
+
+Copy the previous code and continue the pipe to `fit()`. Inside `fit()`, type in `Class ~ .` and set `data` to `training_set` (Note: Leave the three dots inside `set_engine()`; don't remove them).
+
+```{r what-do-we-optimize-12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-12-hint-1, eval = FALSE}
+function(...) {
+  logistic_reg() |>
+    set_engine("glm", ...) |>
+    fit(Class ~ ., ... = ...)
+}
+```
+
+```{r include = FALSE}
+function(...) {
+  logistic_reg() |>
+    set_engine("glm", ...) |>
+    fit(Class ~ ., data = training_set)
+}
+```
+
+### 
+
+Modern gradient descent methods are improved by finding the right optimization parameters. Examples of such hyperparameters are learning rates, momentum, and the number of optimization iterations/epochs.
+
+### Exercise 13
+
+Copy the previous code and continue the pipe to `glance()`.
+
+```{r what-do-we-optimize-13, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-13-hint-1, eval = FALSE}
+function(...) {
+  logistic_reg() |>
+    set_engine("glm", ...) |>
+    fit(Class ~ ., data = training_set) |>
+    ...()
+}
+```
+
+```{r include = FALSE}
+function(...) {
+  logistic_reg() |>
+    set_engine("glm", ...) |>
+    fit(Class ~ ., data = training_set) |>
+    glance()
+}
+```
+
+### 
+
+`glance()` is a function that is used to extract a tidy summary of model fit statistics from a variety of model objects, such as linear regression, generalized linear models, mixed-effects models, and more.
+
+### Exercise 14
+
+Copy the previous code and continue the pipe to `select()`. Inside `select()`, pass in `logLik`.
+
+```{r what-do-we-optimize-14, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-14-hint-1, eval = FALSE}
+function(...) {
+  logistic_reg() |>
+    set_engine("glm", ...) |>
+    fit(Class ~ ., data = training_set) |>
+    glance() |>
+    ...(logLik)
+}
+```
+
+```{r include = FALSE}
+function(...) {
+  logistic_reg() |>
+    set_engine("glm", ...) |>
+    fit(Class ~ ., data = training_set) |>
+    glance() |>
+    select(logLik)
+}
+```
+
+### 
+
+Neural networks and some ensemble models use gradient descent to estimate the model parameters. While the tuning parameters associated with gradient descent are not structural parameters, they often require tuning.
+
+### Exercise 15
+
+Copy the previous code and assign the entire function to a new variable named `llhood`.
+
+```{r what-do-we-optimize-15, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-15-hint-1, eval = FALSE}
+... <- function(...) {
+  logistic_reg() |>
+    set_engine("glm", ...) |>
+    fit(Class ~ ., data = training_set) |>
+    glance() |>
+    select(logLik)
+}
+```
+
+```{r include = FALSE}
+llhood <- function(...) {
+  logistic_reg() |>
+    set_engine("glm", ...) |>
+    fit(Class ~ ., data = training_set) |>
+    glance() |>
+    select(logLik)
+}
+```
+
+### 
+
+In some cases, preprocessing techniques require tuning:
+
+In principal component analysis, or its supervised cousin called partial least squares, the predictors are replaced with new, artificial features that have better properties related to collinearity. The number of extracted components can be tuned.
+
+### Exercise 16
+
+Now, lets use this newly created function along with the `bind_rows()` function. `bind_rows()` is used to bind any number of data frames by row, creating a longer result.
+
+In the code chunk below, type in `bind_rows()`. Inside this function, type in `llhood()`.
+
+```{r what-do-we-optimize-16, exercise = TRUE}
+
+```
+
+```{r what-do-we-optimize-16-hint-1, eval = FALSE}
+bind_rows(
+  ...()
+)
+```
+
+```{r include = FALSE}
+bind_rows(
+  llhood()
+)
+```
+
+### 
+
+Imputation methods estimate missing predictor values using the complete values of one or more predictors. One effective imputation tool uses $K$-nearest neighbors of the complete columns to predict the missing value. The number of neighbors modulates the amount of averaging and can be tuned.  
+
+### Exercise 17
+
+Copy the previous code and as the second argument of `bind_rows()`, type in `llhood()` again. Inside this function, set `family` to `binomial(link = "probit")`.
+
+```{r what-do-we-optimize-17, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-17-hint-1, eval = FALSE}
+bind_rows(
+  llhood(),
+  llhood(family = ...(link = "..."))
+)
+```
+
+```{r include = FALSE}
+bind_rows(
+  llhood(),
+  llhood(family = binomial(link = "probit"))
+)
+```
+
+### 
+
+This part of the code is calling the `llhood()` function, but this time it is specifying a different model. It uses the binomial family with a probit link function, suggesting that this log-likelihood calculation is for a binomial regressioin model with a probit link. Type in `?binomial()` in the Console to learn more.
+
+### Exercise 18
+
+Copy the previous code and as the third argument of `bind_rows()`, type in `llhood()` yet again. Inside this function, set `family` to `binomial(link = "cloglog")`.
+
+```{r what-do-we-optimize-18, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-18-hint-1, eval = FALSE}
+bind_rows(
+  llhood(),
+  llhood(family = binomial(link = "probit")),
+  llhood(family = ...(link = "..."))
+)
+```
+
+```{r include = FALSE}
+bind_rows(
+  llhood(),
+  llhood(family = binomial(link = "probit")),
+  llhood(family = binomial(link = "cloglog"))
+)
+```
+
+### 
+
+"cloglog" stands *complementary log-log*.
+
+Also, `logLik` stands for "log-likelihood," and it is a measure used to assess how well a statistical model fits a given dataset.
+
+### Exercise 19
+
+Copy the previous code and pipe the entire `bind_rows()` function to `mutate()`. Inside `mutate()`, set `link` to a vector containing `"logit"`, `"probit"`, and `"c-log-log"` (use `c()` to create a vector).
+
+```{r what-do-we-optimize-19, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-19-hint-1, eval = FALSE}
+bind_rows(
+  llhood(),
+  llhood(family = binomial(link = "probit")),
+  llhood(family = binomial(link = "cloglog"))
+) |>
+  mutate(link = c("...", "...", "..."))
+  
+```
+
+```{r include = FALSE}
+bind_rows(
+  llhood(),
+  llhood(family = binomial(link = "probit")),
+  llhood(family = binomial(link = "cloglog"))
+) |>
+  mutate(link = c("logit", "probit", "c-log-log"))
+```
+
+### 
+
+According to these results, the logistic model has the best statistical properties.
+
+From the scale of the log-likelihood values, it is difficult to understand if these differences are important or negligible. One way of improving this analysis is to resample the statistics and separate the modeling data from the data used for performance estimation.
+
+### Exercise 20
+
+With this small data set, repeated 10-fold cross-validation is a good choice for resampling. In the yardstick package, the `mn_log_loss()` function is used to estimate the negative log-likelihood.
+
+Lets perform this negative log-likelihood estimation. In the code chunk below, type in `set.seed(1201)`.
+
+```{r what-do-we-optimize-20, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-20-hint-1, eval = FALSE}
+...(1201)
+```
+
+```{r include = FALSE}
+set.seed(1201)
+```
+
+### 
+
+Some classical statistical models also have structural parameters:
+
+In binary regression, the logit link is commonly used (i.e., logistic regression). Other link functions, such as the probit and complementary log-log, are also available.
+
+### Exercise 21
+
+Lets start by creating a 10-fold-cross-validation. In the code chunk below, type in `vfold_cv()`, passing in `training_set` and setting `repeats` to `10`. 
+
+```{r what-do-we-optimize-21, exercise = TRUE}
+
+```
+
+```{r what-do-we-optimize-21-hint-1, eval = FALSE}
+vfold_cv(..., repeats = ...)
+```
+
+```{r include = FALSE}
+vfold_cv(training_set, repeats = 10)
+```
+
+### 
+
+As a reminder, a 10-fold-cross-validation set is when ten iterations of resampling are issued. In this case, since V = 10, the analysis sets are 9/10 of the training set and each assessment set is a distinct 1/10.
+
+### Exercise 22
+
+Copy the previous code and assign it to a new variable named `rs`.
+
+```{r what-do-we-optimize-22, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-22-hint-1, eval = FALSE}
+... <- vfold_cv(training_set, repeats = 10)
+```
+
+```{r include = FALSE}
+rs <- vfold_cv(training_set, repeats = 10)
+```
+
+### 
+
+A counterexample where it is inappropriate to tune a parameter is the prior distribution required for Bayesian analysis. The prior encapsulates the analyst’s belief about the distribution of a quantity before evidence or data are taken into account.
+
+
+### Exercise 23
+
+Next, create a new function. Inside the function, set the code `metric_set(roc_auc, mn_log_loss)` to the variable `perf_meas`.
+
+```{r what-do-we-optimize-23, exercise = TRUE}
+
+```
+
+```{r what-do-we-optimize-23-hint-1, eval = FALSE}
+function(...){
+  ... <- metric_set(..., mn_log_loss)
+}
+```
+
+```{r include = FALSE}
+function(...) {
+  perf_meas <- metric_set(roc_auc, mn_log_loss)
+}
+```
+
+### 
+
+`metric_set()` is a function that calculates the logarithmic loss of a classification model. Click [here](https://yardstick.tidymodels.org/reference/mn_log_loss.html) to learn more. 
+
+### Exercise 24
+
+Copy the previous code. On a new line inside the function, pipe `logistic(reg)` to `set_engine()`. Inside `set_engine()`, type in `"glm", ...`.
+
+```{r what-do-we-optimize-24, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-24-hint-1, eval = FALSE}
+function(...) {
+  perf_meas <- metric_set(roc_auc, mn_log_loss)
+  
+  logistic_reg() |>
+    ...("...", ...)
+}
+```
+
+```{r include = FALSE}
+function(...) {
+  perf_meas <- metric_set(roc_auc, mn_log_loss)
+    
+  logistic_reg() |> 
+    set_engine("glm", ...)
+}
+```
+
+### 
+
+For example, in [Section 11.4](https://www.tmwr.org/compare#tidyposterior) of [*Tidy Modeling with R*](https://www.tmwr.org/index.html), a Bayesian ANOVA model as used, and it was unclear about what the prior should be for the regression parameters (beyond being a symmetric distribution). A t-distribution was chosen with one degree of freedom for the prior since it has heavier tails; this reflects our added uncertainty. The prior beliefs should not be subject to optimization. Tuning parameters are typically optimized for performance whereas priors should not be tweaked to get “the right results.”
+
+### Exercise 25
+
+Copy the previous code and continue the pipe to `fit_resamples()`. Inside `fit_resamples()`, type in `Class ~ A + B, rs` as the first argument, `rs` as the second argument, and set `metrics` to `perf_meas` as the third argument.
+
+```{r what-do-we-optimize-25, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-25-hint-1, eval = FALSE}
+function(...) {
+  perf_meas <- metric_set(roc_auc, mn_log_loss)
+    
+  logistic_reg() |> 
+    set_engine("glm", ...) |>
+    fit_resamples(Class ~ A + B, ... , metrics = ...)
+}
+```
+
+```{r include = FALSE}
+function(...) {
+  perf_meas <- metric_set(roc_auc, mn_log_loss)
+    
+  logistic_reg() |> 
+    set_engine("glm", ...) |>
+    fit_resamples(Class ~ A + B, rs, metrics = perf_meas)
+}
+```
+
+### 
+
+Another (perhaps more debatable) counterexample of a parameter that does not need to be tuned is the number of trees in a random forest or bagging model. This value should instead be chosen to be large enough to ensure numerical stability in the results; tuning it cannot improve performance as long as the value is large enough to produce reliable results.
+
+### Exercise 26
+
+Copy the previous code and continue the pipe to `collect_metrics()`. Inside `collect_metrics()`, set `summarize` to `FALSE`.
+
+```{r what-do-we-optimize-26, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-26-hint-1, eval = FALSE}
+function(...) {
+  perf_meas <- metric_set(roc_auc, mn_log_loss)
+    
+  logistic_reg() |> 
+    set_engine("glm", ...) |>
+    fit_resamples(Class ~ A + B, rs, metrics = perf_meas) |>
+    collect_metrics(summarize = ...)
+}
+```
+
+```{r include = FALSE}
+function(...) {
+  perf_meas <- metric_set(roc_auc, mn_log_loss)
+    
+  logistic_reg() |> 
+    set_engine("glm", ...) |>
+    fit_resamples(Class ~ A + B, rs, metrics = perf_meas) |>
+    collect_metrics(summarize = FALSE)
+}
+```
+
+### 
+
+As a reminder, `collect_metrics()` and `fit_resamples()` were introduced in the "Resampling for Evaluating Performance" tutorial, which is associated with [Chapter 10 of *Tidy Modeling with R*](https://www.tmwr.org/resampling).
+
+### Exercise 27
+
+Copy the previous code and continue the pipe to `select()`. Inside `select()`, type in `id`, `id2`, `.metric`, and `.estimate`.
+
+```{r what-do-we-optimize-27, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-27-hint-1, eval = FALSE}
+function(...) {
+  perf_meas <- metric_set(roc_auc, mn_log_loss)
+    
+  logistic_reg() |> 
+    set_engine("glm", ...) |>
+    fit_resamples(Class ~ A + B, rs, metrics = perf_meas) |>
+    collect_metrics(summarize = FALSE) |>
+    select(..., ..., .metric, .estimate)
+}
+```
+
+```{r include = FALSE}
+function(...) {
+  perf_meas <- metric_set(roc_auc, mn_log_loss)
+    
+  logistic_reg() |> 
+    set_engine("glm", ...) |>
+    fit_resamples(Class ~ A + B, rs, metrics = perf_meas) |>
+    collect_metrics(summarize = FALSE) |>
+    select(id, id2, .metric, .estimate)
+}
+```
+
+### 
+
+For random forests, the number of trees in a random forest or bagging mode is typically in the thousands while the number of trees needed for bagging is around 50 to 100.
+
+### Exercise 28
+
+Copy the previous code and assign the entire function to a new variable named `lloss`.
+
+```{r what-do-we-optimize-28, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-28-hint-1, eval = FALSE}
+... <- function(...) {
+  perf_meas <- metric_set(roc_auc, mn_log_loss)
+    
+  logistic_reg() |> 
+    set_engine("glm", ...) |>
+    fit_resamples(Class ~ A + B, rs, metrics = perf_meas) |>
+    collect_metrics(summarize = FALSE) |>
+    select(id, id2, .metric, .estimate)
+}
+```
+
+```{r include = FALSE}
+lloss <- function(...) {
+  perf_meas <- metric_set(roc_auc, mn_log_loss)
+    
+  logistic_reg() |> 
+    set_engine("glm", ...) |>
+    fit_resamples(Class ~ A + B, rs, metrics = perf_meas) |>
+    collect_metrics(summarize = FALSE) |>
+    select(id, id2, .metric, .estimate)
+}
+```
+
+### 
+
+The purpose of this function is to return the individual resampled performance estimates.
+
+### Exercise 29
+
+Now, lets bind some rows. Type in `bind_rows()`. Set the first argument of this function to `lloss()`, which is piped to `mutate(model = "logistic")` (Note: view the hint if you are confused).
+
+```{r what-do-we-optimize-29, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-29-hint-1, eval = FALSE}
+bind_rows(
+  lloss() |> mutate(... = "...")
+)
+```
+
+```{r include = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic")
+)
+```
+
+### 
+
+What this line of code is doing is it's calling `lloss()`, which has the individual resampled performance estimate and is creating a new column named `model`, which is set to `logistic`. This creation of the column was done by the `mutate()` function.
+
+### Exercise 30
+
+Copy the previous code. Set the second argument of `bind_rows()` to `lloss(family = binomial(link = "probit"))`, which is piped to `mutate(model = "probit")` (Note: view the hint if you are confused).
+
+```{r what-do-we-optimize-30, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-30-hint-1, eval = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(... = binomial(link = "...")) |> mutate(model = "...")
+)
+```
+
+```{r include = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit")
+)
+```
+
+### 
+
+This code has now binded the `probit` models to the tibble containing `logistic` models.
+
+### Exercise 31
+
+Copy the previous code. Set the third argument of `bind_rows()` to `lloss(family = binomial(link = "cloglog"))`, which is piped to `mutate(model = "c-log-log")` (Note: view the hint if you are confused).
+
+```{r what-do-we-optimize-31, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-31-hint-1, eval = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(... = binomial(link = "...")) |> mutate(... = "...")
+)
+```
+
+```{r include = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+)
+```
+
+### 
+
+This code binded the `cloglog` models to the tibble containing `probit` and `logistic` models.
+
+### Exercise 32
+
+Copy the previous code. Pipe the entire `bind_rows()` function to `mutate()`. 
+
+```{r what-do-we-optimize-32, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-32-hint-1, eval = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+) |>
+  ...()
+```
+
+```{r include = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+) |>
+  mutate()
+```
+
+### 
+
+### Exercise 33
+
+Now, lets start converting `log-loss` to `log-likelihood`. Copy the previous code. Inside `mutate()`, set `.estimate` to `ifelse(.metric == "mn_log_loss", -.estimate, .estimate)`.
+
+```{r what-do-we-optimize-33, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-33-hint-1, eval = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+) |>
+  mutate(.estimate = ...(.metric == "...", -.estimate, .estimate))
+```
+
+```{r include = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+) |>
+  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate))
+```
+
+### 
+
+This code modifies the `.estimate` column: If `.metric` is equal to `mn_log_loss`, negate that value in `.estimate`. If not, then keep it unchanged.
+
+### Exercise 34
+
+Copy the previous code and pipe it to `group_by()`. Inside this function, type in `model` and `.metric`. 
+
+```{r what-do-we-optimize-34, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-34-hint-1, eval = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+) |>
+  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
+  group_by(..., ....)
+```
+
+```{r include = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+) |>
+  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
+  group_by(model, .metric)
+```
+
+### 
+
+In this scanario, the `group_by()` function is grouping the data based on the `model` and `.metric`.
+
+### Exercise 35
+
+Copy the previous code and pipe it to `summarize()`. Inside of this function, set `.groups` to `"drop"`. 
+
+```{r what-do-we-optimize-35, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-35-hint-1, eval = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+) |>
+  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
+  group_by(model, .metric) |>
+  summarize(
+    .groups = "..."
+  )
+```
+
+```{r include = FALSE, warning = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+) |>
+  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
+  group_by(model, .metric) |>
+  summarize(
+    .groups = "drop"
+  )
+```
+
+### 
+
+<!-- AK: Getting a warning here and don't understand what it means: -->
+
+<!-- A | warning: glm.fit: fitted probabilities numerically 0 or 1 occurred -->
+<!-- There were issues with some computations   A: x3 -->
+
+<!-- # A tibble: 6 × 4 -->
+<!--   model     .metric       mean std_err -->
+<!--   <chr>     <chr>        <dbl>   <dbl> -->
+<!-- 1 c-log-log mn_log_loss -0.476 0.0117  -->
+<!-- 2 c-log-log roc_auc      0.883 0.00472 -->
+<!-- 3 logistic  mn_log_loss -0.443 0.00845 -->
+<!-- 4 logistic  roc_auc      0.882 0.00471 -->
+<!-- 5 probit    mn_log_loss -0.450 0.00850 -->
+<!-- 6 probit    roc_auc      0.882 0.00471 -->
+
+### Exercise 36
+
+Copy the previous code. Inside `summarize()`, set `mean` to `mean(.estimate, na.rm = TRUE)`.
+
+```{r what-do-we-optimize-36, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-36-hint-1, eval = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+) |>
+  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
+  group_by(model, .metric) |>
+  summarize(
+    .groups = "drop",
+    ... = mean(..., na.rm = TRUE)
+  )
+```
+
+```{r include = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+) |>
+  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
+  group_by(model, .metric) |>
+  summarize(
+    .groups = "drop",
+    mean = mean(.estimate, na.rm = TRUE)
+  )
+```
+
+### 
+
+The `na.rm = TRUE` argument is used to ignore any missing values and perform calcuations on the non-missing values.
+
+### Exercise 37
+
+Copy the previous code. Inside `summarize()`, set `std_err` to `sd(.estimate, na.rm = TRUE) / sqrt(n())`
+
+```{r what-do-we-optimize-37, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-37-hint-1, eval = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+) |>
+  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
+  group_by(model, .metric) |>
+  summarize(
+    .groups = "drop",
+    mean = mean(.estimate, na.rm = TRUE),
+    std_err = sd(.estimate, na.rm = TRUE) / sqrt(n())
+  )
+```
+
+```{r include = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+) |>
+  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
+  group_by(model, .metric) |>
+  summarize(
+    .groups = "drop",
+    mean = mean(.estimate, na.rm = TRUE),
+    std_err = sd(.estimate, na.rm = TRUE) / sqrt(n())
+  )
+```
+
+### 
+
+The `sd()` function is being used here to calculate the standard deviation of the values inside the `.estimate` column. To calculate the standard error, this function is being divided by the square root of `n()`.
+
+### Exercise 38
+
+Copy the previous code and assign it to a new variable named `resampled_res`.
+
+```{r what-do-we-optimize-38, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-38-hint-1, eval = FALSE}
+... <- bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+) |>
+  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
+  group_by(model, .metric) |>
+  summarize(
+    .groups = "drop",
+    mean = mean(.estimate, na.rm = TRUE),
+    std_err = sd(.estimate, na.rm = TRUE) / sqrt(n())
+  )
+```
+
+```{r include = FALSE, warning = FALSE}
+resampled_res <- bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+) |>
+  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
+  group_by(model, .metric) |>
+  summarize(
+    .groups = "drop",
+    mean = mean(.estimate, na.rm = TRUE),
+    std_err = sd(.estimate, na.rm = TRUE) / sqrt(n())
+  )
+```
+
+### 
+
+This code has successfully resampled the results of the 10-fold-cross-validation.
 
 ## Summary
 ### 
