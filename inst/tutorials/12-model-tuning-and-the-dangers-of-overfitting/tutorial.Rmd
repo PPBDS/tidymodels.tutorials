@@ -60,8 +60,17 @@ resampled_res <- bind_rows(
     .groups = "drop",
     mean = mean(.estimate, na.rm = TRUE),
     std_err = sd(.estimate, na.rm = TRUE) / sqrt(n())
-  )
+)
 
+logLikelihoodPlot <- resampled_res |> 
+  filter(.metric == "mn_log_loss") |>
+  ggplot(aes(x = mean, y = model)) +
+  geom_point() +
+  geom_errorbar(aes(xmin = mean - 1.64 * std_err, xmax = mean + 1.64 * std_err, width = 0.1)) +
+  labs(
+    x = "log-likelihood",
+    y = NULL
+  )
 
 ```
 
@@ -1243,6 +1252,238 @@ resampled_res <- bind_rows(
 ### 
 
 This code has successfully resampled the results of the 10-fold-cross-validation.
+
+### Exercise 39
+
+Now, lets plot this data on a graph. But first, a filtration must occur. In the code chunk below, pipe `resampled_res` to `filter()`. Inside this function, type in the expression `.metric == "mn_log_loss"`.
+
+```{r what-do-we-optimize-39, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-39-hint-1, eval = FALSE}
+resampled_res |>
+  ...(.metric == "...")
+```
+
+```{r include = FALSE}
+resampled_res |> 
+  filter(.metric == "mn_log_loss")
+```
+
+### 
+
+This code is filtering the data, making sure that the only `mn_log_loss` data is present.
+
+### Exercise 40
+
+Copy the previous code and pipe it to `ggplot()`. Inside this function, using `aes()`, set the argument `x` to `mean` and `y` to `model`.
+
+```{r what-do-we-optimize-40, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-40-hint-1, eval = FALSE}
+resampled_res |> 
+  filter(.metric == "mn_log_loss") |>
+  ggplot(aes(x = ..., y = ...))
+```
+
+```{r include = FALSE}
+resampled_res |> 
+  filter(.metric == "mn_log_loss") |>
+  ggplot(aes(x = mean, y = model))
+```
+
+### 
+
+If you are unfamiliar with the term "model tuning", model tuning refers to the process of adjusting the hyperparameters of a model in order to optimize its performance.
+
+### Exercise 41
+
+Copy the previous code and add `geom_point()`.
+
+```{r what-do-we-optimize-41, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-41-hint-1, eval = FALSE}
+resampled_res |> 
+  filter(.metric == "mn_log_loss") |>
+  ggplot(aes(x = mean, y = model)) +
+  ...()
+```
+
+```{r include = FALSE}
+resampled_res |> 
+  filter(.metric == "mn_log_loss") |>
+  ggplot(aes(x = mean, y = model)) +
+  geom_point()
+```
+
+### 
+
+As you can see, this produces three points on the graph. Using these points, the 90& confidence intervals can be created using `geom_errorbar()`.
+
+### Exercise 42
+
+Copy the previous code and add `geom_errorbar()`. Inside this function, using `aes()`, set `xmin` to `mean - 1.64 * std_err` (Note: This will throw an error).
+
+```{r what-do-we-optimize-42, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-42-hint-1, eval = FALSE}
+resampled_res |> 
+  filter(.metric == "mn_log_loss") |>
+  ggplot(aes(x = mean, y = model)) +
+  geom_point() +
+  geom_errorbar(...(... = mean - 1.64 * std_err))
+```
+
+```{r include = FALSE}
+#resampled_res |> 
+#  filter(.metric == "mn_log_loss") |>
+#  ggplot(aes(x = mean, y = model)) +
+#  geom_point() +
+#  geom_errorbar(aes(xmin = mean - 1.64 * std_err))
+```
+
+### 
+
+This code throws an error because the `xmax` hasn't been defined yet.
+
+### Exercise 43
+
+Copy the previous code. Inside the `aes()` function inside of `geom_errorbar()`, set `xmax` to `mean + 1.64 * std_err`. 
+
+```{r what-do-we-optimize-43, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-43-hint-1, eval = FALSE}
+resampled_res |> 
+  filter(.metric == "mn_log_loss") |>
+  ggplot(aes(x = mean, y = model)) +
+  geom_point() +
+  geom_errorbar(aes(xmin = mean - 1.64 * std_err, ... = mean + 1.64 * std_err))
+```
+
+```{r include = FALSE}
+resampled_res |> 
+  filter(.metric == "mn_log_loss") |>
+  ggplot(aes(x = mean, y = model)) +
+  geom_point() +
+  geom_errorbar(aes(xmin = mean - 1.64 * std_err, xmax = mean + 1.64 * std_err))
+```
+
+### 
+
+As you can see, each point now has a line on the right and left side, which represents the confidence intervals. 
+
+### Exercise 44
+
+Copy the previous code. Inside the `aes()` function inside of `geom_errorbar()`, set the `width` to `0.1`.
+
+```{r what-do-we-optimize-44, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-44-hint-1, eval = FALSE}
+resampled_res |> 
+  filter(.metric == "mn_log_loss") |>
+  ggplot(aes(x = mean, y = model)) +
+  geom_point() +
+  geom_errorbar(aes(xmin = mean - 1.64 * std_err, xmax = mean + 1.64 * std_err, width = ...))
+```
+
+```{r include = FALSE}
+resampled_res |> 
+  filter(.metric == "mn_log_loss") |>
+  ggplot(aes(x = mean, y = model)) +
+  geom_point() +
+  geom_errorbar(aes(xmin = mean - 1.64 * std_err, xmax = mean + 1.64 * std_err, width = 0.1))
+```
+
+### 
+
+The scale of these values is different than the previous values since they are computed on a smaller data set; the value produced by `broom::glance()` is a sum while `yardstick::mn_log_loss()` is an average.
+
+### Exercise 45
+
+Copy the previous code and add your labs. The final plot should look like this:
+
+```{r}
+logLikelihoodPlot
+```
+
+```{r what-do-we-optimize-45, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-45-hint-1, eval = FALSE}
+resampled_res |> 
+  filter(.metric == "mn_log_loss") |>
+  ggplot(aes(x = mean, y = model)) +
+  geom_point() +
+  geom_errorbar(aes(xmin = mean - 1.64 * std_err, xmax = mean + 1.64 * std_err, width = 0.1)) +
+  labs(
+    x = "...",
+    ... = NULL
+  )
+```
+
+```{r include = FALSE}
+resampled_res |> 
+  filter(.metric == "mn_log_loss") |>
+  ggplot(aes(x = mean, y = model)) +
+  geom_point() +
+  geom_errorbar(aes(xmin = mean - 1.64 * std_err, xmax = mean + 1.64 * std_err, width = 0.1)) +
+  labs(
+    x = "log-likelihood",
+    y = NULL
+  )
+```
+
+### 
+
+These results exhibit evidence that the choice of the link function matters somewhat. Although there is an overlap in the confidence intervals, the logistic model has the best results.
+
+### Exercise 46
+
+What about a different metric? The area under the ROC curve for each resample was also calcuated. These results, which reflect the discriminative ability of the models across numerous probability thresholds, show a lack of difference 
+
+```{r}
+knitr::include_graphics("images/pic2.png")
+```
+
+### 
+
+Given the overlap of the intervals, as well as the scale of the x-axis, any of these options could be used.
+
+### Exercise 47
+
+When the class boundaries for the three models are overlaid on the test set of 198 data points as shown in the image below, this is seen again:
+
+```{r}
+knitr::include_graphics("images/pic3.png")
+```
+
+### 
 
 ## Summary
 ### 
