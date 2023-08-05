@@ -49,7 +49,8 @@ lloss <- function(...) {
     select(id, id2, .metric, .estimate)
 }
 
-resampled_res <- bind_rows(
+resampled_res <- 
+  bind_rows(
   lloss() |> mutate(model = "logistic"),
   lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
   lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
@@ -62,7 +63,8 @@ resampled_res <- bind_rows(
     std_err = sd(.estimate, na.rm = TRUE) / sqrt(n())
 )
 
-logLikelihoodPlot <- resampled_res |> 
+logLikelihoodPlot <- 
+  resampled_res |> 
   filter(.metric == "mn_log_loss") |>
   ggplot(aes(x = mean, y = model)) +
   geom_point() +
@@ -71,6 +73,11 @@ logLikelihoodPlot <- resampled_res |>
     x = "log-likelihood",
     y = NULL
   )
+
+neural_net_spec <- 
+  mlp(hidden_units = tune()) |>
+  set_mode("regression") |>
+  set_engine("keras")
 
 ```
 
@@ -1484,6 +1491,325 @@ knitr::include_graphics("images/pic3.png")
 ```
 
 ### 
+
+This exercise emphasizes that different metrics might lead to different decisions about the choice of tuning parameter values. In this case, one metric indicates the models are somewhat different while another metric shows no difference at all.
+
+###
+
+Congrats! You have learned how to evaluate models when optimizing tuning parameters.
+
+## Tuning Parameters in Tidymodels
+###
+
+You have already dealt with quite a number of arguments that correspond to tuning parameters for recipe and model specifications in previous chapters. It is possible to tune:
+
+- the threshold for combining neighborhoods into an “other” category (with argument name `threshold`)
+
+- the number of degrees of freedom in a natural spline (`deg_free`)
+
+- the number of data points required to execute a split in a tree-based model (`min_n`)
+
+- the amount of regularization in penalized models (`penalty`)
+
+### Exercise 1
+
+The `rand_forest()` function contains a series of arguments that can be passed in. Type `?rand_forest()` in the Console and look at the *Arguments* section. CP/CR.
+
+```{r tuning-parameters-in-1}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+###
+
+For **parsnip** model specifications, there are two kinds of parameter arguments. Main arguments are those that are most often optimized for performance and are available in multiple engines. The main tuning parameters are top-level arguments to the model specification function. For example, the `rand_forest()` function has *main* arguments `trees`, `min_n`, and `mtry` since these are most frequently specified or optimized.
+
+### Exercise 2
+
+A secondary set of tuning parameters are *engine specific*. These are either infrequently optimized or are specific only to certain engines. Again using random forests as an example, the **ranger** package contains some arguments that are not used by other packages.
+
+Type `?set_engine()` in the Console and look at the *Arguments* section. CP/CR.
+
+```{r tuning-parameters-in-2}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+###
+
+One example is gain penalization, which regularizes the predictor selection in the tree induction process. This parameter can help modulate the trade-off between the number of predictors used in the ensemble and performance. The name of this argument in **ranger** is `regularization.factor`.
+
+### Exercise 3
+
+Now, lets specify a value via a **parsnip** model specification. In the code chunk below, type in `rand_forest()`.
+
+```{r tuning-parameters-in-3, exercise = TRUE}
+
+```
+
+```{r tuning-parameters-in-3-hint, eval = FALSE}
+...()
+```
+
+```{r, include = FALSE}
+rand_forest()
+```
+
+###
+
+Many tuning parameters modulate the amount of model complexity. More complexity often implies more malleability in the patterns that a model can emulate. For example, adding degrees of freedom in a spline function increases the intricacy of the prediction equation. While this is an advantage when the underlying motifs in the data are complex, it can also lead to overinterpretation of chance patterns that would not reproduce in new data. 
+
+### Exercise 4
+
+Copy the previous code. Inside the function, set `trees` to `2000`
+
+```{r tuning-parameters-in-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tuning-parameters-in-4-hint, eval = FALSE}
+rand_forest(... = 2000)
+```
+
+```{r, include = FALSE}
+rand_forest(trees = 2000)
+```
+
+###
+
+Overfitting is the situation where a model adapts too much to the training data; it performs well for the data used to build the model but poorly for new data. Since tuning model parameters can increase model complexity, poor choices can lead to overfitting.
+
+### Exercise 5
+
+Copy the previous code. Inside `rand_forest()`, set `min_n` to `10`.
+
+```{r tuning-parameters-in-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tuning-parameters-in-5-hint, eval = FALSE}
+rand_forest(trees = 2000, ... = 10)
+```
+
+```{r, include = FALSE}
+rand_forest(trees = 2000, min_n = 10)
+```
+
+###
+
+With a single hidden unit and sigmoidal activation functions, a neural network for classification is, for all intents and purposes, just logistic regression. However, as the number of hidden units increases, so does the complexity of the model. 
+
+In fact, when the network model uses sigmoidal activation units, George Cybenko, the Dorothy and Walter Gramm Professor of Engineering at Dartmouth, showed that the model is a universal function approximator as long as there are enough hidden units.
+
+### Exercise 6
+
+Copy the previous code and pipe it to `set_engine()`. Inside this function, type in `"ranger"` and set `regularization.factor` to `0.5`.
+
+```{r tuning-parameters-in-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tuning-parameters-in-6-hint, eval = FALSE}
+rand_forest(trees = 2000, min_n = 10) |>
+  set_engine("...", regularization.factor = ...
+```
+
+```{r, include = FALSE}
+rand_forest(trees = 2000, min_n = 10) |>
+  set_engine("ranger", regularization.factor = 0.5)  
+```
+
+###
+
+The main arguments use a harmonized naming system to remove inconsistencies across engines while engine-specific arguments do not.
+
+### Exercise 7
+
+How can you signal to tidymodels functions which arguments should be optimized? Parameters are marked for tuning by assigning them a value of `tune()`. Lets do just that.
+
+In the code chunk below, type in `mlp()`. Inside this function, set the `hidden_units` argument to `tune()`.
+
+```{r tuning-parameters-in-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tuning-parameters-in-7-hint, eval = FALSE}
+mlp(... = tune())
+```
+
+```{r, include = FALSE}
+mlp(hidden_units = tune())
+```
+
+###
+
+We fit neural network classification models to the same two-class data from the previous section, varying the number of hidden units. Using the area under the ROC curve as a performance metric, the effectiveness of the model on the training set increases as more hidden units are added. 
+
+The network model thoroughly and meticulously learns the training set. If the model judges itself on the training set ROC value, it prefers many hidden units so that it can nearly eliminate errors.
+
+### Exercise 8
+
+Copy the previous code and pipe it to `set_mode()`. Inside this function, type in `"regression"`.
+
+```{r tuning-parameters-in-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tuning-parameters-in-8-hint, eval = FALSE}
+mlp(hidden_units = tune()) |>
+  set_mode("...")
+```
+
+```{r, include = FALSE}
+mlp(hidden_units = tune()) |>
+  set_mode("regression")
+```
+
+###
+
+[Chapters 5](https://www.tmwr.org/splitting#splitting) and [10](https://www.tmwr.org/resampling#resampling) in the [*Tidy Modeling with R*](https://www.tmwr.org/index.html) textbook demonstrated that simply repredicting the training set is a poor approach to model evaluation. Here, the neural network very quickly begins to overinterpret patterns that it sees in the training set. Compare these three example class boundaries (developed with the training set) overlaid on training and test sets in the image below:
+
+```{r}
+knitr::include_graphics("images/pic4.png")
+```
+
+
+### Exercise 9
+
+Copy the previous code and pipe it to `set_engine()`. Inside this function, type in `"keras"`.
+
+```{r tuning-parameters-in-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tuning-parameters-in-9-hint, eval = FALSE}
+mlp(hidden_units = tune()) |>
+  set_mode("regression") |>
+  set_engine("...")
+```
+
+```{r, include = FALSE}
+mlp(hidden_units = tune()) |>
+  set_mode("regression") |>
+  set_engine("keras")
+```
+
+###
+
+As you can see from the graph in the previous exercise, the single unit model does not adapt very flexibly to the data (since it is constrained to be linear). A model with four hidden units begins to show signs of overfitting with an unrealistic boundary for values away from the data mainstream. This is caused by a single data point from the first class in the upper-right corner of the data. 
+
+### Exercise 10
+
+Copy the previous code and assign it to a new variable called `neural_net_spec`.
+
+```{r tuning-parameters-in-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tuning-parameters-in-10-hint, eval = FALSE}
+... <- 
+  mlp(hidden_units = tune()) |>
+  set_mode("regression") |>
+  set_engine("keras")
+```
+
+```{r, include = FALSE}
+neural_net_spec <- 
+  mlp(hidden_units = tune()) |>
+  set_mode("regression") |>
+  set_engine("keras")
+```
+
+###
+
+By 20 hidden units, the model (from the graph) is beginning to memorize the training set, creating small islands around those data to minimize the resubstitution error rate. These patterns do not repeat in the test set. This last panel is the best illustration of how tuning parameters that control complexity must be modulated so that the model is effective. For a 20-unit model, the training set ROC AUC is 0.944 but the test set value is 0.855.
+
+### Exercise 11
+
+The tune() function doesn’t actually execute any particular parameter value; it only returns an expression. In the code chunk below, type in `tune()` and press "Run Code".
+
+```{r tuning-parameters-in-11, exercise = TRUE}
+
+```
+
+```{r tuning-parameters-in-11-hint, eval = FALSE}
+...()
+```
+
+```{r, include = FALSE}
+tune()
+```
+
+###
+
+Embedding this `tune()` value in an argument will tag the parameter for optimization. The model tuning functions shown in the next two chapters parse the model specification and/or recipe to discover the tagged parameters. These functions can automatically configure and process these parameters since they understand their characteristics (e.g., the range of possible values, etc.).
+
+### Exercise 12
+
+To enumerate the tuning parameters for an object, the `extract_parameter_set_dials()` will be used. In the code chunk below, type in `extract_parameter_set_dials()`, passing in `neural_net_spec`.
+
+```{r tuning-parameters-in-12, exercise = TRUE}
+
+```
+
+```{r tuning-parameters-in-12-hint, eval = FALSE}
+extract_parameter_set_dials(...)
+```
+
+```{r, include = FALSE}
+extract_parameter_set_dials(neural_net_spec)
+```
+
+###
+
+The results show a value of `nparam[+]`, indicating that the number of hidden units is a numeric parameter.
+
+### Exercise 13
+
+
+
+```{r tuning-parameters-in-13, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tuning-parameters-in-13-hint, eval = FALSE}
+
+```
+
+```{r, include = FALSE}
+
+```
+
+###
+
+(maybe keep here) The occurrence of overfitting from the graph in the previous exercises is obvious with two predictors that can be plotted. However, in general, a quantitative approach must be used for detecting overfitting.
+
+The solution for detecting when a model is overemphasizing the training set is using out-of-sample data.
+ 
 
 ## Summary
 ### 
