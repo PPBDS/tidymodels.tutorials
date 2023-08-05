@@ -19,6 +19,7 @@ library(tidyverse)
 library(tidymodels)
 library(tune)
 library(ggrepel)
+library(ggforce)
 library(rstanarm)
 library(tidyposterior)
 library(lme4)
@@ -294,6 +295,167 @@ crossing(hidden_units = 1:3,
 ```
 
 ###
+
+`grid_regular()` can create random and regular grids for any number of parameter objects. The parameter object knows the ranges of the parameters. The **dials** package contains a set of `grid_*()` functions that take the parameter object as input to produce different types of grids. 
+
+### Exercise 11
+
+Type `grid_regular()` and add the parameter `mlp_param`. 
+
+```{r regular-and-nonregul-11, exercise = TRUE}
+
+```
+
+```{r regular-and-nonregul-11-hint, eval = FALSE}
+grid_regular(...)
+```
+
+```{r, include = FALSE}
+grid_regular(mlp_param)
+```
+
+###
+
+The `levels` argument is the number of levels per parameter to create. It can also take a named vector of values.
+
+### Exercise 12
+
+Copy the previous code and add the parameter `levels`, setting it equal to 2.
+
+```{r regular-and-nonregul-12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-12-hint, eval = FALSE}
+grid_regular(mlp_param, levels = ...)
+```
+
+```{r, include = FALSE}
+grid_regular(mlp_param, levels = 2)
+```
+
+###
+
+There are techniques for creating regular grids that do not use all possible values of each parameter set. These *fractional factorial designs* could also be used. To learn more, consult the CRAN Task View for experimental design.
+
+### Exercise 13
+
+Copy the previous code and switch the `levels` parameter to make it equal a vector of `hidden_units = 3`, `penalty = 2`, `epochs = 2`.
+
+```{r regular-and-nonregul-13, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-13-hint, eval = FALSE}
+grid_regular(mlp_param, levels = c(... = 3, penalty = 2, epochs = ...))
+```
+
+```{r, include = FALSE}
+grid_regular(mlp_param, levels = c(hidden_units = 3, penalty = 2, epochs = 2))
+```
+
+###
+
+Regular grids can be computationally expensive to use, especially when there are a medium-to-large number of tuning parameters. This is true for many models but not all. 
+
+### Exercise 14
+
+The `grid_random()` function generates independent uniform random numbers across the parameter ranges. 
+
+Type `grid_random()` and add the parameters `mlp_param` and `size = 1000`.
+
+```{r regular-and-nonregul-14, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-14-hint, eval = FALSE}
+grid_random(mlp_param, size = ...)
+```
+
+```{r, include = FALSE}
+grid_random(mlp_param, size = 1000)
+```
+
+###
+
+There are several options for creating non-regular grids. The first is to use random sampling across the range of parameters.
+
+### Exercise 15
+
+To view the summary of the previous code, copy the previous code and pipe it to `summary()`.
+
+```{r regular-and-nonregul-15, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-15-hint, eval = FALSE}
+... |>
+  ...()
+```
+
+```{r, include = FALSE}
+grid_random(mlp_param, size = 1000) |>
+  summary()
+```
+
+###
+
+The issue with random grids is that, with small-to-medium grids, random values can result in overlapping parameter combinations. Also, the random grid needs to cover the whole parameter space, but the likelihood of good coverage increases with the number of grid values.
+
+### Exercise 16
+
+Now we will graoh the grid. Type `mlp_param` and pipe it to `grid_random()`, with the parameters `size = 20` and `original = FALSE`.
+
+```{r regular-and-nonregul-16, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-16-hint, eval = FALSE}
+mlp_param |>
+  grid_random(... = 20, original = ...)
+```
+
+```{r, include = FALSE}
+mlp_param |>
+  grid_random(size = 20, original = FALSE)
+```
+
+###
+
+If the parameter object has an associated transformation (such as we have for `penalty`), the random numbers are generated on the transformed scale.
+
+### Exercise 17
+
+Copy the previous code and pipe it to `ggplot()`. Within `aes()` of `ggplot()`, add the parameters `x = .panel_x` and `y = .panel_y`
+
+```{r regular-and-nonregul-17, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-17-hint, eval = FALSE}
+
+```
+
+```{r, include = FALSE}
+mlp_param |>
+  grid_random(size = 20, original = FALSE) |>
+  ggplot(aes(x = .panel_x, y = .panel_y))
+```
+
+###
+
 
 
 
