@@ -243,7 +243,7 @@ initial_split(two_class_dat)
 
 As an example, Jerome H. Friedman, one of the world's leading researchers in statistics and data mining, optimized the number of trees in a boosted tree ensemble and found different results when maximizing the likelihood and accuracy:
 
-"Degrading the likelihood by overfitting actually improves misclassification error rate. Although perhaps counterintuitive, this is not a contradiction; likelihood and error rate measure different aspects of fit quality."
+"Degrading the likelihood by over-fitting actually improves misclassification error rate. Although perhaps counter-intuitive, this is not a contradiction; likelihood and error rate measure different aspects of fit quality."
 
 ### Exercise 5
 
@@ -392,7 +392,7 @@ In the classic single-layer artificial neural network (a.k.a. the multilayer per
 
 ### Exercise 11
 
-Copy the previous code. Inside the funciton, pipe `logistic_reg()` to `set_engine()`. Inside `set_engine()`, pass in `"glm"` and `...`.
+Copy the previous code. Inside the function, pipe `logistic_reg()` to `set_engine()`. Inside `set_engine()`, pass in `"glm"` and `...`.
 
 ```{r what-do-we-optimize-11, exercise = TRUE}
 
@@ -602,7 +602,7 @@ bind_rows(
 
 ### 
 
-This part of the code is calling the `llhood()` function, but this time it is specifying a different model. It uses the binomial family with a probit link function, suggesting that this log-likelihood calculation is for a binomial regressioin model with a probit link. Type in `?binomial()` in the Console to learn more.
+This part of the code is calling the `llhood()` function, but this time it is specifying a different model. It uses the binomial family with a probit link function, suggesting that this log-likelihood calculation is for a binomial regression model with a probit link. Type in `?binomial()` in the Console to learn more.
 
 ### Exercise 18
 
@@ -634,7 +634,7 @@ bind_rows(
 
 "cloglog" stands *complementary log-log*.
 
-Also, `logLik` stands for "log-likelihood," and it is a measure used to assess how well a statistical model fits a given dataset.
+Also, `logLik` stands for "log-likelihood," and it is a measure used to assess how well a statistical model fits a given data set.
 
 ### Exercise 19
 
@@ -1120,7 +1120,7 @@ bind_rows(
 
 ### 
 
-In this scanario, the `group_by()` function is grouping the data based on the `model` and `.metric`.
+In this scenario, the `group_by()` function is grouping the data based on the `model` and `.metric`.
 
 ### Exercise 35
 
@@ -1215,7 +1215,7 @@ bind_rows(
 
 ### 
 
-The `na.rm = TRUE` argument is used to ignore any missing values and perform calcuations on the non-missing values.
+The `na.rm = TRUE` argument is used to ignore any missing values and perform calculations on the non-missing values.
 
 ### Exercise 37
 
@@ -1517,7 +1517,7 @@ These results exhibit evidence that the choice of the link function matters some
 
 ### Exercise 46
 
-What about a different metric? The area under the ROC curve for each resample was also calcuated. These results, which reflect the discriminative ability of the models across numerous probability thresholds, show a lack of difference 
+What about a different metric? The area under the ROC curve for each resample was also calculated These results, which reflect the discriminating ability of the models across numerous probability thresholds, show a lack of difference 
 
 ```{r}
 knitr::include_graphics("images/pic2.png")
@@ -1610,7 +1610,7 @@ rand_forest()
 
 ### 
 
-Many tuning parameters modulate the amount of model complexity. More complexity often implies more malleability in the patterns that a model can emulate. For example, adding degrees of freedom in a spline function increases the intricacy of the prediction equation. While this is an advantage when the underlying motifs in the data are complex, it can also lead to overinterpretation of chance patterns that would not reproduce in new data. 
+Many tuning parameters modulate the amount of model complexity. More complexity often implies more malleability in the patterns that a model can emulate. For example, adding degrees of freedom in a spline function increases the intricacy of the prediction equation. While this is an advantage when the underlying motifs in the data are complex, it can also lead to over-interpretation of chance patterns that would not reproduce in new data. 
 
 ### Exercise 4
 
@@ -1884,7 +1884,7 @@ Note that the `identifier` and `type` columns are not the same for both of the s
 
 ### Exercise 15
 
-Copy the previuos code and assign it to a new variable called `recipes_param`. 
+Copy the previous code and assign it to a new variable called `recipes_param`. 
 
 ```{r tuning-parameters-in-15, exercise = TRUE}
 
@@ -1928,7 +1928,7 @@ The solution for detecting when a model is overemphasizing the training set is u
 
 ### Exercise 17
 
-Copy the previuos code and pipe it to `add_model()`. Inside this function, type `neural_net_spec`.
+Copy the previous code and pipe it to `add_model()`. Inside this function, type `neural_net_spec`.
 
 ```{r tuning-parameters-in-17, exercise = TRUE}
 
@@ -1984,7 +1984,7 @@ Neural networks are exquisitely capable of emulating nonlinear patterns. Adding 
 
 ### Exercise 19
 
-Copy the previuos code and assign it to a new variable named `wflow_param`.
+Copy the previous code and assign it to a new variable named `wflow_param`.
 
 ```{r tuning-parameters-in-19, exercise = TRUE}
 
@@ -2208,7 +2208,7 @@ Along with grid and iterative searching, hybrid strategies are also an option an
 
 ### Exercise 28
 
-Copy the previuos code and assign it to a variable called `rf_spec`.
+Copy the previous code and assign it to a variable called `rf_spec`.
 
 ```{r tuning-parameters-in-28, exercise = TRUE}
 
@@ -2276,7 +2276,7 @@ rf_param <- extract_parameter_set_dials(rf_spec)
 
 ### 
 
-<!-- AK: Add knowledge drop -->
+R provides various libraries for hyperparameter tuning, such as **caret**, **mlr**, **tune**, and **RSample**. These libraries offer functions and tools for efficient parameter search and evaluation.
 
 ### Exercise 31
 
@@ -2448,7 +2448,7 @@ workflow() |>
 
 ### 
 
-PCA helps in reducing the number of features (dimensions) in a dataset while retaining as much of the original variance as possible. This is particularly useful when dealing with datasets that have a large number of correlated features, as it can simplify the analysis and improve computational efficiency.
+PCA helps in reducing the number of features (dimensions) in a data set while retaining as much of the original variance as possible. This is particularly useful when dealing with data sets that have a large number of correlated features, as it can simplify the analysis and improve computational efficiency.
 
 ### Exercise 38
 
@@ -2476,7 +2476,7 @@ workflow() |>
 
 ### 
 
-<!-- AK: Add knowledge drop -->
+This [link](https://workflows.tidymodels.org/reference/workflow.html) provides more information regarding workflows in R. 
 
 ### Exercise 39
 
@@ -2584,7 +2584,7 @@ regularization_factor()
 
 ### 
 
-Finally, some tuning parameters are best associated with transformations. A good example of this is the penalty parameter associated with many regularized regression models. This parameter is nonnegative and it is common to vary its values in log units
+Finally, some tuning parameters are best associated with transformations. A good example of this is the penalty parameter associated with many regularized regression models. This parameter is non-negative and it is common to vary its values in log units
 
 ### Exercise 43
 
@@ -2593,8 +2593,6 @@ The primary **dials** parameter object indicates that a transformation is used b
 ```{r tuning-parameters-in-43, exercise = TRUE}
 
 ```
-
-<button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r tuning-parameters-in-43-hint-1, eval = FALSE}
 ...()
@@ -2615,8 +2613,6 @@ Note that new range values must be in the transformed units. In the code chunk b
 ```{r tuning-parameters-in-44, exercise = TRUE}
 
 ```
-
-<button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r tuning-parameters-in-44-hint-1, eval = FALSE}
 penalty(c(..., ...)) |>
@@ -2646,8 +2642,6 @@ In the code chunk below, type in `penalty()`. Inside this function, set `trans` 
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
-
 ```{r tuning-parameters-in-45-hint-1, eval = FALSE}
 ...(trans = ..., range = 10^c(-10, 0))
 ```
@@ -2658,7 +2652,7 @@ penalty(trans = NULL, range = 10^c(-10, 0))
 
 ### 
 
-Congrats! You have learned how to tune paremeters in tidymodels
+Congrats! You have learned how to tune parameters in tidymodels.
 
 ## Summary
 ### 
