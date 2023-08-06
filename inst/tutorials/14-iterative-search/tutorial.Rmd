@@ -15,6 +15,8 @@ description: 'Tutorial for Chapter 14: Iterative Search'
 library(learnr)
 library(tutorial.helpers)
 library(tidymodels)
+library(knitr)
+library(kernlab)
 tidymodels_prefer()
 
 knitr::opts_chunk$set(echo = FALSE)
@@ -38,6 +40,29 @@ svm_spec <-
   svm_rbf(cost = tune(), rbf_sigma = tune()) |>
   set_engine("kernlab") |>
   set_mode("classification")
+
+svm_wflow <- 
+  workflow() |> 
+  add_model(svm_spec) |>
+  add_recipe(svm_rec)
+
+svm_param <- 
+  svm_wflow |> 
+  extract_parameter_set_dials() |> 
+  update(rbf_sigma = rbf_sigma(c(-7, -1)))
+
+set.seed(1402)
+start_grid <- 
+  svm_param |> 
+  update(
+    cost = cost(c(-6, 1)),
+    rbf_sigma = rbf_sigma(c(-6, -4))
+  ) |>
+   grid_regular(levels = 2)
+
+svm_initial <- 
+  svm_wflow |> 
+  tune_grid(resamples = cell_folds, grid = start_grid, metrics = roc_res)
 
 ```
 
@@ -97,12 +122,33 @@ tidymodels_prefer()
 
 The SVM model uses a dot product and, for this reason, it is necessary to center and scale the predictors. Like the multilayer perceptron model, this model would benefit from the use of PCA feature extraction. However, we will not use this third tuning parameter in this chapter so that we can visualize the search process in two dimensions.
 
-
 ### Exercise 3
+
+Load the **kernlab** package using `library()`.
+
+```{r a-support-vector-mac-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-support-vector-mac-3-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(kernlab)
+```
+
+### 
+
+**kernlab** is a package that provides kernlab-based machine learning methods.
+
+### Exercise 4
 
 Press "Run code"
 
-```{r a-support-vector-mac-3, exercise = TRUE}
+```{r a-support-vector-mac-4, exercise = TRUE}
 data(cells)
 cells1 <- cells |> select(-case)
 
@@ -126,17 +172,17 @@ roc_res <- metric_set(roc_auc)
 
 These were the variables created in the "Grid Search" tutorial, and will be used for this tutorial.
 
-### Exercise 4
+### Exercise 5
 
 Lets create three tidymodel objects: `svm_rec`, `svm_spec`, and `svm_wflow`.
 
 Start by typing `recipe()`. Inside this function, type in `class ~ .` and set `data` to `cells1`. 
 
-```{r a-support-vector-mac-4, exercise = TRUE}
+```{r a-support-vector-mac-5, exercise = TRUE}
 
 ```
 
-```{r a-support-vector-mac-4-hint-1, eval = FALSE}
+```{r a-support-vector-mac-5-hint-1, eval = FALSE}
  ...(class ~ ., data = ...)
 ```
 
@@ -148,17 +194,17 @@ recipe(class ~ ., data = cells1)
 
 When grid search is infeasible or inefficient, iterative methods are a sensible approach for optimizing tuning parameters.
 
-### Exercise 5
+### Exercise 6
 
 Copy the previous code and pipe it to `step_YeoJohnson()`. Inside this function, type in `all_numeric_predictors()`.
 
-```{r a-support-vector-mac-5, exercise = TRUE}
+```{r a-support-vector-mac-6, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r a-support-vector-mac-5-hint-1, eval = FALSE}
+```{r a-support-vector-mac-6-hint-1, eval = FALSE}
 recipe(class ~ ., data = cells1) |>
   step_YeoJohnson(...())
 ```
@@ -172,17 +218,17 @@ recipe(class ~ ., data = cells1) |>
 
 `step_YeoJohnson()` creates a *specification* of a recipe step that will transform data using a Yeo-Johnson transformation. The Yeo-Johnson transformation is a a mathematical method used for transforming data to achieve a more normal or symmetric distribution.
 
-### Exercise 6
+### Exercise 7
 
 Copy the previous code and pipe it to `step_normalize()`. Inside this function, type `all_numeric_predictors()`.
 
-```{r a-support-vector-mac-6, exercise = TRUE}
+```{r a-support-vector-mac-7, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r a-support-vector-mac-6-hint-1, eval = FALSE}
+```{r a-support-vector-mac-7-hint-1, eval = FALSE}
 recipe(class ~ ., data = cells1) |>
   step_YeoJohnson(all_numeric_predictors()) |>
   step_normalize(...())
@@ -198,17 +244,17 @@ recipe(class ~ ., data = cells1) |>
 
 Bayesian optimization techniques analyze the current resampling results and create a predictive model to suggest tuning parameter values that have yet to be evaluated. The suggested parameter combination is then resampled. These results are then used in another predictive model that recommends more candidate values for testing, and so on. The process proceeds for a set number of iterations or until no further improvements occur.
 
-### Exercise 7
+### Exercise 8
 
 Copy the previous code and assign it to a new variable named `svm_rec`.
 
-```{r a-support-vector-mac-7, exercise = TRUE}
+```{r a-support-vector-mac-8, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r a-support-vector-mac-7-hint-1, eval = FALSE}
+```{r a-support-vector-mac-8-hint-1, eval = FALSE}
 ... <- 
   recipe(class ~ ., data = cells1) |>
   step_YeoJohnson(all_numeric_predictors()) |>
@@ -226,15 +272,15 @@ svm_rec <-
 
 When using Bayesian optimization, the primary concerns are how to create the model and how to select parameters recommended by that model.
 
-### Exercise 8
+### Exercise 9
 
 Next, lets create `svm_spec`. Start by typing in `svm_rbf()`. Inside this function, set `cost` to `tune()` and `rbf_sigma` to `tune()`. 
 
-```{r a-support-vector-mac-8, exercise = TRUE}
+```{r a-support-vector-mac-9, exercise = TRUE}
 
 ```
 
-```{r a-support-vector-mac-8-hint-1, eval = FALSE}
+```{r a-support-vector-mac-9-hint-1, eval = FALSE}
 svm_rbf(cost = ...(), ... = tune())
 ```
 
@@ -246,17 +292,17 @@ svm_rbf(cost = tune(), rbf_sigma = tune())
 
 Gaussian process (GP) models are well-known statistical techniques that have a history in spatial statistics (under the name of kriging methods). They can be derived in multiple ways, including as a Bayesian model. This [book](https://direct.mit.edu/books/book/2320/Gaussian-Processes-for-Machine-Learning), written by Carl Edward Rasmussen and Christopher K. I. Williams, is an excellect reference for GP models.
 
-### Exercise 9
+### Exercise 10
 
 Copy the previous code and pipe it to `set_engine()`. Inside this function, type `"kernlab"`.
 
-```{r a-support-vector-mac-9, exercise = TRUE}
+```{r a-support-vector-mac-10, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r a-support-vector-mac-9-hint-1, eval = FALSE}
+```{r a-support-vector-mac-10-hint-1, eval = FALSE}
 svm_rbf(cost = tune(), rbf_sigma = tune()) |>
   set_engine("...")
 ```
@@ -270,17 +316,17 @@ svm_rbf(cost = tune(), rbf_sigma = tune()) |>
 
 `svm_rbf()` is a function that defines a support vector machine model. For classification, the model tries to maximize the width of the margin between classes using a nonlinear class boundary. For regression, the model optimizes a robust loss function that is only affected by very large model residuals and uses nonlinear functions of the predictors. The function can fit classification and regression models.
 
-### Exercise 10
+### Exercise 11
 
 Copy the previous code and pipe it to `set_mode()`. Inside this function, type `"classification"`.
 
-```{r a-support-vector-mac-10, exercise = TRUE}
+```{r a-support-vector-mac-11, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r a-support-vector-mac-10-hint-1, eval = FALSE}
+```{r a-support-vector-mac-11-hint-1, eval = FALSE}
 svm_rbf(cost = tune(), rbf_sigma = tune()) |>
   set_engine("kernlab") |>
   set_mode("...")
@@ -303,17 +349,17 @@ cost()
 # > Range (transformed scale): [-10, 5]
 ````
 
-### Exercise 11
+### Exercise 12
 
 Copy the previous code and assign it to a new variable named `svm_spec`.
 
-```{r a-support-vector-mac-11, exercise = TRUE}
+```{r a-support-vector-mac-12, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r a-support-vector-mac-11-hint, eval = FALSE}
+```{r a-support-vector-mac-12-hint, eval = FALSE}
 ... <- 
   svm_rbf(cost = tune(), rbf_sigma = tune()) |>
   set_engine("kernlab") |>
@@ -338,17 +384,15 @@ rbf_sigma()
 # > Range (transformed scale): [-10, 0]
 ````
 
-### Exercise 12
+### Exercise 13
 
 Finally, lets create a workflow. Start by piping `workflow()` to `add_model()`. Inside `add_model()`, type `svm_spec`.
 
-```{r a-support-vector-mac-12, exercise = TRUE}
+```{r a-support-vector-mac-13, exercise = TRUE}
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
-
-```{r a-support-vector-mac-12-hint, eval = FALSE}
+```{r a-support-vector-mac-13-hint, eval = FALSE}
 workflow() |> 
   add_model(...)
 ```
@@ -360,19 +404,19 @@ workflow() |>
 
 ### 
 
-<!-- AK: Add knowledge drop -->
+Along with `add_model()`, there are 2 other functions that work with models: `remove_model()` and `update_model()`. `remove_model()` removes the model specification (as well as any fitted model object) and any extra formulas. `update_model()` removes the model and then adds the new specification to the workflow.
 
-### Exercise 13
+### Exercise 14
 
 Copy the previous code and pipe it to `add_recipe()`. Inside this function, type `svm_rec`
 
-```{r a-support-vector-mac-13, exercise = TRUE}
+```{r a-support-vector-mac-14, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r a-support-vector-mac-13-hint, eval = FALSE}
+```{r a-support-vector-mac-14-hint, eval = FALSE}
 workflow() |> 
   add_model(svm_spec) |>
   add_recipe(...)
@@ -382,6 +426,424 @@ workflow() |>
 workflow() |> 
   add_model(svm_spec) |>
   add_recipe(svm_rec)
+```
+
+### 
+
+`add_recipe()` also has a remove and update counterpart: `remove_recipe()` and `update_recipe()`.
+
+### Exercise 15
+
+Copy the previous code and assign it to a new variable named `svm_wflow`.
+
+```{r a-support-vector-mac-15, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-support-vector-mac-15-hint, eval = FALSE}
+... <- 
+  workflow() |> 
+  add_model(svm_spec) |>
+  add_recipe(svm_rec)
+```
+
+```{r include = FALSE}
+svm_wflow <- 
+  workflow() |> 
+  add_model(svm_spec) |>
+  add_recipe(svm_rec)
+```
+
+### 
+
+Mathematically, a GP is a collection of random variables whose joint probability distribution is multivariate Gaussian. In the context of our application, this is the collection of performance metrics for the tuning parameter candidate values.
+
+### Exercise 16
+
+For illustration, let’s slightly change the kernel parameter range, to improve the visualizations of the search. Start by piping `svm_wflow` to `extract_parameter_set_dials()`.
+
+```{r a-support-vector-mac-16, exercise = TRUE}
+
+```
+
+```{r a-support-vector-mac-16-hint, eval = FALSE}
+svm_wflow |> 
+  ...()
+```
+
+```{r include = FALSE}
+svm_wflow |> 
+  extract_parameter_set_dials()
+```
+
+### 
+
+Before discussing specific details about iterative search and how it works, let’s explore the relationship between the two SVM tuning parameters and the area under the ROC curve for this specific data set. We constructed a very large regular grid, composed of 2,500 candidate values, and evaluated the grid using resampling. This is obviously impractical in regular data analysis and tremendously inefficient. However, it elucidates the path that the search process should take and where the numerically optimal value(s) occur.
+
+### Exercise 17
+
+Copy the previous code and pipe it to `update()`. Inside this function, set `rbf_sigma` to `rbf_sigma(c(-7, -1))`.
+
+```{r a-support-vector-mac-17, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-support-vector-mac-17-hint, eval = FALSE}
+svm_wflow |> 
+  extract_parameter_set_dials() |>
+  update(rbf_sigma = ...(c(-7, ...)))
+```
+
+```{r include = FALSE}
+svm_wflow |> 
+  extract_parameter_set_dials() |> 
+  update(rbf_sigma = rbf_sigma(c(-7, -1)))
+```
+
+### 
+
+The image below shows the results of evaluating this grid (mentioned in the previous exercise), with lighter color corresponding to higher (better) model performance. There is a large swath in the lower diagonal of the parameter space that is relatively flat with poor performance. 
+
+```{r}
+knitr::include_graphics("images/pic1.png")
+```
+
+### Exercise 18
+
+Copy the previous code and assign it to the variable `svm_param`.
+
+```{r a-support-vector-mac-18, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-support-vector-mac-18-hint, eval = FALSE}
+... <- 
+  svm_wflow |> 
+  extract_parameter_set_dials() |> 
+  update(rbf_sigma = rbf_sigma(c(-7, -1)))
+```
+
+```{r include = FALSE}
+svm_param <- 
+  svm_wflow |> 
+  extract_parameter_set_dials() |> 
+  update(rbf_sigma = rbf_sigma(c(-7, -1)))
+```
+
+### 
+
+Looking at the graph from the previous exercise, you can see that a ridge of best performance occurs in the upper-right portion of the space. The black dot indicates the best settings. The transition from the plateau of poor results to the ridge of best performance is very sharp. There is also a sharp drop in the area under the ROC curve just to the right of the ridge.
+
+### Exercise 19
+
+Type in `set.seed()` and pass in `1401`
+
+```{r a-support-vector-mac-19, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-support-vector-mac-19-hint, eval = FALSE}
+...(1401)
+```
+
+```{r include = FALSE}
+set.seed(1401)
+```
+
+### 
+
+As a reminder, `set.seed()` ensures the reproduciblility of the data.
+
+### Exercise 20
+
+The following search procedures require at least some resampled performance statistics before proceeding. For this purpose, you will create a small regular grid that resides in the flat portion of the parameter space. 
+
+In the code chunk below, on a new line, pipe `svm_param` to `update()`. Inside this function, set `cost` to `cost(c(-6, 1))`.
+
+
+```{r a-support-vector-mac-20, exercise = TRUE}
+
+```
+
+```{r a-support-vector-mac-20-hint, eval = FALSE}
+... |> 
+  update(
+    cost = ...(c(-6, 1))
+  )
+```
+
+```{r include = FALSE}
+svm_param |> 
+  update(
+    cost = cost(c(-6, 1))
+  )
+```
+
+### 
+
+As you finish creating this grid, the realization of the four random variables will be 0.8639, 0.8625, 0.8627, and 0.8659, which are assumed to be distributed as multivariate Gaussian. The inputs that define the independent variables/predictors for the GP model are the corresponding tuning parameter values, as shown in the table below:
+
+```{r}
+knitr::include_graphics("images/pic2.png")
+```
+
+### Exercise 21
+
+Copy the previous code. Inside `update()`, set `rbf_sigma` to `rbf_sigma(c(-6, -4))`.
+
+```{r a-support-vector-mac-21, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-support-vector-mac-21-hint, eval = FALSE}
+svm_param |> 
+  update(
+    cost = cost(c(-6, 1)),
+    ... = rbf_sigma(...(-6, -4))
+  )
+```
+
+```{r include = FALSE}
+svm_param |> 
+  update(
+    cost = cost(c(-6, 1)),
+    rbf_sigma = rbf_sigma(c(-6, -4))
+  )
+```
+
+### 
+
+Gaussian process models are specified by their mean and covariance functions, although the latter has the most effect on the nature of the GP model. The covariance function is often parameterized in terms of the input values (denoted as $x$).
+
+### Exercise 22
+
+Copy the previous code and pipe the `update()` function to `grid_regular()`. Inside this function, set `levels` to `2`.
+
+```{r a-support-vector-mac-22, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-support-vector-mac-22-hint, eval = FALSE}
+svm_param |> 
+  update(
+    cost = cost(c(-6, 1)),
+    rbf_sigma = rbf_sigma(c(-6, -4))
+  ) |>
+   ...(levels = 2)
+```
+
+```{r include = FALSE}
+svm_param |> 
+  update(
+    cost = cost(c(-6, 1)),
+    rbf_sigma = rbf_sigma(c(-6, -4))
+  ) |>
+   grid_regular(levels = 2)
+```
+
+### 
+
+Essentially, this code creates a grid of SVM models that have varying costs and RBF sigma parameters. The resulting grid will consist of different SVM model configurations with different combinations of cost and RBF sigma values, each ready for training and evaluation.
+
+### Exercise 23
+
+Copy the previous code and assign it to a new variable named `start_grid`.
+
+```{r a-support-vector-mac-23, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-support-vector-mac-23-hint, eval = FALSE}
+... <- 
+  svm_param |> 
+  update(
+    cost = cost(c(-6, 1)),
+    rbf_sigma = rbf_sigma(c(-6, -4))
+  ) |>
+   grid_regular(levels = 2)
+```
+
+```{r include = FALSE}
+start_grid <- 
+  svm_param |> 
+  update(
+    cost = cost(c(-6, 1)),
+    rbf_sigma = rbf_sigma(c(-6, -4))
+  ) |>
+   grid_regular(levels = 2)
+```
+
+### 
+
+As an example, a commonly used covariance function is the squared exponential function:
+
+$$\operatorname{cov}(\boldsymbol{x}_i, \boldsymbol{x}_j) = \exp\left(-\frac{1}{2}|\boldsymbol{x}_i - \boldsymbol{x}_j|^2\right) + \sigma^2_{ij}$$
+
+where where $\sigma^2_{ij}$ is a constant error variance term that is zero when $i=j$. 
+
+
+This equation translates to: 
+
+As the distance between two tuning parameter combinations increases, the covariance between the performance metrics increase exponentially.
+
+### Exercise 24
+
+Next, type in `set.seed()` and pass in `1402`.
+
+```{r a-support-vector-mac-24, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-support-vector-mac-24-hint, eval = FALSE}
+...(1402)
+```
+
+```{r include = FALSE}
+set.seed(1402)
+```
+
+### 
+
+The nature of this covariance function (see the previous exercise) allows the Gaussian process to represent highly nonlinear relationships between model performance and the tuning parameters even when only a small amount of data exists.
+
+### Exercise 25
+
+Next, lets tune `svm_wflow`. Start by piping `svm_wflow` to `tune_grid()`. Inside this function, set `resamples` to `cell_folds`.
+
+```{r a-support-vector-mac-25, exercise = TRUE}
+
+```
+
+```{r a-support-vector-mac-25-hint, eval = FALSE}
+... |> 
+  tune_grid(resamples = ...)
+```
+
+```{r include = FALSE}
+svm_wflow |> 
+  tune_grid(resamples = cell_folds)
+```
+
+### 
+
+An important virtue of these Gaussian process models is that, since a full probability model is specified, the predictions for new inputs can reflect the entire distribution of the outcome. In other words, new performance statistics can be predicted in terms of both mean and variance.
+
+### Exercise 26
+
+Copy the previous code. Inside `tune_grid()`, set `grid` to `start_grid` and `metrics` to `roc_res`.
+
+```{r a-support-vector-mac-26, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-support-vector-mac-26-hint, eval = FALSE}
+svm_wflow |> 
+  tune_grid(resamples = cell_folds, grid = ..., metrics = ...) 
+```
+
+```{r include = FALSE}
+svm_wflow |> 
+  tune_grid(resamples = cell_folds, grid = start_grid, metrics = roc_res)
+```
+
+### 
+
+Suppose that two new tuning parameters were under consideration. In the table below, candidate *A* has a slightly better mean ROC value than candidate *B* (the current best is 0.8659). However, its variance is four-fold larger than *B*. Is this good or bad? Choosing option *A* is riskier but has potentially higher return. The increase in variance also reflects that this new value is farther from the existing data than *B*.
+
+```{r}
+knitr::include_graphics("images/pic3.png")
+```
+
+### Exercise 27
+
+Copy the previous code and assign it to a new variable named `svm_initial`.
+
+```{r a-support-vector-mac-27, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-support-vector-mac-27-hint, eval = FALSE}
+... <- svm_wflow |> 
+  tune_grid(resamples = cell_folds, grid = start_grid, metrics = roc_res)
+```
+
+```{r include = FALSE}
+svm_initial <- 
+  svm_wflow |> 
+  tune_grid(resamples = cell_folds, grid = start_grid, metrics = roc_res)
+```
+
+### 
+
+Based on the initial grid of four results (which you will code in the next exercise), the GP model is fit, candidates are predicted, and a fifth tuning parameter combination is selected. We compute performance estimates for the new configuration, the GP is refit with the five existing results (and so on).
+
+### Exercise 28
+
+Type in `collect_metrics()` and pass in `svm_initial`.
+
+```{r a-support-vector-mac-28, exercise = TRUE}
+
+```
+
+```{r a-support-vector-mac-28-hint, eval = FALSE}
+collect_metrics(...)
+```
+
+```{r include = FALSE}
+collect_metrics(svm_initial)
+```
+
+### 
+
+This initial grid shows fairly equivalent results, with no individual point much better than any of the others. These results can be ingested by the iterative tuning functions.
+
+### 
+
+Congrats! You have learned how to create a Support Vector Model (SVM).
+
+## Bayesian Optimization
+### 
+
+As metnioned in the last section, Bayesian optimization techniques analyze the current resampling results and create a predictive model to suggest tuning parameter values that have yet to be evaluated. The suggested parameter combination is then resampled. These results are then used in another predictive model that recommends more candidate values for testing, and so on. The process proceeds for a set number of iterations or until no further improvements occur.
+
+### Exercise 1
+
+Lets use the SVM results from the previous section as the initial substrate for the Gaussian process model. Recall that, for this application, we want to maximize the area under the ROC curve.
+
+Start by typing 
+
+```{r bayesian-optimizatio-1, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r bayesian-optimizatio-1-hint-1, eval = FALSE}
+
+```
+
+```{r include = FALSE}
+
 ```
 
 ### 

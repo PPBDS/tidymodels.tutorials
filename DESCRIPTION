@@ -17,6 +17,7 @@ Suggests:
     corrr,
     doParallel,
     ggrepel,
+    kernlab
     lme4,
     learnr,
     multilevelmod,
