@@ -3,10 +3,10 @@ title: Iterative Search
 author: Aryan Kancherla
 tutorial:
   id: iterative-search
-output: 
+output:
   learnr::tutorial:
-    progressive: true
-    allow_skip: true
+    progressive: yes
+    allow_skip: yes
 runtime: shiny_prerendered
 description: 'Tutorial for Chapter 14: Iterative Search'
 ---
@@ -20,6 +20,25 @@ tidymodels_prefer()
 knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
         tutorial.storage = "local") 
+
+data(cells)
+cells <- cells %>% select(-case)
+
+set.seed(1304)
+cell_folds <- vfold_cv(cells)
+
+roc_res <- metric_set(roc_auc)
+
+svm_rec <- 
+  recipe(class ~ ., data = cells) |>
+  step_YeoJohnson(all_numeric_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+svm_spec <- 
+  svm_rbf(cost = tune(), rbf_sigma = tune()) |>
+  set_engine("kernlab") |>
+  set_mode("classification")
+
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -29,12 +48,12 @@ options(tutorial.exercise.timelimit = 60,
 ```
 
 ## Introduction
-###
+### 
 
 <!-- Two to four sentence about the main topics covered in this tutorial. Why are we here? What will students get out of giving you 90 minutes of their lives? How does this tutorial connect to other tutorials? -->
 
 ## A Support Vector Machine Model
-###
+### 
 
 The "Grid Search" tutorial, which is associated with [Chapter 13](https://www.tmwr.org/grid-search), demonstrated how grid search takes a pre-defined set of candidate values, evaluates them, then chooses the best settings. Iterative search methods pursue a different strategy. During the search process, they predict which values to test next.
 
@@ -46,15 +65,15 @@ Load the **tidymodels** package using `library()`.
 
 ```
 
-```{r a-support-vector-mac-1-hint, eval = FALSE}
+```{r a-support-vector-mac-1-hint-1, eval = FALSE}
 library(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 library(tidymodels)
 ```
 
-###
+### 
 
 We once again use the cell segmentation data, as described in Chapter 13, for modeling, with a support vector machine (SVM) model to demonstrate sequential tuning methods. The two tuning parameters to optimize are the SVM cost value and the radial basis function kernel parameter $\sigma$. Both parameters can have a profound effect on the model complexity and performance.
 
@@ -66,20 +85,309 @@ Type `tidymodels_prefer()` to get rid of naming conflicts.
 
 ```
 
-```{r a-support-vector-mac-2-hint, eval = FALSE}
+```{r a-support-vector-mac-2-hint-1, eval = FALSE}
 ...()
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 tidymodels_prefer()
 ```
 
-###
+### 
 
 The SVM model uses a dot product and, for this reason, it is necessary to center and scale the predictors. Like the multilayer perceptron model, this model would benefit from the use of PCA feature extraction. However, we will not use this third tuning parameter in this chapter so that we can visualize the search process in two dimensions.
 
+
+### Exercise 3
+
+Press "Run code"
+
+```{r a-support-vector-mac-3, exercise = TRUE}
+data(cells)
+cells <- cells %>% select(-case)
+
+set.seed(1304)
+cell_folds <- vfold_cv(cells)
+
+roc_res <- metric_set(roc_auc)
+```
+
+```{r include = FALSE}
+data(cells)
+cells <- cells %>% select(-case)
+
+set.seed(1304)
+cell_folds <- vfold_cv(cells)
+
+roc_res <- metric_set(roc_auc)
+```
+
+### 
+
+These were the variables created in the "Grid Search" tutorial, and will be used for this tutorial.
+
+### Exercise 4
+
+Lets create three tidymodel objects: `svm_rec`, `svm_spec`, and `svm_wflow`.
+
+Start by typing `recipe()`. Inside this function, type in `class ~ .` and set `data` to `cells`. 
+
+```{r a-support-vector-mac-4, exercise = TRUE}
+
+```
+
+```{r a-support-vector-mac-4-hint-1, eval = FALSE}
+ ...(class ~ ., data = ...)
+```
+
+```{r include = FALSE}
+recipe(class ~ ., data = cells)
+```
+
+### 
+
+When grid search is infeasible or inefficient, iterative methods are a sensible approach for optimizing tuning parameters.
+
+### Exercise 5
+
+Copy the previous code and pipe it to `step_YeoJohnson()`. Inside this function, type in `all_numeric_predictors()`.
+
+```{r a-support-vector-mac-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-support-vector-mac-5-hint-1, eval = FALSE}
+recipe(class ~ ., data = cells) |>
+  step_YeoJohnson(...())
+```
+
+```{r include = FALSE}
+recipe(class ~ ., data = cells) |>
+  step_YeoJohnson(all_numeric_predictors())
+```
+
+### 
+
+`step_YeoJohnson()` creates a *specification* of a recipe step that will transform data using a Yeo-Johnson transformation. The Yeo-Johnson transformation is a a mathematical method used for transforming data to achieve a more normal or symmetric distribution.
+
+### Exercise 6
+
+Copy the previous code and pipe it to `step_normalize()`. Inside this function, type `all_numeric_predictors()`.
+
+```{r a-support-vector-mac-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-support-vector-mac-6-hint-1, eval = FALSE}
+recipe(class ~ ., data = cells) |>
+  step_YeoJohnson(all_numeric_predictors()) |>
+  step_normalize(...())
+```
+
+```{r include = FALSE}
+recipe(class ~ ., data = cells) |>
+  step_YeoJohnson(all_numeric_predictors()) |>
+  step_normalize(all_numeric_predictors())
+```
+
+### 
+
+Bayesian optimization techniques analyze the current resampling results and create a predictive model to suggest tuning parameter values that have yet to be evaluated. The suggested parameter combination is then resampled. These results are then used in another predictive model that recommends more candidate values for testing, and so on. The process proceeds for a set number of iterations or until no further improvements occur.
+
+### Exercise 7
+
+Copy the previous code and assign it to a new variable named `svm_rec`.
+
+```{r a-support-vector-mac-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-support-vector-mac-7-hint-1, eval = FALSE}
+... <- 
+  recipe(class ~ ., data = cells) |>
+  step_YeoJohnson(all_numeric_predictors()) |>
+  step_normalize(all_numeric_predictors())
+```
+
+```{r include = FALSE}
+svm_rec <- 
+  recipe(class ~ ., data = cells) |>
+  step_YeoJohnson(all_numeric_predictors()) |>
+  step_normalize(all_numeric_predictors())
+```
+
+### 
+
+When using Bayesian optimization, the primary concerns are how to create the model and how to select parameters recommended by that model.
+
+### Exercise 8
+
+Next, lets create `svm_spec`. Start by typing in `svm_rbf()`. Inside this function, set `cost` to `tune()` and `rbf_sigma` to `tune()`. 
+
+```{r a-support-vector-mac-8, exercise = TRUE}
+
+```
+
+```{r a-support-vector-mac-8-hint-1, eval = FALSE}
+svm_rbf(cost = ...(), ... = tune())
+```
+
+```{r include = FALSE}
+svm_rbf(cost = tune(), rbf_sigma = tune())
+```
+
+### 
+
+Gaussian process (GP) models are well-known statistical techniques that have a history in spatial statistics (under the name of kriging methods). They can be derived in multiple ways, including as a Bayesian model. This [book](https://direct.mit.edu/books/book/2320/Gaussian-Processes-for-Machine-Learning), written by Carl Edward Rasmussen and Christopher K. I. Williams, is an excellect reference for GP models.
+
+### Exercise 9
+
+Copy the previous code and pipe it to `set_engine()`. Inside this function, type `"kernlab"`.
+
+```{r a-support-vector-mac-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-support-vector-mac-9-hint-1, eval = FALSE}
+svm_rbf(cost = tune(), rbf_sigma = tune()) |>
+  set_engine("...")
+```
+
+```{r include = FALSE}
+svm_rbf(cost = tune(), rbf_sigma = tune()) |>
+  set_engine("kernlab")
+```
+
+### 
+
+`svm_rbf()` is a function that defines a support vector machine model. For classification, the model tries to maximize the width of the margin between classes using a nonlinear class boundary. For regression, the model optimizes a robust loss function that is only affected by very large model residuals and uses nonlinear functions of the predictors. The function can fit classification and regression models.
+
+### Exercise 10
+
+Copy the previous code and pipe it to `set_mode()`. Inside this function, type `"classification"`.
+
+```{r a-support-vector-mac-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-support-vector-mac-10-hint-1, eval = FALSE}
+svm_rbf(cost = tune(), rbf_sigma = tune()) |>
+  set_engine("kernlab") |>
+  set_mode("...")
+```
+
+```{r include = FALSE}
+svm_rbf(cost = tune(), rbf_sigma = tune()) |>
+  set_engine("kernlab") |>
+  set_mode("classification")
+```
+
+### 
+
+The default parameter range for the tuning parameter `cost` are:
+
+````
+cost()
+# > Cost (quantitative)
+# > Transformer: log-2 [1e-100, Inf]
+# > Range (transformed scale): [-10, 5]
+````
+
+### Exercise 11
+
+Copy the previous code and assign it to a new variable named `svm_spec`.
+
+```{r a-support-vector-mac-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-support-vector-mac-11-hint, eval = FALSE}
+... <- 
+  svm_rbf(cost = tune(), rbf_sigma = tune()) |>
+  set_engine("kernlab") |>
+  set_mode("classification")
+```
+
+```{r include = FALSE}
+svm_spec <- 
+  svm_rbf(cost = tune(), rbf_sigma = tune()) |>
+  set_engine("kernlab") |>
+  set_mode("classification")
+```
+
+### 
+
+The default parameter range for `rbf_sigma` is:
+
+````
+rbf_sigma()
+# > Radial Basis Function sigma (quantitative)
+# > Transformer: log-10 [1e-100, Inf]
+# > Range (transformed scale): [-10, 0]
+````
+
+### Exercise 12
+
+Finally, lets create a workflow. Start by piping `workflow()` to `add_model()`. Inside `add_model()`, type `svm_spec`.
+
+```{r a-support-vector-mac-12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-support-vector-mac-12-hint, eval = FALSE}
+workflow() |> 
+  add_model(...)
+```
+
+```{r include = FALSE}
+workflow() |> 
+  add_model(svm_spec)
+```
+
+### 
+
+<!-- AK: Add knowledge drop -->
+
+### Exercise 13
+
+Copy the previous code and pipe it to `add_recipe()`. Inside this function, type `svm_rec`
+
+```{r a-support-vector-mac-13, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-support-vector-mac-13-hint, eval = FALSE}
+workflow() |> 
+  add_model(svm_spec) |>
+  add_recipe(...)
+```
+
+```{r include = FALSE}
+workflow() |> 
+  add_model(svm_spec) |>
+  add_recipe(svm_rec)
+```
+
+### 
+
 ## Summary
-###
+### 
 
 <!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
 
