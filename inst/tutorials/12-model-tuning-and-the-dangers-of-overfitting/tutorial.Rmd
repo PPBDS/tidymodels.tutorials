@@ -164,7 +164,7 @@ In ordinary linear regression, there are two parameters $\beta_0$ and $\beta_1$ 
 
 $$ y_i = \beta_0 + \beta_1 x_i + \epsilon_i$$ 
 
-When we have the outcome ($y$) and predictor ($x$) data, we can estimate the two parameters $\beta_0$ and $\beta_1$: 
+When you have the outcome ($y$) and predictor ($x$) data, you can estimate the two parameters $\beta_0$ and $\beta_1$: 
 
 $$\hat \beta_1 = \frac{\sum_i (y_i-\bar{y})(x_i-\bar{x})}{\sum_i(x_i-\bar{x})^2}$$ 
 
@@ -172,7 +172,7 @@ and
 
 $$\hat \beta_0 = \bar{y}-\hat \beta_1 \bar{x}.$$
 
-We can directly estimate these values from the data for this example model because they are analytically tractable; if we have the data, then we can estimate these model parameters. 
+You can directly estimate these values from the data for this example model because they are analytically tractable; if you have the data, then you can estimate these model parameters. 
 
 ### Exercise 2
 
@@ -220,7 +220,7 @@ two_class_dat
 
 ### 
 
-How should we evaluate models when we optimize tuning parameters? It depends on the model and the purpose of the model. For cases where the statistical properties of the tuning parameter are tractable, common statistical properties can be used as the objective function..
+How should models be evaluated when optimizing tuning parameters? It depends on the model and the purpose of the model. For cases where the statistical properties of the tuning parameter are tractable, common statistical properties can be used as the objective function..
 
 
 ### Exercise 4
@@ -341,7 +341,7 @@ testing(split)
 
 ### 
 
-Each of these models results in linear class boundaries. Which one should we use? Since, for these data, the number of model parameters does not vary, the statistical approach is to compute the (log) likelihood for each model and determine the model with the largest value. Traditionally, the likelihood is computed using the same data that were used to estimate the parameters, not using approaches like data splitting or resampling.
+Each of these models results in linear class boundaries. Which one should you use? Since, for these data, the number of model parameters does not vary, the statistical approach is to compute the (log) likelihood for each model and determine the model with the largest value. Traditionally, the likelihood is computed using the same data that were used to estimate the parameters, not using approaches like data splitting or resampling.
 
 ### Exercise 9
 
@@ -794,7 +794,7 @@ function(...) {
 
 ### 
 
-For example, in [Section 11.4](https://www.tmwr.org/compare#tidyposterior) of [*Tidy Modeling with R*](https://www.tmwr.org/index.html), a Bayesian ANOVA model as used, and it was unclear about what the prior should be for the regression parameters (beyond being a symmetric distribution). A t-distribution was chosen with one degree of freedom for the prior since it has heavier tails; this reflects our added uncertainty. The prior beliefs should not be subject to optimization. Tuning parameters are typically optimized for performance whereas priors should not be tweaked to get “the right results.”
+For example, in [Section 11.4](https://www.tmwr.org/compare#tidyposterior) of [*Tidy Modeling with R*](https://www.tmwr.org/index.html), a Bayesian ANOVA model as used, and it was unclear about what the prior should be for the regression parameters (beyond being a symmetric distribution). A t-distribution was chosen with one degree of freedom for the prior since it has heavier tails; this reflects the added uncertainty. The prior beliefs should not be subject to optimization. Tuning parameters are typically optimized for performance whereas priors should not be tweaked to get “the right results.”
 
 ### Exercise 25
 
@@ -1704,7 +1704,7 @@ mlp(hidden_units = tune())
 
 ### 
 
-We fit neural network classification models to the same two-class data from the previous section, varying the number of hidden units. Using the area under the ROC curve as a performance metric, the effectiveness of the model on the training set increases as more hidden units are added. 
+Neural network classification models are fit to the same two-class data from the previous section, varying the number of hidden units. Using the area under the ROC curve as a performance metric, the effectiveness of the model on the training set increases as more hidden units are added. 
 
 The network model thoroughly and meticulously learns the training set. If the model judges itself on the training set ROC value, it prefers many hidden units so that it can nearly eliminate errors.
 
@@ -1952,7 +1952,7 @@ workflow() |>
 
 Tuning parameter optimization usually falls into one of two categories: grid search and iterative search:
 
-Grid search is when we predefine a set of parameter values to evaluate. The main choices involved in grid search are how to make the grid and how many parameter combinations to evaluate. Grid search is often judged as inefficient since the number of grid points required to cover the parameter space can become unmanageable with the curse of dimensionality.
+Grid search is when you predefine a set of parameter values to evaluate. The main choices involved in grid search are how to make the grid and how many parameter combinations to evaluate. Grid search is often judged as inefficient since the number of grid points required to cover the parameter space can become unmanageable with the curse of dimensionality.
 
 ### Exercise 18
 
@@ -1980,7 +1980,7 @@ workflow() |>
 
 ### 
 
-Neural networks are exquisitely capable of emulating nonlinear patterns. Adding spline terms to this type of model is unnecessary; we combined this model and recipe for illustration only.
+Neural networks are exquisitely capable of emulating nonlinear patterns. Adding spline terms to this type of model is unnecessary; the model and recipe are combined for this illustration only.
 
 ### Exercise 19
 
@@ -2010,7 +2010,7 @@ wflow_param <-
 
 ### 
 
-*Iterative search* or sequential search is when we sequentially discover new parameter combinations based on previous results. Almost any nonlinear optimization method is appropriate, although some are more efficient than others. In some cases, an initial set of results for one or more parameter combinations is required to start the optimization process. 
+*Iterative search* or sequential search is when you sequentially discover new parameter combinations based on previous results. Almost any nonlinear optimization method is appropriate, although some are more efficient than others. In some cases, an initial set of results for one or more parameter combinations is required to start the optimization process. 
 
 ### Exercise 20
 
