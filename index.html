@@ -51,40 +51,48 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="tidymodelstutorials">tidymodels.tutorials<a class="anchor" aria-label="anchor" href="#tidymodelstutorials"></a>
+<div class="page-header"><h1 id="tutorials-for-tidy-modeling-with-r">Tutorials for <em>Tidy Modeling with R</em>
+<a class="anchor" aria-label="anchor" href="#tutorials-for-tidy-modeling-with-r"></a>
 </h1></div>
 <!-- badges: start -->
 
-<p>The goal of tidymodels.tutorials is to …</p>
+<div class="section level2">
+<h2 id="about-this-package">About this package<a class="anchor" aria-label="anchor" href="#about-this-package"></a>
+</h2>
+<p><strong>tidymodel.tutorials</strong> provides tutorials for <a href="https://www.tmwr.org/" class="external-link"><em>Tidy Modeling with R</em></a> by Max Kuhn and Julia Silge. These tutorials assume that you have some experience working with the tools provided by the <strong><a href="https://ppbds.github.io/tutorial.helpers/" class="external-link">tutorial.helpers</a></strong> package. As long as you have completed the “Getting Started” tutorial from that package, you should be fine.</p>
+<p>The main audience for these tutorials is instructors teaching data science and their students. Instructors want students to, for example, read Chapter 8 of <a href="https://www.tmwr.org/" class="external-link"><em>Tidy Modeling with R</em></a> (or something similar), typing in the code at the R Console along the way. Sadly, students almost never do that. Indeed, many (most?) of them won’t even read the assigned chapter.</p>
+<p>The promise we make to instructors is that, if they assign our tutorial for Chapter 8, then students will type in at least 90% of the code examples from the chapter, and then run the code to see what happens. We also pull out some of the most important prose from the chapter and do everything we can to cajole/trick students into reading it. These <a href="https://ppbds.github.io/tutorial.helpers/articles/instructions.html" class="external-link">two</a> <a href="https://ppbds.github.io/tutorial.helpers/articles/books.html" class="external-link">essays</a> provide background information about our approach.</p>
+<p>Our causal claim is that, if an instructor were to randomly assign half the class to do these tutorials and half to simply complete the reading, the half completing the tutorials would perform much better for the rest of the course.</p>
+</div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>You can install the development version of tidymodels.tutorials from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
+<p>You can install the development version from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># install.packages("devtools")</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"PPBDS/tidymodels.tutorials"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"PPBDS/tidymodels.tutorials"</span><span class="op">)</span></span></code></pre></div>
+<p>If R offers you the option to update some packages, you should do so. For packages that need compilation, feel free to answer “no”.</p>
+<p>Then <strong>restart your R session</strong> or <strong>restart RStudio</strong>.</p>
 </div>
 <div class="section level2">
-<h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
+<h2 id="accessing-tutorials">Accessing tutorials<a class="anchor" aria-label="anchor" href="#accessing-tutorials"></a>
 </h2>
-<p>This is a basic example which shows you how to solve a common problem:</p>
+<p>In order to access the tutorials, start by loading the package.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co">#library(tidymodels.tutorials)</span></span>
-<span><span class="co">## basic example code</span></span></code></pre></div>
-<p>What is special about using <code>README.Rmd</code> instead of just <code>README.md</code>? You can include R chunks like so:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">cars</span><span class="op">)</span></span>
-<span><span class="co">#&gt;      speed           dist       </span></span>
-<span><span class="co">#&gt;  Min.   : 4.0   Min.   :  2.00  </span></span>
-<span><span class="co">#&gt;  1st Qu.:12.0   1st Qu.: 26.00  </span></span>
-<span><span class="co">#&gt;  Median :15.0   Median : 36.00  </span></span>
-<span><span class="co">#&gt;  Mean   :15.4   Mean   : 42.98  </span></span>
-<span><span class="co">#&gt;  3rd Qu.:19.0   3rd Qu.: 56.00  </span></span>
-<span><span class="co">#&gt;  Max.   :25.0   Max.   :120.00</span></span></code></pre></div>
-<p>You’ll still need to render <code>README.Rmd</code> regularly, to keep <code>README.md</code> up-to-date. <code>devtools::build_readme()</code> is handy for this. You could also use GitHub Actions to re-render <code>README.Rmd</code> every time you push. An example workflow can be found here: <a href="https://github.com/r-lib/actions/tree/v1/examples" class="external-link uri">https://github.com/r-lib/actions/tree/v1/examples</a>.</p>
-<p>You can also embed plots, for example:</p>
-<p><img src="reference/figures/README-pressure-1.png" width="100%"></p>
-<p>In that case, don’t forget to commit and push the resulting figure files, so they display on GitHub and CRAN.</p>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">tidymodels.tutorials</span><span class="op">)</span></span></code></pre></div>
+<p>You can access the tutorials via the Tutorial tab in the top right (Environment) pane in RStudio.</p>
+<p>If either of the following is happening to you</p>
+<ul>
+<li>
+Cannot find the Tutorial pane
+</li>
+<li>
+Cannot find any tidymodels tutorials
+</li>
+</ul>
+<p>Then <strong>remember to restart your R session</strong> after installing the package.</p>
+<p>Because tutorials within the Tutorial pane are sorted in alphabetical order by the name of the package, the <strong>tidymodels.tutorials</strong> will be toward the bottom. If you don’t see any tutorials, try clicking the “Home” button – the little house symbol with the thin red roof in the upper right.</p>
+<p>In order to expand the window, you can drag and enlarge the tutorial pane inside RStudio. In order to open a pop-up window, click the “Show in New Window” icon next to the home icon.</p>
+<p>You may notice that the Jobs tab in the lower left will create output as the tutorial is starting up. This is because RStudio is running the code to create the tutorial. If you accidentally clicked “Start Tutorial” and would like to stop the job from running, you can click the back arrow in the Jobs tab, and then press the red stop sign icon. Your work will be saved between RStudio sessions, meaning that you can complete a tutorial in multiple sittings. Once you have completed a tutorial, follow the instructions on the tutorial <code>Submit</code> page and, if you’re a student, submit your answers as instructed.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="license">
