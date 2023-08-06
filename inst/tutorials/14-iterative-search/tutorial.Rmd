@@ -1,0 +1,87 @@
+---
+title: Iterative Search
+author: Aryan Kancherla
+tutorial:
+  id: iterative-search
+output: 
+  learnr::tutorial:
+    progressive: true
+    allow_skip: true
+runtime: shiny_prerendered
+description: 'Tutorial for Chapter 14: Iterative Search'
+---
+
+```{r setup, include = FALSE}
+library(learnr)
+library(tutorial.helpers)
+library(tidymodels)
+tidymodels_prefer()
+
+knitr::opts_chunk$set(echo = FALSE)
+options(tutorial.exercise.timelimit = 60, 
+        tutorial.storage = "local") 
+```
+
+```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
+```
+
+```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
+```
+
+## Introduction
+###
+
+<!-- Two to four sentence about the main topics covered in this tutorial. Why are we here? What will students get out of giving you 90 minutes of their lives? How does this tutorial connect to other tutorials? -->
+
+## A Support Vector Machine Model
+###
+
+The "Grid Search" tutorial, which is associated with [Chapter 13](https://www.tmwr.org/grid-search), demonstrated how grid search takes a pre-defined set of candidate values, evaluates them, then chooses the best settings. Iterative search methods pursue a different strategy. During the search process, they predict which values to test next.
+
+### Exercise 1
+
+Load the **tidymodels** package using `library()`.
+
+```{r a-support-vector-mac-1, exercise = TRUE}
+
+```
+
+```{r a-support-vector-mac-1-hint, eval = FALSE}
+library(...)
+```
+
+```{r, include = FALSE}
+library(tidymodels)
+```
+
+###
+
+We once again use the cell segmentation data, as described in Chapter 13, for modeling, with a support vector machine (SVM) model to demonstrate sequential tuning methods. The two tuning parameters to optimize are the SVM cost value and the radial basis function kernel parameter $\sigma$. Both parameters can have a profound effect on the model complexity and performance.
+
+### Exercise 2
+
+Type `tidymodels_prefer()` to get rid of naming conflicts.
+
+```{r a-support-vector-mac-2, exercise = TRUE}
+
+```
+
+```{r a-support-vector-mac-2-hint, eval = FALSE}
+...()
+```
+
+```{r, include = FALSE}
+tidymodels_prefer()
+```
+
+###
+
+The SVM model uses a dot product and, for this reason, it is necessary to center and scale the predictors. Like the multilayer perceptron model, this model would benefit from the use of PCA feature extraction. However, we will not use this third tuning parameter in this chapter so that we can visualize the search process in two dimensions.
+
+## Summary
+###
+
+<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+
+```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
+```
