@@ -15,7 +15,9 @@ RoxygenNote: 7.2.3
 Suggests:
     censored,
     corrr,
+    ggforce,
     ggrepel,
+    knitr,
     lme4,
     learnr,
     multilevelmod,
@@ -24,6 +26,7 @@ Suggests:
     roxygen2,
     rsconnect,
     rstanarm,
+    stringr,
     tidymodels,
     tidyposterior,
     tidyverse,
