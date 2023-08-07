@@ -21,7 +21,9 @@ Suggests:
     censored,
     corrr,
     doParallel,
+    finetune,
     ggrepel,
+    kernlab
     lme4,
     learnr,
     multilevelmod,
