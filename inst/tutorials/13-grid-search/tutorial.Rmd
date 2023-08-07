@@ -5,8 +5,8 @@ tutorial:
   id: grid-search
 output:
   learnr::tutorial:
-    progressive: yes
-    allow_skip: yes
+    progressive: true
+    allow_skip: true
 runtime: shiny_prerendered
 description: 'Tutorial for Chapter 13: Grid Search'
 ---
@@ -14,19 +14,19 @@ description: 'Tutorial for Chapter 13: Grid Search'
 ```{r setup, include = FALSE}
 library(learnr)
 library(tutorial.helpers)
-#library(finetune)
+library(finetune)
 library(knitr)
 library(tidyverse)
 library(tidymodels)
 library(tune)
 library(ggrepel)
-#library(ggforce)
+library(ggforce)
 library(rstanarm)
 library(tidyposterior)
 library(lme4)
 library(multilevelmod)
 library(nlme)
-#library(usemodels)
+library(usemodels)
 library(workflowsets)
 
 tidymodels_prefer()
@@ -55,11 +55,9 @@ mlp_rec <-
   step_pca(all_numeric_predictors(), num_comp = tune()) |>
   step_normalize(all_numeric_predictors())
 
+cells1 <- cells |> select(-case)
 
-cells <- cells |>
-  select(-case)
-
-cell_folds <- vfold_cv(cells)
+cell_folds <- vfold_cv(cells1)
 
 mlp_wflow <- 
   workflow() |>
@@ -109,17 +107,15 @@ final_mlp_fit <-
   fit(cells)
 
 xgboost_recipe <-
-  recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built +
-           Bldg_Type + Latitude + Longitude, 
-         data = ames_train) |>
+  recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
   step_novel(all_nominal_predictors()) |>
   step_dummy(all_nominal_predictors(), one_hot = TRUE) |>
   step_zv(all_predictors())
 
 xgboost_spec <-
   boost_tree(trees = tune(), min_n = tune(), tree_depth = tune(),
-             learn_rate = tune(), loss_reduction = tune(), sample_size =
-               tune()) |>
+             learn_rate = tune(), loss_reduction = tune(),
+             sample_size = tune()) |>
   set_mode("regression") |>
   set_engine("xgboost")
 
@@ -130,8 +126,8 @@ xgboost_workflow <-
 
 xgboost_tune <-
   tune_grid(xgboost_workflow, 
-            resamples = stop("add your rsample object"), 
-            grid = stop("add number of candidate points"))
+            resamples = cell_folds,
+            grid = mlp_param)
 
 c5_spec <-
   boost_tree(trees = tune()) |>

@@ -13,8 +13,10 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Suggests:
+    baguette,
     censored,
     corrr,
+    finetune,
     ggforce,
     ggrepel,
     knitr,
@@ -26,10 +28,12 @@ Suggests:
     roxygen2,
     rsconnect,
     rstanarm,
+    rules,
     stringr,
+    testthat (>= 3.0.0),
     tidymodels,
     tidyposterior,
     tidyverse,
-    testthat (>= 3.0.0),
-    tutorial.helpers
+    tutorial.helpers,
+    usemodels
 Config/testthat/edition: 3
