@@ -23,7 +23,7 @@ Suggests:
     doParallel,
     finetune,
     ggrepel,
-    kernlab
+    kernlab,
     lme4,
     learnr,
     multilevelmod,
