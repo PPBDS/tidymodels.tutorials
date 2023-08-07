@@ -203,7 +203,7 @@ These were the variables created in the "Grid Search" tutorial, and will be used
 
 ### Exercise 5
 
-Lets create three tidymodel objects: `svm_rec`, `svm_spec`, and `svm_wflow`.
+Let's create three tidymodel objects: `svm_rec`, `svm_spec`, and `svm_wflow`.
 
 Start by typing `recipe()`. Inside this function, type in `class ~ .` and set `data` to `cells1`. 
 

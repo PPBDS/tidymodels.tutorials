@@ -8,6 +8,7 @@
 inst/tutorials/[^/]*/(?!(data|images|.*Rmd))
 
 inst/tutorials/*/*html
+inst/tutorials/*/*cache*
 
 inst/tutorials/*/*_files/
 docs
