@@ -80,6 +80,19 @@ svm_bo <-
     control = ctrl
   )
 
+ctrl_sa <- control_sim_anneal(verbose = TRUE, no_improve = 10L)
+
+svm_sa <- 
+  svm_wflow |>
+  tune_sim_anneal(
+    resamples = cell_folds,
+    metrics = roc_res,
+    initial = svm_initial,
+    param_info = svm_param,
+    iter = 50,
+    control = ctrl_sa
+  )
+
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -91,7 +104,7 @@ svm_bo <-
 ## Introduction
 ### 
 
-<!-- Two to four sentence about the main topics covered in this tutorial. Why are we here? What will students get out of giving you 90 minutes of their lives? How does this tutorial connect to other tutorials? -->
+This tutorial covers [Chapter 14: Iterative Search](https://www.tmwr.org/iterative-search) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. In this tutorial, you will learn about Bayesian optimization, with the use of `control_bayes()` and `tune_bayes()`, as well as simulated annealing, with the use of `control_sim_anneal()` and `tune_sim_anneal()`. These functions come from the [**tidymodels**](https://www.tidymodels.org/packages/) and [**finetune**](https://finetune.tidymodels.org/) packages.
 
 ## A Support Vector Machine Model
 ### 
@@ -116,7 +129,7 @@ library(tidymodels)
 
 ### 
 
-We once again use the cell segmentation data, as described in Chapter 13, for modeling, with a support vector machine (SVM) model to demonstrate sequential tuning methods. The two tuning parameters to optimize are the SVM cost value and the radial basis function kernel parameter $\sigma$. Both parameters can have a profound effect on the model complexity and performance.
+The cell segmentation data will be used one again, as described in Chapter 13, for modeling, with a support vector machine (SVM) model to demonstrate sequential tuning methods. The two tuning parameters to optimize are the SVM cost value and the radial basis function kernel parameter $\sigma$. Both parameters can have a profound effect on the model complexity and performance.
 
 ### Exercise 2
 
@@ -136,7 +149,7 @@ tidymodels_prefer()
 
 ### 
 
-The SVM model uses a dot product and, for this reason, it is necessary to center and scale the predictors. Like the multilayer perceptron model, this model would benefit from the use of PCA feature extraction. However, we will not use this third tuning parameter in this chapter so that we can visualize the search process in two dimensions.
+The SVM model uses a dot product and, for this reason, it is necessary to center and scale the predictors. Like the multilayer perceptron model, this model would benefit from the use of PCA feature extraction. However, this third tuning parameter in this chapter will not be used so that the search process in two dimensions can be visualized. 
 
 ### Exercise 3
 
@@ -306,7 +319,7 @@ svm_rbf(cost = tune(), rbf_sigma = tune())
 
 ### 
 
-Gaussian process (GP) models are well-known statistical techniques that have a history in spatial statistics (under the name of kriging methods). They can be derived in multiple ways, including as a Bayesian model. This [book](https://direct.mit.edu/books/book/2320/Gaussian-Processes-for-Machine-Learning), written by Carl Edward Rasmussen and Christopher K. I. Williams, is an excellect reference for GP models.
+Gaussian process (GP) models are well-known statistical techniques that have a history in spatial statistics (under the name of kriging methods). They can be derived in multiple ways, including as a Bayesian model. This [book](https://direct.mit.edu/books/book/2320/Gaussian-Processes-for-Machine-Learning), written by Carl Edward Rasmussen and Christopher K. I. Williams, is an excellent reference for GP models.
 
 ### Exercise 10
 
@@ -474,7 +487,7 @@ svm_wflow <-
 
 ### 
 
-Mathematically, a GP is a collection of random variables whose joint probability distribution is multivariate Gaussian. In the context of our application, this is the collection of performance metrics for the tuning parameter candidate values.
+Mathematically, a GP is a collection of random variables whose joint probability distribution is multivariate Gaussian. In the context of this tutorial's application application, this is the collection of performance metrics for the tuning parameter candidate values.
 
 ### Exercise 16
 
@@ -496,7 +509,7 @@ svm_wflow |>
 
 ### 
 
-Before discussing specific details about iterative search and how it works, let’s explore the relationship between the two SVM tuning parameters and the area under the ROC curve for this specific data set. We constructed a very large regular grid, composed of 2,500 candidate values, and evaluated the grid using resampling. This is obviously impractical in regular data analysis and tremendously inefficient. However, it elucidates the path that the search process should take and where the numerically optimal value(s) occur.
+Before discussing specific details about iterative search and how it works, let’s explore the relationship between the two SVM tuning parameters and the area under the ROC curve for this specific data set. A very large regular grid has been constructed, composed of 2,500 candidate values, and evaluated the grid using resampling. This is obviously impractical in regular data analysis and tremendously inefficient. However, it elucidates the path that the search process should take and where the numerically optimal value(s) occur.
 
 ### Exercise 17
 
@@ -807,11 +820,12 @@ Copy the previous code and assign it to a new variable named `svm_initial`.
 svm_initial <- 
   svm_wflow |> 
   tune_grid(resamples = cell_folds, grid = start_grid, metrics = roc_res)
+
 ```
 
 ### 
 
-Based on the initial grid of four results (which you will code in the next exercise), the GP model is fit, candidates are predicted, and a fifth tuning parameter combination is selected. We compute performance estimates for the new configuration, the GP is refit with the five existing results (and so on).
+Based on the initial grid of four results (which you will code in the next exercise), the GP model is fit, candidates are predicted, and a fifth tuning parameter combination is selected.The performance estimates for the new configuration are computed, the GP is refit with the five existing results (and so on).
 
 ### Exercise 28
 
@@ -840,7 +854,7 @@ Congrats! You have learned how to create a Support Vector Model (SVM).
 ## Bayesian Optimization
 ### 
 
-As metnioned in the last section, Bayesian optimization techniques analyze the current resampling results and create a predictive model to suggest tuning parameter values that have yet to be evaluated. The suggested parameter combination is then resampled. These results are then used in another predictive model that recommends more candidate values for testing, and so on. The process proceeds for a set number of iterations or until no further improvements occur.
+As mentioned in the last section, Bayesian optimization techniques analyze the current resampling results and create a predictive model to suggest tuning parameter values that have yet to be evaluated. The suggested parameter combination is then resampled. These results are then used in another predictive model that recommends more candidate values for testing, and so on. The process proceeds for a set number of iterations or until no further improvements occur.
 
 ### Exercise 1
 
@@ -880,7 +894,7 @@ question_text(NULL,
 
 ### Exercise 3
 
-Lets use the SVM results from the previous section as the initial substrate for the Gaussian process model. Recall that, for this application, we want to maximize the area under the ROC curve.
+Lets use the SVM results from the previous section as the initial substrate for the Gaussian process model. Recall that, for this application, the goal is to maximize the area under the ROC curve.
 
 Start by typing `control_bayes()`, setting `verbose` to `TRUE`.
 
@@ -898,7 +912,7 @@ control_bayes(verbose = TRUE)
 
 ### 
 
-As a reminder, here is the Heatmap of the mean area under the ROC curve for a high density grid of tuning parameter values:
+As a reminder, here is the Heat map of the mean area under the ROC curve for a high density grid of tuning parameter values:
 
 ```{r}
 knitr::include_graphics("images/pic1.png")
@@ -906,7 +920,7 @@ knitr::include_graphics("images/pic1.png")
 
 ### Exercise 4
 
-Copy the previous code and assign it to a new variable named `ctrl`
+Copy the previous code and assign it to a new variable named `ctrl`.
 
 ```{r bayesian-optimizatio-4, exercise = TRUE}
 
@@ -1262,7 +1276,7 @@ The "current best" section shows the current maximum of the area under the ROC c
 
 ### Exercise 15
 
-The functions that are used to interrogate the results are the same as those used for grid search. Type `?show_best()` in the Console and look at the *Descripton* section. CP/CR.
+The functions that are used to interrogate the results are the same as those used for grid search. Type `?show_best()` in the Console and look at the *Description* section. CP/CR.
 
 ```{r bayesian-optimizatio-15}
 question_text(NULL,
@@ -1318,21 +1332,21 @@ To implement iterative search via simulated annealing, the **finetune** package 
 
 ```
 
-```{r simulated-annealing-1-hint, eval = FALSE}
+```{r simulated-annealing-1-hint-1, eval = FALSE}
 library(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 library(finetune)
 ```
 
-###
+### 
 
 The process of using simulated annealing starts with an initial value and embarks on a controlled random walk through the parameter space. Each new candidate parameter value is a small perturbation of the previous value that keeps the new point within a local neighborhood.
 
 ### Exercise 2
 
-Type `?control_sim_anneal()` in the Console and look at the *Descripton* section. CP/CR.
+Type `?control_sim_anneal()` in the Console and look at the *Description* section. CP/CR.
  
 ```{r simulated-annealing-2}
 question_text(NULL,
@@ -1347,13 +1361,13 @@ question_text(NULL,
 
 The candidate point is resampled to obtain its corresponding performance value. If this achieves better results than the previous parameters, it is accepted as the new best and the process continues. If the results are worse than the previous value the search procedure may still use this parameter to define further steps.
 
-###
+### 
 
-This depends on two factors. First, the likelihood of accepting a bad result decreases as performance becomes worse. In other words, a slightly worse result has a better chance of acceptance than one with a large drop in performance. The other factor is the number of search iterations. Simulated annealing wants to accept fewer suboptimal values as the search proceeds.
+This depends on two factors. First, the likelihood of accepting a bad result decreases as performance becomes worse. In other words, a slightly worse result has a better chance of acceptance than one with a large drop in performance. The other factor is the number of search iterations. Simulated annealing wants to accept fewer sub optimal values as the search proceeds.
 
 ### Exercise 3
 
-Next, type `?tune_sim_anneal()` in the Console and look at the *Descripton* section. CP/CR.
+Next, type `?tune_sim_anneal()` in the Console and look at the *Description* section. CP/CR.
 
 ```{r simulated-annealing-3}
 question_text(NULL,
@@ -1364,7 +1378,7 @@ question_text(NULL,
 	rows = 3)
 ```
 
-###
+### 
 
 From the two factors mentioned in the previous exercise, the acceptance probability for a bad result can be formalized as:
 
@@ -1372,7 +1386,7 @@ $$\operatorname{Pr}[\text{accept suboptimal parameters at iteration } i] = \exp(
 
 where $i$ is the iteration number, $c$ is a user-specified constant, and $D_i$ is the percent difference between the old and new values (where negative values imply worse results).
 
-For a bad result, we determine the acceptance probability and compare it to a random uniform number. If the random number is greater than the probability value, the search discards the current parameters and the next iteration creates its candidate value in the neighborhood of the previous value. Otherwise, the next iteration forms the next set of parameters based on the current (suboptimal) values.
+For a bad result, the acceptance probability is determined and is compared to a random uniform number. If the random number is greater than the probability value, the search discards the current parameters and the next iteration creates its candidate value in the neighborhood of the previous value. Otherwise, the next iteration forms the next set of parameters based on the current (sub optimal) values.
 
 ### Exercise 4
 
@@ -1384,17 +1398,17 @@ Start by typing `control_sim_anneal()`. Inside this function, set `verbose` to `
 
 ```
 
-```{r simulated-annealing-4-hint, eval = FALSE}
+```{r simulated-annealing-4-hint-1, eval = FALSE}
 control_sim_anneal(verbose = TRUE)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 control_sim_anneal(verbose = TRUE)
 ```
 
-###
+### 
 
-How are acceptance probabilities influenced? The heatmap in the graph below shows how the acceptance probability can change over iterations, performance, and the user-specified coefficient:
+How are acceptance probabilities influenced? The heat map in the graph below shows how the acceptance probability can change over iterations, performance, and the user-specified coefficient:
 
 ```{r}
 knitr::include_graphics("images/pic7.png")
@@ -1408,39 +1422,61 @@ Copy the previous code. Inside `control_sim_anneal()`, set `no_improve` to `10L`
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
+<button on click = "transfer_code(this)">Copy previous code</button>
 
-```{r simulated-annealing-5-hint, eval = FALSE}
+```{r simulated-annealing-5-hint-1, eval = FALSE}
 control_sim_anneal(verbose = TRUE, no_improve = ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 control_sim_anneal(verbose = TRUE, no_improve = 10L)
 ```
 
-###
+### 
 
-`no_improve`, for simulated annealing, is an integer that will stop the search if no global best or improved results are discovered within `no_improve` iterations. Accepted suboptimal or discarded parameters count as “no improvement.”
+`no_improve`, for simulated annealing, is an integer that will stop the search if no global best or improved results are discovered within `no_improve` iterations. Accepted sub optimal or discarded parameters count as “no improvement.”
 
 ### Exercise 6
 
-In the code chunk below, type in `set.seed()` and pass in `1404`.
+Copy the previous code and assign it to a new variable named `ctrl_sa`.
 
 ```{r simulated-annealing-6, exercise = TRUE}
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
+<button on click = "transfer_code(this)">Copy previous code</button>
 
-```{r simulated-annealing-6-hint, eval = FALSE}
+```{r simulated-annealing-6-hint-1, eval = FALSE}
+... <- control_sim_anneal(verbose = TRUE, no_improve = 10L)
+```
+
+```{r include = FALSE}
+ctrl_sa <- control_sim_anneal(verbose = TRUE, no_improve = 10L)
+```
+
+### 
+
+The `control_sim_anneal()` has numerous arguments. If you type `?control_sim_anneal()` in the Console and look at the *Arguments* section, you will find out about these arguments.
+
+### Exercise 7
+
+In the code chunk below, type in `set.seed()` and pass in `1404`.
+
+```{r simulated-annealing-7, exercise = TRUE}
+
+```
+
+<button on click = "transfer_code(this)">Copy previous code</button>
+
+```{r simulated-annealing-7-hint-1, eval = FALSE}
 set.seed(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 set.seed(1404)
 ```
 
-###
+### 
 
 Lets look at this graph once more:
 
@@ -1448,48 +1484,47 @@ Lets look at this graph once more:
 knitr::include_graphics("images/pic7.png")
 ```
 
-
 The user can adjust the coefficients to find a probability profile that suits their needs. In `finetune::control_sim_anneal()`, the default for this `cooling_coef` argument is 0.02. Decreasing this coefficient will encourage the search to be more forgiving of poor results.
 
 This process continues for a set amount of iterations but can halt if no globally best results occur within a pre-determined number of iterations. However, it can be very helpful to set a *restart threshold*. If there are a string of failures, this feature revisits the last globally best parameter settings and starts anew.
 
-### Exercise 7
+### Exercise 8
 
 In the code chunk below, pipe `svm_wflow` to `tune_sim_anneal()`. Inside this function, set `resamples` to `cell_folds`.
 
-```{r simulated-annealing-7, exercise = TRUE}
+```{r simulated-annealing-8, exercise = TRUE}
 
 ```
 
-```{r simulated-annealing-7-hint, eval = FALSE}
+```{r simulated-annealing-8-hint-1, eval = FALSE}
 ... |>
   tune_sim_anneal(
     resamples = ...
   )
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 svm_wflow |>
   tune_sim_anneal(
     resamples = cell_folds
   )
 ```
 
-###
+### 
 
 The acceptance probabilities of simulated annealing allow the search to proceed in the wrong direction, at least for the short term, with the potential to find a much better region of the parameter space in the long run.
 
-### Exercise 8
+### Exercise 9
 
 Copy the previous code and set the `metrics` argument to `roc_res`.
 
-```{r simulated-annealing-8, exercise = TRUE}
+```{r simulated-annealing-9, exercise = TRUE}
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
+<button on click = "transfer_code(this)">Copy previous code</button>
 
-```{r simulated-annealing-8-hint, eval = FALSE}
+```{r simulated-annealing-9-hint-1, eval = FALSE}
 svm_wflow |>
   tune_sim_anneal(
     resamples = cell_folds,
@@ -1497,7 +1532,7 @@ svm_wflow |>
   )
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 svm_wflow |>
   tune_sim_anneal(
     resamples = cell_folds,
@@ -1505,14 +1540,229 @@ svm_wflow |>
   )
 ```
 
-###
+### 
 
+Looking at the graph in exercise 6, the main important detail is to define how to perturb the tuning parameters from iteration to iteration. There are a variety of methods in the literature for this, such as the *generalized simulated annealing*. For continuous tuning parameters, a small radius is defined to specify the local “neighborhood.” For example, suppose there are two tuning parameters and each is bounded by zero and one. The simulated annealing process generates random values on the surrounding radius and randomly chooses one to be the current candidate value.
+
+### Exercise 10
+
+Copy the previous code and set `initial` to `svm_initial`.
+
+```{r simulated-annealing-10, exercise = TRUE}
+
+```
+
+<button on click = "transfer_code(this)">Copy previous code</button>
+
+```{r simulated-annealing-10-hint-1, eval = FALSE}
+svm_wflow |>
+  tune_sim_anneal(
+    resamples = cell_folds,
+    metrics = roc_res,
+    initial = ...
+  )
+```
+
+```{r include = FALSE}
+svm_wflow |>
+  tune_sim_anneal(
+    resamples = cell_folds,
+    metrics = roc_res,
+    initial = svm_initial
+  )
+```
+
+### 
+
+Take a look at the graph below, which is an illustration of how simulated annealing determines what is the local neighborhood for two numeric tuning parameters:
+
+```{r}
+knitr::include_graphics("images/pic8.png")
+```
+
+The process of creating this graph started with initial values of `penalty = 0.025` and `mixture = 0.050`. `penalty` stands for the amount of total regularization, and `mixture` stands for the proportion of the lasso penalty.
+
+Using a radius that randomly fluctuated between 0.050 and 0.015, the data was appropriately scaled, random values were generated on radii around the initial point, then one was randomly chosen as the candidate. For illustration, it was assumed that all candidate values were improvements. Using the new value, a set of new random neighbors were generated, one was chosen, and so on.
+
+### Exercise 11
+
+Copy the previous code and set `param_info` to `svm_param`
+
+```{r simulated-annealing-11, exercise = TRUE}
+
+```
+
+<button on click = "transfer_code(this)">Copy previous code</button>
+
+```{r simulated-annealing-11-hint-1, eval = FALSE}
+svm_wflow |>
+  tune_sim_anneal(
+    resamples = cell_folds,
+    metrics = roc_res,
+    initial = svm_initial,
+    param_info = ...
+  )
+```
+
+```{r include = FALSE}
+svm_wflow |>
+  tune_sim_anneal(
+    resamples = cell_folds,
+    metrics = roc_res,
+    initial = svm_initial,
+    param_info = svm_param
+  )
+```
+
+### 
+
+Looking at the graph from the previous exercise, note that, during some iterations, the candidate sets along the radius exclude points outside of the parameter boundaries. Also, the implementation of the data on the graph biases the choice of the next tuning parameter configurations away from new values that are very similar to previous configurations.
+
+### Exercise 12
+
+Copy the previous code and set `iter` to `50`.
+
+```{r simulated-annealing-12, exercise = TRUE}
+
+```
+
+<button on click = "transfer_code(this)">Copy previous code</button>
+
+```{r simulated-annealing-12-hint-1, eval = FALSE}
+svm_wflow |>
+  tune_sim_anneal(
+    resamples = cell_folds,
+    metrics = roc_res,
+    initial = svm_initial,
+    param_info = svm_param,
+    iter = ...
+  )
+```
+
+```{r include = FALSE}
+svm_wflow |>
+  tune_sim_anneal(
+    resamples = cell_folds,
+    metrics = roc_res,
+    initial = svm_initial,
+    param_info = svm_param,
+    iter = 50
+  )
+```
+
+### 
+
+For non-numeric parameters, a probability for how often the parameter value changes is assigned.
+
+### Exercise 13
+
+Copy the previous code and set `control` to `ctrl_sa`.
+
+```{r simulated-annealing-13, exercise = TRUE}
+
+```
+
+<button on click = "transfer_code(this)">Copy previous code</button>
+
+```{r simulated-annealing-13-hint-1, eval = FALSE}
+svm_wflow |>
+  tune_sim_anneal(
+    resamples = cell_folds,
+    metrics = roc_res,
+    initial = svm_initial,
+    param_info = svm_param,
+    iter = 50,
+    control = ...
+  )
+```
+
+```{r include = FALSE}
+svm_wflow |>
+  tune_sim_anneal(
+    resamples = cell_folds,
+    metrics = roc_res,
+    initial = svm_initial,
+    param_info = svm_param,
+    iter = 50,
+    control = ctrl_sa
+  )
+```
+
+### 
+
+`cooling_coef` is the $c$ coefficient in $\exp(c\times D_i \times i)$ that modulates how quickly the acceptance probability decreases over iterations. Larger values of `cooling_coef` decrease the probability of accepting a sub optimal parameter setting.
+
+### Exercise 14
+
+Copy the previous code and assign it to a new variable named `svm_sa`.
+
+```{r simulated-annealing-14, exercise = TRUE}
+
+```
+
+<button on click = "transfer_code(this)">Copy previous code</button>
+
+```{r simulated-annealing-14-hint-1, eval = FALSE}
+... <- 
+  svm_wflow |>
+  tune_sim_anneal(
+    resamples = cell_folds,
+    metrics = roc_res,
+    initial = svm_initial,
+    param_info = svm_param,
+    iter = 50,
+    control = ctrl_sa
+  )
+```
+
+```{r include = FALSE}
+svm_sa <- 
+  svm_wflow |>
+  tune_sim_anneal(
+    resamples = cell_folds,
+    metrics = roc_res,
+    initial = svm_initial,
+    param_info = svm_param,
+    iter = 50,
+    control = ctrl_sa
+  )
+```
+
+### 
+
+The simulated annealing process discovered new global optimums at 4 different iterations. The earliest improvement was at iteration 5 and the final optimum occurred at iteration 27. The best overall results occurred at iteration 27 with a mean area under the ROC curve of *0.8985* (compared to an initial best of 0.8659). There were 4 restarts at iterations 13, 21, 35, and 43 as well as 12 discarded candidates during the process.
+
+### Exercise 15
+
+As with the other `tune_*()` functions, the corresponding `autoplot()` function produces visual assessments of the results. Using `autoplot(svm_sa, type = "performance")` shows the performance over iterations (see the image below).
+
+```{r}
+knitr::include_graphics("images/pic9.png")
+```
+
+### 
+
+`autoplot(svm_sa, type = "parameters")` plots performance versus specific tuning parameter values:
+
+```{r}
+knitr::include_graphics("images/pic10.png")
+```
+
+### 
+
+<!-- AK: I want to add the video from section 14.3.2 in the textbook but not sure how to. -->
 
 
 ## Summary
 ### 
 
-<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+Congrats! You have completed the "Iterative Search" tutorial. In this tutorial, you have learned:
+
+- How to create a Support Vector Model (SVM) using `svm_rbf()`
+- How to resample a grid using `tune_grid()`
+- How to implement iterative search via Bayesian optimization (`control_bayes()` and `tune_bayes()`)
+- How to display the top sub-models and their performance estimates using `show_best()`
+- How to implement iterative search via simulated annealing (`control_sim_anneal()` and `tune_sim_anneal()`)
 
 ```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
 ```
