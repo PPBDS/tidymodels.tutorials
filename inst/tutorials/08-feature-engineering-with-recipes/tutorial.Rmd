@@ -536,7 +536,7 @@ The `predict()` method applies the same preprocessing that was used on the train
 
 Type in `predict()`, passing in `lm_fit` and `ames_train`.
 
-<!-- AK: Getting a warning message here and unsure of how to fix it.  -->
+<!-- AK: Getting a warning message here and unsure of how to fix it. DK: Explain it when it happens. Done. -->
 
 ```{r using-recipes-7, exercise = TRUE}
 
@@ -552,7 +552,7 @@ predict(lm_fit, ames_test)
 
 ### 
 
-As you can, the code outputs a list of predicted sale prices based on the neighborhood, year built, building type, and area.
+Notice how the code produces a warning message, showing that there are "doubtful cases". This warning message means that there are some redundant or near-redundant predictors in the model. In this case, don't worry about this message and move on.
 
 ###
 

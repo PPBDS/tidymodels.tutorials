@@ -1735,6 +1735,8 @@ How does the number of resamples affect these types of formal Bayesian compariso
 
 Great Job! You now know have basic understanding of Bayesian Methods and how to analyze these methods using models and functions to make these models.
 
+<!-- PK: Skipping a graph because it includes knowledge I am not aware of, therefore cannot explain it well enough. -->
+
 ## Summary
 ### 
 
