@@ -17,6 +17,7 @@ library(tutorial.helpers)
 library(tidymodels)
 library(knitr)
 library(kernlab)
+library(finetune)
 tidymodels_prefer()
 
 knitr::opts_chunk$set(echo = FALSE)
@@ -52,6 +53,7 @@ svm_param <-
   update(rbf_sigma = rbf_sigma(c(-7, -1)))
 
 set.seed(1402)
+
 start_grid <- 
   svm_param |> 
   update(
@@ -63,6 +65,20 @@ start_grid <-
 svm_initial <- 
   svm_wflow |> 
   tune_grid(resamples = cell_folds, grid = start_grid, metrics = roc_res)
+
+ctrl <- control_bayes(verbose = TRUE)
+
+set.seed(1403)
+svm_bo <- 
+  svm_wflow |>
+  tune_bayes(
+    resamples = cell_folds,
+    metrics = roc_res,
+    initial = svm_initial,
+    param_info = svm_param,
+    iter = 25,
+    control = ctrl
+  )
 
 ```
 
@@ -828,25 +844,670 @@ As metnioned in the last section, Bayesian optimization techniques analyze the c
 
 ### Exercise 1
 
+Type `?control_bayes()` in the Console and look at the *Description* section. Copy Paste the Command Response (or CP/CR).
+
+```{r bayesian-optimizatio-1}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+A class of objective functions, called *acquisition functions*, facilitate the trade-off between mean and variance. Recall that the predicted variance of the GP models are mostly driven by how far away they are from the existing data. The trade-off between the predicted mean and variance for new candidates is frequently viewed through the lens of exploration and exploitation.
+
+### Exercise 2
+
+Next, type `?tune_bayes()` in the Console and look at the *Description* section. CP/CR.
+
+```{r bayesian-optimizatio-2}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+*Exploration* biases the selection towards regions where there are fewer (if any) observed candidate models. This tends to give more weight to candidates with higher variance and focuses on finding new results.
+
+*Exploitation* principally relies on the mean prediction to find the best (mean) value. It focuses on existing results.
+
+### Exercise 3
+
 Lets use the SVM results from the previous section as the initial substrate for the Gaussian process model. Recall that, for this application, we want to maximize the area under the ROC curve.
 
-Start by typing 
+Start by typing `control_bayes()`, setting `verbose` to `TRUE`.
 
-```{r bayesian-optimizatio-1, exercise = TRUE}
+```{r bayesian-optimizatio-3, exercise = TRUE}
+
+```
+
+```{r bayesian-optimizatio-3-hint-1, eval = FALSE}
+control_bayes(... = TRUE)
+```
+
+```{r include = FALSE}
+control_bayes(verbose = TRUE)
+```
+
+### 
+
+As a reminder, here is the Heatmap of the mean area under the ROC curve for a high density grid of tuning parameter values:
+
+```{r}
+knitr::include_graphics("images/pic1.png")
+```
+
+### Exercise 4
+
+Copy the previous code and assign it to a new variable named `ctrl`
+
+```{r bayesian-optimizatio-4, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r bayesian-optimizatio-1-hint-1, eval = FALSE}
-
+```{r bayesian-optimizatio-4-hint-1, eval = FALSE}
+... <- control_bayes(verbose = TRUE)
 ```
 
 ```{r include = FALSE}
-
+ctrl <- control_bayes(verbose = TRUE)
 ```
 
 ### 
+
+To demonstrate exploration and exploitation, let's look at a toy example with a single parameter that has values between [0, 1] and the performance metric is $R^2$. The true function is shown in the image below, along with five candidate values that have existing results as points.
+
+```{r}
+knitr::include_graphics("images/pic4.png")
+```
+
+### Exercise 5
+
+Next, type in `set.seed()` and pass in `1403`.
+
+```{r bayesian-optimizatio-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r bayesian-optimizatio-5-hint-1, eval = FALSE}
+...(1403)
+```
+
+```{r include = FALSE}
+set.seed(1403)
+```
+
+### 
+
+From the graph in the previous exercise, the Gaussian process model is shown below. The shaded region indicates the mean $\pm$ 1 standard error. The two vertical lines indicate two candidate points that are examined in more detail later.
+
+```{r}
+knitr::include_graphics("images/pic5.png")
+```
+
+### 
+
+This nonlinear trend passes through each observed point, but the model is not perfect. There are no observed points near the true optimum setting and, in this region, the fit could be much better.
+
+### Exercise 6
+
+Now, lets start using `tune_bayes()` on `svm_wflow`. Start by piping `svm_wflow` to `tune_bayes()` (Note: This will throw an error).
+
+```{r bayesian-optimizatio-6, exercise = TRUE}
+
+```
+
+```{r bayesian-optimizatio-6-hint-1, eval = FALSE}
+svm_wflow |>
+  ...()
+```
+
+```{r include = FALSE}
+#svm_wflow |>
+#  tune_bayes()
+```
+
+### 
+
+This code throws an error because the `resamples` argument hasn't been passed in a value.
+
+### Exercise 7
+
+Copy the previous code. Inside `tune_bayes()`, set `resamples` to `cell_folds`.
+
+```{r bayesian-optimizatio-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r bayesian-optimizatio-7-hint-1, eval = FALSE}
+svm_wflow |>
+  tune_bayes(
+    resamples = ...
+  )
+```
+
+```{r include = FALSE}
+svm_wflow |>
+  tune_bayes(
+    resamples = cell_folds
+  )
+```
+
+### 
+
+As a way to encourage exploration, a simple (but not often used) approach is to find the tuning parameter associated with the largest confidence interval. For example (looking at the graphs from the previous exercises), by using a single standard deviation for the $R^2$ confidence bound, the next point to sample would be 0.236. This is slightly more into the region with no observed results. Increasing the number of standard deviations used in the upper bound would push the selection farther into empty regions. 
+
+
+### Exercise 8
+
+Copy the previous code. Inside `tune_bayes()`, set `metrics` to `roc_res`.
+
+```{r bayesian-optimizatio-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r bayesian-optimizatio-8-hint-1, eval = FALSE}
+svm_wflow |>
+  tune_bayes(
+    resamples = cell_folds,
+    metrics = ...
+  )
+```
+
+```{r include = FALSE}
+svm_wflow |>
+  tune_bayes(
+    resamples = cell_folds,
+    metrics = roc_res
+  )
+```
+
+### 
+
+One of the most commonly used acquisition functions is *expected improvement*. The notion of improvement requires a value for the current best results (unlike the confidence bound approach). Since the GP can describe a new candidate point using a distribution, the parts of the distribution that show improvement can be weighed using the probability of the improvement occurring.
+
+### Exercise 9
+
+Copy the previous code. Inside `tune_bayes()`, set `initial` to `svm_initial`.
+
+```{r bayesian-optimizatio-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r bayesian-optimizatio-9-hint-1, eval = FALSE}
+svm_wflow |>
+  tune_bayes(
+    resamples = cell_folds,
+    metrics = roc_res,
+    initial = ...
+  )
+```
+
+```{r include = FALSE}
+svm_wflow |>
+  tune_bayes(
+    resamples = cell_folds,
+    metrics = roc_res,
+    initial = svm_initial
+  )
+```
+
+### 
+
+The `initial` argument can be either an integer, an object produced using `tune_grid()`, or one of the racing functions. Using an integer specifies the size of a space-filling design that is sampled prior to the first GP model.
+
+### Exercise 10
+
+Copy the previous code. Set the `param_info` argument to `svm_param`
+
+```{r bayesian-optimizatio-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r bayesian-optimizatio-10-hint-1, eval = FALSE}
+svm_wflow |>
+  tune_bayes(
+    resamples = cell_folds,
+    metrics = roc_res,
+    initial = svm_initial,
+    param_info = ...
+  )
+```
+
+```{r include = FALSE}
+svm_wflow |>
+  tune_bayes(
+    resamples = cell_folds,
+    metrics = roc_res,
+    initial = svm_initial,
+    param_info = svm_param
+  )
+```
+
+### 
+
+The `param_info` argument, in this case, specifies the range of the parameters as well as any transformations that are used. These are used to define the search space. In situations where the default parameter objects are insufficient, `param_info` is used to override the defaults.
+
+### Exercise 11
+
+Copy the previous code and set the argument `iter` to `25`. Also, set `control` to `ctrl`. (Note: This will produce a series of iterations (ex: "Iteration 1")).
+
+```{r bayesian-optimizatio-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r bayesian-optimizatio-11-hint-1, eval = FALSE}
+svm_wflow |>
+  tune_bayes(
+    resamples = cell_folds,
+    metrics = roc_res,
+    initial = svm_initial,
+    param_info = svm_param,
+    iter = ...,
+    control = ...
+  )
+```
+
+```{r include = FALSE}
+svm_wflow |>
+  tune_bayes(
+    resamples = cell_folds,
+    metrics = roc_res,
+    initial = svm_initial,
+    param_info = svm_param,
+    iter = 25,
+    control = ctrl
+  )
+```
+
+### 
+
+The search process starts with an initial best value of 0.8659 for the area under the ROC curve. A Gaussian process model uses these four statistics to create a model. The large candidate set is automatically generated and scored using the expected improvement acquisition function. The first iteration failed to improve the outcome with an ROC value of 0.86315. After fitting another Gaussian process model with the new outcome value, the second iteration also failed to yield an improvement.
+
+### Exercise 12
+
+Copy the previous code and assign to a new variable named `svm_bo`.
+
+```{r bayesian-optimizatio-12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r bayesian-optimizatio-12-hint-1, eval = FALSE}
+... <- 
+  svm_wflow |>
+  tune_bayes(
+    resamples = cell_folds,
+    metrics = roc_res,
+    initial = svm_initial,
+    param_info = svm_param,
+    iter = 25,
+    control = ctrl
+  )
+```
+
+```{r include = FALSE}
+svm_bo <- 
+  svm_wflow |>
+  tune_bayes(
+    resamples = cell_folds,
+    metrics = roc_res,
+    initial = svm_initial,
+    param_info = svm_param,
+    iter = 25,
+    control = ctrl
+  )
+```
+
+### 
+
+Bayesian optimization is an iterative process.
+
+### Exercise 13
+
+Now, lets look at some of the iterations. The log of the first two iterations, produced by the verbose option, was:
+
+````
+
+# > 
+# > ── Iteration 1 ──────────────────────────────────────────────────────────────────────
+# > 
+# > i Current best:      roc_auc=0.8659 (@iter 0)
+# > i Gaussian process model
+# > ✓ Gaussian process model
+# > i Generating 5000 candidates
+# > i Predicted candidates
+# > i cost=0.386, rbf_sigma=0.000266
+# > i Estimating performance
+# > ✓ Estimating performance
+# > ⓧ Newest results:    roc_auc=0.8631 (+/-0.00866)
+# > 
+# > ── Iteration 2 ──────────────────────────────────────────────────────────────────────
+# > 
+# > i Current best:      roc_auc=0.8659 (@iter 0)
+# > i Gaussian process model
+# > ✓ Gaussian process model
+# > i Generating 5000 candidates
+# > i Predicted candidates
+# > i cost=13.8, rbf_sigma=7.83e-07
+# > i Estimating performance
+# > ✓ Estimating performance
+# > ⓧ Newest results:    roc_auc=0.8624 (+/-0.00865)
+````
+
+### 
+
+The "Newest results" represents the area under the ROC curve. Remember that the goal is the maximize the area under the ROC curve.
+
+### Exercise 14
+
+The search continues. There were a total of 9 improvements in the outcome along the way at iterations 3, 4, 5, 6, 8, 13, 22, 23, and 24. The best result occurred at iteration 24 with an area under the ROC curve of 0.8986:
+
+````
+# > ── Iteration 24 ─────────────────────────────────────────────────────────────────────
+# > 
+# > i Current best:      roc_auc=0.8986 (@iter 23)
+# > i Gaussian process model
+# > ✓ Gaussian process model
+# > i Generating 5000 candidates
+# > i Predicted candidates
+# > i cost=31.8, rbf_sigma=0.0016
+# > i Estimating performance
+# > ✓ Estimating performance
+# > ♥ Newest results:    roc_auc=0.8986 (+/-0.00785)
+````
+
+### 
+
+The last iteration, Iteration 25, produced this:
+
+````
+# > ── Iteration 25 ─────────────────────────────────────────────────────────────────────
+# > 
+# > i Current best:      roc_auc=0.8986 (@iter 24)
+# > i Gaussian process model
+# > ✓ Gaussian process model
+# > i Generating 5000 candidates
+# > i Predicted candidates
+# > i cost=20, rbf_sigma=0.00188
+# > i Estimating performance
+# > ✓ Estimating performance
+# > ⓧ Newest results:    roc_auc=0.8982 (+/-0.00781)
+````
+### 
+
+The "current best" section shows the current maximum of the area under the ROC curve.
+
+### Exercise 15
+
+The functions that are used to interrogate the results are the same as those used for grid search. Type `?show_best()` in the Console and look at the *Descripton* section. CP/CR.
+
+```{r bayesian-optimizatio-15}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+The `autoplot()` function has several options for iterative search methods. The graph below shows how the outcome changed over the search by using `autoplot(svm_bo, type = "performance")`:
+
+```{r}
+knitr::include_graphics("images/pic6.png")
+```
+
+### Exercise 16
+
+Now, lets use `show_best()` to find the top sub-models. In the code chunk below, type in `show_best()` and pass in `svm_bo`.
+
+```{r bayesian-optimizatio-16, exercise = TRUE}
+
+```
+
+```{r bayesian-optimizatio-16-hint, eval = FALSE}
+show_best(...)
+```
+
+```{r include = FALSE}
+show_best(svm_bo)
+```
+
+### 
+
+As you can see, the `show_best()` function showed the top 5 mean areas under the ROC curve. Looking at the `.config` column, Iteration 24 had the highest area. The next highest areas were Iteration 23, 22, 13, and 15.
+
+### 
+
+<!-- AK: I want to add the video from section 14.2.3 in the textbook but not sure how to. -->
+
+## Simulated Annealing
+### 
+
+Simulated annealing (SA) is a general nonlinear search routine inspired by the process in which metal cools. It is a global search method that can effectively navigate many different types of search landscapes, including discontinuous functions. Unlike most gradient-based optimization routines, simulated annealing can reassess previous solutions.
+
+### Exercise 1
+
+To implement iterative search via simulated annealing, the **finetune** package is needed. Load **finetune** using `library()`
+
+```{r simulated-annealing-1, exercise = TRUE}
+
+```
+
+```{r simulated-annealing-1-hint, eval = FALSE}
+library(...)
+```
+
+```{r, include = FALSE}
+library(finetune)
+```
+
+###
+
+The process of using simulated annealing starts with an initial value and embarks on a controlled random walk through the parameter space. Each new candidate parameter value is a small perturbation of the previous value that keeps the new point within a local neighborhood.
+
+### Exercise 2
+
+Type `?control_sim_anneal()` in the Console and look at the *Descripton* section. CP/CR.
+ 
+```{r simulated-annealing-2}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+The candidate point is resampled to obtain its corresponding performance value. If this achieves better results than the previous parameters, it is accepted as the new best and the process continues. If the results are worse than the previous value the search procedure may still use this parameter to define further steps.
+
+###
+
+This depends on two factors. First, the likelihood of accepting a bad result decreases as performance becomes worse. In other words, a slightly worse result has a better chance of acceptance than one with a large drop in performance. The other factor is the number of search iterations. Simulated annealing wants to accept fewer suboptimal values as the search proceeds.
+
+### Exercise 3
+
+Next, type `?tune_sim_anneal()` in the Console and look at the *Descripton* section. CP/CR.
+
+```{r simulated-annealing-3}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+###
+
+From the two factors mentioned in the previous exercise, the acceptance probability for a bad result can be formalized as:
+
+$$\operatorname{Pr}[\text{accept suboptimal parameters at iteration } i] = \exp(c\times D_i \times i)$$
+
+where $i$ is the iteration number, $c$ is a user-specified constant, and $D_i$ is the percent difference between the old and new values (where negative values imply worse results).
+
+For a bad result, we determine the acceptance probability and compare it to a random uniform number. If the random number is greater than the probability value, the search discards the current parameters and the next iteration creates its candidate value in the neighborhood of the previous value. Otherwise, the next iteration forms the next set of parameters based on the current (suboptimal) values.
+
+### Exercise 4
+
+Now, lets implement an iterative search via simulated annealing, which is very consistent with Bayesian optimization in terms of syntax.
+
+Start by typing `control_sim_anneal()`. Inside this function, set `verbose` to `TRUE`.
+
+```{r simulated-annealing-4, exercise = TRUE}
+
+```
+
+```{r simulated-annealing-4-hint, eval = FALSE}
+control_sim_anneal(verbose = TRUE)
+```
+
+```{r, include = FALSE}
+control_sim_anneal(verbose = TRUE)
+```
+
+###
+
+How are acceptance probabilities influenced? The heatmap in the graph below shows how the acceptance probability can change over iterations, performance, and the user-specified coefficient:
+
+```{r}
+knitr::include_graphics("images/pic7.png")
+```
+
+### Exercise 5
+
+Copy the previous code. Inside `control_sim_anneal()`, set `no_improve` to `10L`.
+
+```{r simulated-annealing-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r simulated-annealing-5-hint, eval = FALSE}
+control_sim_anneal(verbose = TRUE, no_improve = ...)
+```
+
+```{r, include = FALSE}
+control_sim_anneal(verbose = TRUE, no_improve = 10L)
+```
+
+###
+
+`no_improve`, for simulated annealing, is an integer that will stop the search if no global best or improved results are discovered within `no_improve` iterations. Accepted suboptimal or discarded parameters count as “no improvement.”
+
+### Exercise 6
+
+In the code chunk below, type in `set.seed()` and pass in `1404`.
+
+```{r simulated-annealing-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r simulated-annealing-6-hint, eval = FALSE}
+set.seed(...)
+```
+
+```{r, include = FALSE}
+set.seed(1404)
+```
+
+###
+
+Lets look at this graph once more:
+
+```{r}
+knitr::include_graphics("images/pic7.png")
+```
+
+
+The user can adjust the coefficients to find a probability profile that suits their needs. In `finetune::control_sim_anneal()`, the default for this `cooling_coef` argument is 0.02. Decreasing this coefficient will encourage the search to be more forgiving of poor results.
+
+This process continues for a set amount of iterations but can halt if no globally best results occur within a pre-determined number of iterations. However, it can be very helpful to set a *restart threshold*. If there are a string of failures, this feature revisits the last globally best parameter settings and starts anew.
+
+### Exercise 7
+
+In the code chunk below, pipe `svm_wflow` to `tune_sim_anneal()`. Inside this function, set `resamples` to `cell_folds`.
+
+```{r simulated-annealing-7, exercise = TRUE}
+
+```
+
+```{r simulated-annealing-7-hint, eval = FALSE}
+... |>
+  tune_sim_anneal(
+    resamples = ...
+  )
+```
+
+```{r, include = FALSE}
+svm_wflow |>
+  tune_sim_anneal(
+    resamples = cell_folds
+  )
+```
+
+###
+
+The acceptance probabilities of simulated annealing allow the search to proceed in the wrong direction, at least for the short term, with the potential to find a much better region of the parameter space in the long run.
+
+### Exercise 8
+
+Copy the previous code and set the `metrics` argument to `roc_res`.
+
+```{r simulated-annealing-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r simulated-annealing-8-hint, eval = FALSE}
+svm_wflow |>
+  tune_sim_anneal(
+    resamples = cell_folds,
+    metrics = ...
+  )
+```
+
+```{r, include = FALSE}
+svm_wflow |>
+  tune_sim_anneal(
+    resamples = cell_folds,
+    metrics = roc_res
+  )
+```
+
+###
+
+
 
 ## Summary
 ### 
