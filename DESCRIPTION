@@ -24,6 +24,7 @@ Suggests:
     doParallel,
     finetune,
     ggrepel,
+    ggforce,
     kernlab,
     lme4,
     learnr,
