@@ -42,6 +42,28 @@ bean_rec <-
   step_orderNorm(all_numeric_predictors()) |>
   step_normalize(all_numeric_predictors())
 
+bean_rec_trained <- prep(bean_rec)
+
+bean_validation <- 
+  bean_val$splits |>
+  pluck(1) |>
+  assessment()
+
+bean_val_processed <- bake(bean_rec_trained, new_data = bean_validation)
+
+
+p1 <- 
+  bean_validation |> 
+  ggplot(aes(x = area)) +
+  geom_histogram(bins = 30, alpha = 1/3, color = "white", fill = "blue") +
+  ggtitle("Original validation set data")
+
+p2 <-
+  bean_val_processed |> 
+  ggplot(aes(x = area)) + 
+  geom_histogram(bins = 30, color = "white", fill = "red", alpha = 1/3) + 
+  ggtitle("Processed validation set data")
+
 
 ```
 
@@ -733,6 +755,456 @@ This recipe will be extended with additional steps for the dimensionality reduct
 
 ## Recipes In The Wild
 ### 
+
+A workflow containing a recipe uses `fit()` to estimate the recipe and model, then `predict()` to process the data and make model predictions. There are analogous functions in the recipes package that can be used for the same purpose:
+
+- `prep(recipe, training)` fits the recipe to the training set.
+- `bake(recipe, new_data)` applies the recipe operations to `new_data`
+
+### Exercise 1
+
+Let’s estimate `bean_rec` using the training set data, with `prep()`. In the code chunk below, type in `prep()` and pass in `bean_rec`.
+
+```{r recipes-in-the-wild-1, exercise = TRUE}
+
+```
+
+```{r recipes-in-the-wild-1-hint, eval = FALSE}
+prep(...)
+```
+
+```{r, include = FALSE}
+prep(bean_rec)
+```
+
+###
+
+Note in the output that the steps have been trained and that the selectors are no longer general (i.e., `all_numeric_predictors()`); they now show the actual columns that were selected. 
+
+Also, `prep(bean_rec)` does not require the `training` argument. You can pass any data into that argument, but omitting it means that the original `data` from the call to `recipe()` will be used. In our case, this was the training set data.
+
+### Exercise 2
+
+Copy the previous code and assign it to a new variable named `bean_rec_trained`.
+
+```{r recipes-in-the-wild-2, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r recipes-in-the-wild-2-hint, eval = FALSE}
+... <- prep(bean_rec)
+```
+
+```{r, include = FALSE}
+bean_rec_trained <- prep(bean_rec)
+```
+
+###
+
+Remember that `prep()` for a recipe is like `fit()` for a model.
+
+### Exercise 3
+
+Once new steps are added to this estimated recipe, reapplying `prep()` will estimate only the untrained steps. This will come in handy when different feature extraction methods are tried.
+
+Here is an example of this process. Press "Run code" (Note: This will throw an error, as `cornbread` is not a real predictor. The code below is just an example of adding a step and reapplying `prep()`).
+
+```{r recipes-in-the-wild-3, exercise = TRUE}
+bean_rec_trained |> 
+  step_dummy(cornbread) |>  # <- not a real predictor
+  prep(verbose = TRUE)
+```
+
+```{r, include = FALSE}
+#bean_rec_trained |> 
+#  step_dummy(cornbread) |>  # <- not a real predictor
+#  prep(verbose = TRUE)
+```
+
+###
+
+In geenral, if you encounter errors when working with a recipe, `prep()` can be used with its `verbose` option to troubleshoot.
+
+### Exercise 4
+
+Another option that can help you understand what happens in the analysis is `log_changes`. In the code chunk below, pipe `bean_rec` to `prep()`. Inside this function, set `log_changes` to `TRUE`.
+
+```{r recipes-in-the-wild-4, exercise = TRUE}
+
+```
+
+```{r recipes-in-the-wild-4-hint, eval = FALSE}
+bean_rec |> 
+  prep(... = ...)
+```
+
+```{r, include = FALSE}
+bean_rec |> 
+  prep(log_changes = TRUE)
+```
+
+###
+
+Since `prep()` has to execute the recipe as it proceeds, it may be advantageous to keep this version of the training set so that, if that data set is to be used later, redundant calculations can be avoided. However, if the training set is big, it may be problematic to keep such a large amount of data in memory. Use `retain = FALSE` to avoid this.
+
+### Exercise 5
+
+Using `bake()` with a recipe is much like using `predict()` with a model; the operations estimated from the training set are applied to any data, like testing data or new data at prediction time.
+
+In the code chunk below, pipe `bean_val$splits` to `pluck()`. Inside this function, type in `1`. 
+
+```{r recipes-in-the-wild-5, exercise = TRUE}
+
+```
+
+```{r recipes-in-the-wild-5-hint, eval = FALSE}
+bean_val$splits |>
+  ...(1)
+```
+
+```{r, include = FALSE}
+bean_val$splits |>
+  pluck(1)
+```
+
+###
+
+`pluck()` implements a generalized form of the double bracket operator, `[[`, that allow you to index deeply and flexibly into data structures.
+
+### Exercise 6
+
+Copy the previous code and pipe it to `assessment()`. Then, press "Run code".
+
+```{r recipes-in-the-wild-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r recipes-in-the-wild-6-hint, eval = FALSE}
+bean_val$splits |>
+  pluck(1) |>
+  ...()
+```
+
+```{r, include = FALSE}
+bean_val$splits |>
+  pluck(1) |>
+  assessment()
+```
+
+###
+
+In this scenario, `assessment()` returns the code as a data frame (specifically a tibble).
+
+### Exercise 7
+
+Copy the previous code and assign it to a new variable named `bean_validation`.
+
+```{r recipes-in-the-wild-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r recipes-in-the-wild-7-hint, eval = FALSE}
+... <- 
+  bean_val$splits |>
+  pluck(1) |>
+  assessment()
+```
+
+```{r, include = FALSE}
+bean_validation <- 
+  bean_val$splits |>
+  pluck(1) |>
+  assessment()
+```
+
+###
+
+This [link](https://recipes.tidymodels.org/reference/bake.html) contains more information about `bake()`.
+
+### Exercise 8
+
+Now, lets process `bean_validation` with `bake()`. In the code chunk below, type in `bake()`. Inside this funciton, type in `bean_rec_trained` and set `new_data` to `bean_validation`.
+
+```{r recipes-in-the-wild-8, exercise = TRUE}
+
+```
+
+```{r recipes-in-the-wild-8-hint, eval = FALSE}
+bake(..., new_data = ...)
+```
+
+```{r, include = FALSE}
+bake(bean_rec_trained, new_data = bean_validation)
+```
+
+###
+
+By using `bake()`, the validation set samples have now been processed.
+
+### Exercise 9
+
+Copy the previous code and assign it to a new variable named `bean_val_processed`.
+
+```{r recipes-in-the-wild-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r recipes-in-the-wild-9-hint, eval = FALSE}
+... <- bake(bean_rec_trained, new_data = bean_validation)
+```
+
+```{r, include = FALSE}
+bean_val_processed <- bake(bean_rec_trained, new_data = bean_validation)
+```
+
+###
+
+Another potential consequence of having a multitude of predictors is possible harm to a model. The simplest example is a method like ordinary linear regression where the number of predictors should be less than the number of data points used to fit the model. 
+
+### Exercise 10
+
+Now, lets create 2 histograms of the `area` predictor that show the before and after of the prepared recipe. When completed, the histograms will look like this:
+
+```{r}
+p1
+p2
+```
+
+
+In the code chunk below, pipe `bean_validation` to `ggplot()`. Inside this function, using `aes()`, set `x` to `area`.
+
+```{r recipes-in-the-wild-10, exercise = TRUE}
+
+```
+
+```{r recipes-in-the-wild-10-hint, eval = FALSE}
+bean_validation |> 
+  ...(aes(x = ...))
+```
+
+```{r, include = FALSE}
+bean_validation |> 
+  ggplot(aes(x = area))
+```
+
+###
+
+Another potential consequence of having a multitude of predictors is multicollinearity, where between-predictor correlations can negatively impact the mathematical operations used to estimate a model.
+
+### Exercise 11
+
+Copy the previous code and add `geom_histogram()`. Inside this function, set `bins` to `30` and `alpha` to `1/3`. 
+
+```{r recipes-in-the-wild-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r recipes-in-the-wild-11-hint, eval = FALSE}
+bean_validation |> 
+  ggplot(aes(x = area)) +
+  geom_histogram(bins = ..., alpha = ...)
+```
+
+```{r, include = FALSE}
+bean_validation |> 
+  ggplot(aes(x = area)) +
+  geom_histogram(bins = 30, alpha = 1/3)
+```
+
+###
+
+If there are an extremely large number of predictors, it is fairly unlikely that there are an equal number of real underlying effects. Predictors may be measuring the same latent effect(s), and thus such predictors will be highly correlated. Many dimensionality reduction techniques thrive in this situation. In fact, most can be effective only when there are such relationships between predictors that can be exploited.
+
+### Exercise 12
+
+Copy the previous code. Inside `geom_histogram()`, set `color` to `"white"` and `fill` to `"blue"`.
+
+```{r recipes-in-the-wild-12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r recipes-in-the-wild-12-hint, eval = FALSE}
+bean_validation |> 
+  ggplot(aes(x = area)) +
+  geom_histogram(bins = 30, alpha = 1/3, color = "...", fill = "...")
+```
+
+```{r, include = FALSE}
+bean_validation |> 
+  ggplot(aes(x = area)) +
+  geom_histogram(bins = 30, alpha = 1/3, color = "white", fill = "blue")
+```
+
+###
+
+When starting a new modeling project, reducing the dimensions of the data may provide some intuition about how hard the modeling problem may be.
+
+### Exercise 13
+
+Copy the previous code and add `ggtitle()`. Inside this function, type in `"Original validation set data"`. The final graph should look like this:
+
+```{r}
+p1
+```
+
+
+```{r recipes-in-the-wild-13, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r recipes-in-the-wild-13-hint, eval = FALSE}
+bean_validation |> 
+  ggplot(aes(x = area)) +
+  geom_histogram(bins = 30, alpha = 1/3, color = "white", fill = "blue") +
+  ggtitle("...")
+```
+
+```{r, include = FALSE}
+bean_validation |> 
+  ggplot(aes(x = area)) +
+  geom_histogram(bins = 30, alpha = 1/3, color = "white", fill = "blue") +
+  ggtitle("Original validation set data")
+```
+
+###
+
+`ggtitle()` is another way to add a title to a graph. `labs()` also has the capibility of doing this, but it's good to know other ways as well. 
+
+### Exercise 14
+
+Now, lets create the processed validation set graph, which will look like this:
+
+```{r}
+p2
+```
+
+Pipe `bean_val_processed` to `ggplot()`. Inside this function, using `aes()`, set `x` to `area`.
+
+```{r recipes-in-the-wild-14, exercise = TRUE}
+
+```
+
+```{r recipes-in-the-wild-14-hint, eval = FALSE}
+bean_val_processed |>
+  ...(aes(x = ...))
+```
+
+```{r, include = FALSE}
+bean_val_processed |>
+  ggplot(aes(x = area))
+```
+
+###
+
+Principal component analysis (PCA) is one of the most straightforward methods for reducing the number of columns in the data set because it relies on linear methods and is unsupervised (i.e., does not consider the outcome data).
+
+### Exercise 15
+
+Copy the previous code and add `geom_histogram()`. Inside this function, set `bins` to `30`, `alpha` to `1/3`, `color` to `"white"`, and `fill` to `"red"`.
+
+```{r recipes-in-the-wild-15, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r recipes-in-the-wild-15-hint, eval = FALSE}
+bean_val_processed |>
+  ggplot(aes(x = area)) +
+  geom_histogram(bins = ..., alpha = ..., color = "...", fill = "...")
+```
+
+```{r, include = FALSE}
+bean_val_processed |>
+  ggplot(aes(x = area)) +
+  geom_histogram(bins = 30, alpha = 1/3, color = "white", fill = "red")
+```
+
+###
+
+For a high-dimensional classification problem, an initial plot of the main PCA components might show a clear separation between the classes. If this is the case, then it is fairly safe to assume that a linear classifier might do a good job. However, the converse is not true; a lack of separation does not mean that the problem is insurmountable.
+
+### Exercise 16
+
+Copy the previous code and add `ggtitle()`. Inside this function, type `"Processed validation set data"`. The final graph should look like this:
+
+```{r}
+p2
+```
+
+
+```{r recipes-in-the-wild-16, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r recipes-in-the-wild-16-hint, eval = FALSE}
+bean_val_processed |>
+  ggplot(aes(x = area)) +
+  geom_histogram(bins = 30, alpha = 1/3, color = "white", fill = "red") +
+  ggtitle("...")
+```
+
+```{r, include = FALSE}
+bean_val_processed |>
+  ggplot(aes(x = area)) +
+  geom_histogram(bins = 30, alpha = 1/3, color = "white", fill = "red") +
+  ggtitle("Processed validation set data")
+```
+
+###
+
+As you can see, the processed validation set data is much more different than the original validation set data.
+
+### Exercise 17
+
+As previously mentioned, using `prep(recipe, retain = TRUE)` keeps the existing processed version of the training set in the recipe. This enables the user to use `bake(recipe, new_data = NULL)`, which returns that data set without further computations.
+
+Press "Run code".
+
+```{r recipes-in-the-wild-17, exercise = TRUE}
+bake(bean_rec_trained, new_data = NULL) |> nrow()
+
+bean_val$splits |> pluck(1) |> analysis() |> nrow()
+```
+
+```{r, include = FALSE}
+bake(bean_rec_trained, new_data = NULL) |> nrow()
+
+bean_val$splits |> pluck(1) |> analysis() |> nrow()
+```
+
+###
+
+If the training set is not pathologically large, using this value of `retain` can save a lot of computational time.
+
+Also, additional selectors can be used in the call to specify which columns to return. The default selector is `everything()`, but more specific directives can be used.
+
+###
+
+Congrats! You have learned how to bake a recipe with the use of `bake()`. 
+
+
+## Feature Extraction Techniques
+###
+
+ 
+
 
 ## Summary
 ### 
