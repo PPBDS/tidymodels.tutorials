@@ -16,6 +16,30 @@
       "Repository": "CRAN",
       "Hash": "68122010f01c4dcfbe58ce7112f2433d"
     },
+    "C50": {
+      "Package": "C50",
+      "Version": "0.1.8",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "Cubist",
+        "R",
+        "partykit"
+      ],
+      "Hash": "9ce1ac05ba2d6aa5b65ad60d266ebd80"
+    },
+    "Cubist": {
+      "Package": "Cubist",
+      "Version": "0.4.2.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "lattice",
+        "reshape2",
+        "utils"
+      ],
+      "Hash": "0d1db36bbd21a10577e9b234c248f19c"
+    },
     "DBI": {
       "Package": "DBI",
       "Version": "1.1.3",
@@ -52,6 +76,17 @@
         "R"
       ],
       "Hash": "b7b812ae4484d4bbf0a0baac72e8fc01"
+    },
+    "Formula": {
+      "Package": "Formula",
+      "Version": "1.2-5",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R",
+        "stats"
+      ],
+      "Hash": "7a29697b75e027767a53fde6c903eca7"
     },
     "GPfit": {
       "Package": "GPfit",
@@ -213,6 +248,16 @@
       ],
       "Hash": "f29d708a8e830a90d8f6d2acf1734974"
     },
+    "TeachingDemos": {
+      "Package": "TeachingDemos",
+      "Version": "2.12",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "41e566d7eab7307a31b3dee3b203c7e0"
+    },
     "abind": {
       "Package": "abind",
       "Version": "1.4-5",
@@ -244,6 +289,34 @@
         "R"
       ],
       "Hash": "c39fbec8a30d23e721980b8afb31984c"
+    },
+    "baguette": {
+      "Package": "baguette",
+      "Version": "1.0.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "C50",
+        "R",
+        "butcher",
+        "dials",
+        "dplyr",
+        "earth",
+        "furrr",
+        "generics",
+        "hardhat",
+        "magrittr",
+        "parsnip",
+        "purrr",
+        "rlang",
+        "rpart",
+        "rsample",
+        "tibble",
+        "tidyr",
+        "utils",
+        "withr"
+      ],
+      "Hash": "b7bd52098388a070314251c327725cee"
     },
     "base64enc": {
       "Package": "base64enc",
@@ -883,6 +956,19 @@
       ],
       "Hash": "716869fffc16e282c118f8894e082a7d"
     },
+    "earth": {
+      "Package": "earth",
+      "Version": "5.3.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "Formula",
+        "R",
+        "TeachingDemos",
+        "plotmo"
+      ],
+      "Hash": "1a97c41edcc9b87ec45ffdc128075909"
+    },
     "ellipsis": {
       "Package": "ellipsis",
       "Version": "0.3.2",
@@ -1085,6 +1171,35 @@
       ],
       "Hash": "15e9634c0fcd294799e9b2e929ed1b86"
     },
+    "ggforce": {
+      "Package": "ggforce",
+      "Version": "0.4.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "MASS",
+        "R",
+        "Rcpp",
+        "RcppEigen",
+        "cli",
+        "ggplot2",
+        "grDevices",
+        "grid",
+        "gtable",
+        "lifecycle",
+        "polyclip",
+        "rlang",
+        "scales",
+        "stats",
+        "systemfonts",
+        "tidyselect",
+        "tweenr",
+        "utils",
+        "vctrs",
+        "withr"
+      ],
+      "Hash": "a06503f54e227f79b45a72df2946a2d2"
+    },
     "ggplot2": {
       "Package": "ggplot2",
       "Version": "3.4.2",
@@ -1139,6 +1254,24 @@
         "withr"
       ],
       "Hash": "c76ee8fe60939384b9726128e38caea0"
+    },
+    "glmnet": {
+      "Package": "glmnet",
+      "Version": "4.1-7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "Matrix",
+        "R",
+        "Rcpp",
+        "RcppEigen",
+        "foreach",
+        "methods",
+        "shape",
+        "survival",
+        "utils"
+      ],
+      "Hash": "06f12f72ce94e533751a041cef8b71bc"
     },
     "globals": {
       "Package": "globals",
@@ -1461,6 +1594,18 @@
       ],
       "Hash": "1deaf1de3eac7e1d3377954b3a283652"
     },
+    "inum": {
+      "Package": "inum",
+      "Version": "1.0-5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "libcoin",
+        "stats"
+      ],
+      "Hash": "baa4e298aa0fe48568c951d2fcc5d7c2"
+    },
     "ipred": {
       "Package": "ipred",
       "Version": "0.9-14",
@@ -1552,6 +1697,20 @@
         "stats"
       ],
       "Hash": "d7d6a7cb690ac73eeced99e1ed9d6cdb"
+    },
+    "kknn": {
+      "Package": "kknn",
+      "Version": "1.3.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "Matrix",
+        "R",
+        "graphics",
+        "igraph",
+        "stats"
+      ],
+      "Hash": "caf9351c33fcb5209928dbfab053c43a"
     },
     "knitr": {
       "Package": "knitr",
@@ -1687,6 +1846,18 @@
         "Rcpp"
       ],
       "Hash": "a007ff66aa9d478e220bf0493a7b1d95"
+    },
+    "libcoin": {
+      "Package": "libcoin",
+      "Version": "1.0-9",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "mvtnorm",
+        "stats"
+      ],
+      "Hash": "8400d6bc0318f0b9b082b0e75fa6dd90"
     },
     "lifecycle": {
       "Package": "lifecycle",
@@ -1946,6 +2117,17 @@
       ],
       "Hash": "6dfe8bf774944bd5595785e3229d8771"
     },
+    "mvtnorm": {
+      "Package": "mvtnorm",
+      "Version": "1.2-2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "stats"
+      ],
+      "Hash": "ef6270cb713747aa8211620d6a47188d"
+    },
     "nlme": {
       "Package": "nlme",
       "Version": "3.1-162",
@@ -2080,6 +2262,27 @@
       ],
       "Hash": "009152502d5125513c353612052e9d4e"
     },
+    "partykit": {
+      "Package": "partykit",
+      "Version": "1.2-20",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "Formula",
+        "R",
+        "grDevices",
+        "graphics",
+        "grid",
+        "inum",
+        "libcoin",
+        "mvtnorm",
+        "rpart",
+        "stats",
+        "survival",
+        "utils"
+      ],
+      "Hash": "8551bfc8d1d6ab813e2e5c8917268cd4"
+    },
     "patchwork": {
       "Package": "patchwork",
       "Version": "1.1.2",
@@ -2191,6 +2394,33 @@
       ],
       "Hash": "6b0c222c5071efe0f3baf3dae9aa40e2"
     },
+    "plotmo": {
+      "Package": "plotmo",
+      "Version": "3.6.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "Formula",
+        "R",
+        "TeachingDemos",
+        "plotrix"
+      ],
+      "Hash": "ec6e3b80a43a169b3a81e426e697b84a"
+    },
+    "plotrix": {
+      "Package": "plotrix",
+      "Version": "3.8-2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "grDevices",
+        "graphics",
+        "stats",
+        "utils"
+      ],
+      "Hash": "2ebe8c2ec200da649738b0fc35a9b1a1"
+    },
     "plyr": {
       "Package": "plyr",
       "Version": "1.8.8",
@@ -2211,6 +2441,16 @@
         "R"
       ],
       "Hash": "bd54ba8a0a5faded999a7aab6e46b374"
+    },
+    "polyclip": {
+      "Package": "polyclip",
+      "Version": "1.10-4",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "66bbfa06f78108ee967220643596c91e"
     },
     "posterior": {
       "Package": "posterior",
@@ -2701,6 +2941,26 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "5564500e25cffad9e22244ced1379887"
+    },
+    "rules": {
+      "Package": "rules",
+      "Version": "1.0.2",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R",
+        "dials",
+        "dplyr",
+        "generics",
+        "parsnip",
+        "purrr",
+        "rlang",
+        "stats",
+        "stringr",
+        "tidyr",
+        "utils"
+      ],
+      "Hash": "cbd971b6537943f1177d4562cd23276e"
     },
     "rvest": {
       "Package": "rvest",
@@ -3322,6 +3582,21 @@
       ],
       "Hash": "55228ea53e0c8749496bdd8892c9d9d4"
     },
+    "tweenr": {
+      "Package": "tweenr",
+      "Version": "2.0.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "cpp11",
+        "farver",
+        "magrittr",
+        "rlang",
+        "vctrs"
+      ],
+      "Hash": "c16efcef4c72d3bff5e65031f3f1f841"
+    },
     "tzdb": {
       "Package": "tzdb",
       "Version": "0.4.0",
@@ -3332,6 +3607,23 @@
         "cpp11"
       ],
       "Hash": "f561504ec2897f4d46f0c7657e488ae1"
+    },
+    "usemodels": {
+      "Package": "usemodels",
+      "Version": "0.2.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "cli",
+        "clipr",
+        "dplyr",
+        "purrr",
+        "recipes",
+        "rlang",
+        "tidyr",
+        "tune"
+      ],
+      "Hash": "b08c9b87f51ecb707482194e3bd70322"
     },
     "utf8": {
       "Package": "utf8",
