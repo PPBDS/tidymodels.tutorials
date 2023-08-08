@@ -18,7 +18,9 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Suggests:
+    beans,
     censored,
+    corrplot,
     corrr,
     doParallel,
     finetune,
