@@ -19,6 +19,7 @@ library(knitr)
 library(tidymodels)
 library(beans)
 library(corrplot)
+library(bestNormalize)
 tidymodels_prefer()
 
 knitr::opts_chunk$set(echo = FALSE)
@@ -34,6 +35,12 @@ bean_test <- testing(bean_split)
 bean_val <- validation_split(bean_train, strata = class, prop = 3/4)
 
 tmwr_cols <- colorRampPalette(c("#91CBD765", "#CA225E"))
+
+bean_rec <- 
+  recipe(class ~ ., data = analysis(bean_val$splits[[1]])) |>
+  step_zv(all_numeric_predictors()) |>
+  step_orderNorm(all_numeric_predictors()) |>
+  step_normalize(all_numeric_predictors())
 
 
 ```
@@ -567,6 +574,164 @@ While it isn't done here,  it is also important to see if this correlation struc
 Congrats! You have analyzed the `beans` data set, creating various splits and a visual of the correlation matrix of the predictors.
 
 ## A Starter Recipe
+### 
+
+It’s time to look at the beans data in a smaller space. Let's start with a basic recipe to preprocess the data prior to any dimensionality reduction steps. Several predictors are ratios and so are likely to have skewed distributions. Such distributions can wreak havoc on variance calculations (such as the ones used in PCA).
+
+### Exercise 1
+
+To start, load the **bestNormalize** library using `library()`.
+
+```{r a-starter-recipe-1, exercise = TRUE}
+
+```
+
+```{r a-starter-recipe-1-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(bestNormalize)
+```
+
+### 
+
+Dimensionality reduction can be used either in feature engineering or in exploratory data analysis. For example, in high-dimensional biology experiments, one of the first tasks, before any modeling, is to determine if there are any unwanted trends in the data (e.g., effects not related to the question of interest, such as lab-to-lab differences).
+
+### Exercise 2
+
+Let's use the training data from the `bean_val` split object to create a recipe. In the code chunk below, type in `recipe()`. Inside this function, type in `class ~ .` and set `data` to `analysis(bean_val$splits[[1]])`.
+
+```{r a-starter-recipe-2, exercise = TRUE}
+
+```
+
+```{r a-starter-recipe-2-hint-1, eval = FALSE}
+...(class ~ ., data = ...(bean_val$splits[[...]])) 
+```
+
+```{r include = FALSE}
+recipe(class ~ ., data = analysis(bean_val$splits[[1]])) 
+```
+
+### 
+
+Debugging the data is difficult when there are hundreds of thousands of dimensions, and dimensionality reduction can be an aid for exploratory data analysis.
+
+### Exercise 3
+
+Copy the previous code and pipe it to `step_zv()`. Inside this function, type in `all_numeric_predictors()`.
+
+```{r a-starter-recipe-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-starter-recipe-3-hint-1, eval = FALSE}
+recipe(class ~ ., data = analysis(bean_val$splits[[1]])) |>
+  step_zv(...())
+```
+
+```{r include = FALSE}
+recipe(class ~ ., data = analysis(bean_val$splits[[1]])) |>
+  step_zv(all_numeric_predictors())
+```
+
+### 
+
+`step_zv()` creates a specification of a recipe step that will remove variables that contain only a single value.
+
+### Exercise 4
+
+Copy the previous code and pipe it to `step_orderNorm()`. Inside this function, type in `all_numeric_predictors()`.
+
+```{r a-starter-recipe-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-starter-recipe-4-hint-1, eval = FALSE}
+recipe(class ~ ., data = analysis(bean_val$splits[[1]])) |>
+  step_zv(all_numeric_predictors()) |>
+  step_orderNorm(...())
+```
+
+```{r include = FALSE}
+recipe(class ~ ., data = analysis(bean_val$splits[[1]])) |>
+  step_zv(all_numeric_predictors()) |>
+  step_orderNorm(all_numeric_predictors())
+```
+
+### 
+
+`step_orderNorm()` is a function that creates a specification of a recipe step that will transform data using the ORQ (orderNorm) transformation, which approximates the "true" normalizing transformation if one exists.
+
+### Exercise 5
+
+Copy the previous code and pipe it to `step_normalize()`. Inside this function, type `all_numeric_predictors()`.
+
+```{r a-starter-recipe-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-starter-recipe-5-hint-1, eval = FALSE}
+recipe(class ~ ., data = analysis(bean_val$splits[[1]])) |>
+  step_zv(all_numeric_predictors()) |>
+  step_orderNorm(all_numeric_predictors()) |>
+  step_normalize(...())
+```
+
+```{r include = FALSE}
+recipe(class ~ ., data = analysis(bean_val$splits[[1]])) |>
+  step_zv(all_numeric_predictors()) |>
+  step_orderNorm(all_numeric_predictors()) |>
+  step_normalize(all_numeric_predictors())
+```
+
+### 
+
+`step_normalize()` creates a *specification* of a recipe step that will normalize numeric data to have a standard deviation of one and a mean of zero.
+
+### Exercise 6
+
+Copy the previous code and assign it to a new variable named `bean_rec`.
+
+```{r a-starter-recipe-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-starter-recipe-6-hint-1, eval = FALSE}
+... <- 
+  recipe(class ~ ., data = analysis(bean_val$splits[[1]])) |>
+  step_zv(all_numeric_predictors()) |>
+  step_orderNorm(all_numeric_predictors()) |>
+  step_normalize(all_numeric_predictors())
+```
+
+```{r include = FALSE}
+bean_rec <- 
+  recipe(class ~ ., data = analysis(bean_val$splits[[1]])) |>
+  step_zv(all_numeric_predictors()) |>
+  step_orderNorm(all_numeric_predictors()) |>
+  step_normalize(all_numeric_predictors())
+```
+
+### 
+
+Remember that when invoking the `recipe()` function, the steps are not estimated or executed in any way.
+
+### 
+
+This recipe will be extended with additional steps for the dimensionality reduction analyses. Before doing so, let’s go over how a recipe can be used outside of a workflow.
+
+
+## Recipes In The Wild
 ### 
 
 ## Summary
