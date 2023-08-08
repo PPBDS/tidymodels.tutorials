@@ -5,8 +5,8 @@ tutorial:
   id: a-model-workflow
 output:
   learnr::tutorial:
-    progressive: yes
-    allow_skip: yes
+    progressive: true
+    allow_skip: true
 runtime: shiny_prerendered
 description: 'Tutorial for Chapter 7: A Model Workflow'
 ---

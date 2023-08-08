@@ -1,0 +1,1540 @@
+---
+title: Screening Many Models
+author: Pratham Kancherla
+tutorial:
+  id: screening-many-models
+output: 
+  learnr::tutorial:
+    progressive: true
+    allow_skip: true
+runtime: shiny_prerendered
+description: 'Tutorial for Chapter 15: Screening Many Models'
+---
+
+```{r setup, include = FALSE}
+library(learnr)
+library(tutorial.helpers)
+#library(finetune)
+library(knitr)
+library(tidyverse)
+library(tidymodels)
+library(tune)
+library(ggrepel)
+#library(ggforce)
+library(rstanarm)
+library(rules)
+library(tidyposterior)
+library(lme4)
+library(multilevelmod)
+library(nlme)
+#library(usemodels)
+library(workflowsets)
+
+knitr::opts_chunk$set(echo = FALSE)
+options(tutorial.exercise.timelimit = 60, 
+        tutorial.storage = "local") 
+
+data(cells)
+cells1 <- cells %>% select(-case)
+
+set.seed(1304)
+cell_folds <- vfold_cv(cells1)
+
+roc_res <- metric_set(roc_auc)
+
+concrete1 <- 
+   concrete |>
+   group_by(across(-compressive_strength)) |>
+   summarize(compressive_strength = mean(compressive_strength),
+             .groups = "drop")
+
+concrete_split <- initial_split(concrete, strata = compressive_strength)
+concrete_train <- training(concrete_split)
+concrete_test  <- testing(concrete_split)
+
+concrete_folds <-
+  vfold_cv(concrete_train, 
+           strata = compressive_strength, 
+           repeats = 5)
+
+normalized_rec <- 
+   recipe(compressive_strength ~ ., data = concrete_train) |>
+   step_normalize(all_predictors()) 
+
+linear_reg_spec <- 
+   linear_reg(penalty = tune(), mixture = tune()) |>
+   set_engine("glmnet")
+
+nnet_spec <- 
+   mlp(hidden_units = tune(), penalty = tune(), epochs = tune()) |>
+   set_engine("nnet", MaxNWts = 2600) |>
+   set_mode("regression")
+
+mars_spec <- 
+  mars(prod_degree = tune()) |> #<- use GCV to choose terms
+  set_engine("earth") |>
+  set_mode("regression")
+
+svm_r_spec <- 
+  svm_rbf(cost = tune(), rbf_sigma = tune()) |>
+  set_engine("kernlab") |>
+  set_mode("regression")
+
+svm_p_spec <- 
+  svm_poly(cost = tune(), degree = tune()) |>
+  set_engine("kernlab") |>
+  set_mode("regression")
+
+knn_spec <- 
+  nearest_neighbor(neighbors = tune(), dist_power = tune(), weight_func = tune()) |>
+  set_engine("kknn") |>
+  set_mode("regression")
+
+cart_spec <- 
+  decision_tree(cost_complexity = tune(), min_n = tune()) |>
+  set_engine("rpart") |>
+  set_mode("regression")
+
+bag_cart_spec <- 
+  bag_tree() |>
+  set_engine("rpart", times = 50L) |>
+  set_mode("regression")
+
+rf_spec <- 
+  rand_forest(mtry = tune(), min_n = tune(), trees = 1000) |>
+  set_engine("ranger") |>
+  set_mode("regression")
+
+xgb_spec <- 
+   boost_tree(tree_depth = tune(), learn_rate = tune(), loss_reduction = tune(), min_n = tune(), sample_size = tune(), trees = tune()) |>
+  set_engine("xgboost") |>
+  set_mode("regression")
+
+cubist_spec <- 
+  cubist_rules(committees = tune(), neighbors = tune()) |>
+  set_engine("Cubist") 
+
+normalized <- 
+  workflow_set(
+    preproc = list(normalized = normalized_rec),
+    models = list(SVM_radial = svm_r_spec, 
+                  SVM_poly = svm_p_spec, 
+                  KNN = knn_spec, 
+                  neural_network = nnet_spec)
+   )
+
+model_vars <-
+  workflow_variables(outcomes = compressive_length,
+                   predictors = everything())
+
+normalized |> extract_workflow(id = "normalized_KNN")
+
+normalized1 <-
+  normalized |>
+  option_add(param_info = nnet_param, id = "normalized_neural_network")
+
+no_pre_proc <- 
+  workflow_set(
+    preproc = list(simple = model_vars), 
+    models = list(MARS = mars_spec,
+                  CART = cart_spec,
+                  CART_bagged = bag_cart_spec,
+                  RF = rf_spec,
+                  boosting = xgb_spec, 
+                  Cubist = cubist_spec)
+   )
+
+all_workflows <- 
+  bind_rows(no_pre_proc, normalized, with_features) |>
+  mutate(wflow_id = gsub("(simple_)|(normalized_)", "", wflow_id))
+```
+
+```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
+```
+
+```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
+```
+
+## Introduction
+###
+
+<!-- Two to four sentence about the main topics covered in this tutorial. Why are we here? What will students get out of giving you 90 minutes of their lives? How does this tutorial connect to other tutorials? -->
+
+## Modeling Concrete Mixture Strength
+###
+
+To demonstrate how to screen multiple model workflows, we will use the concrete mixture data from Applied Predictive Modeling [M. Kuhn and Johnson 2013](https://www.tmwr.org/workflow-sets#ref-apm) as an example. A wide variety of models were evaluated with different predictor sets and preprocessing needs. How can workflow sets make such a process of large scale testing for models easier?
+
+### Exercise 1
+
+First, let’s define the data splitting and resampling schemes. Load the `library **tidymodels** using `library()`.
+
+```{r modeling-concrete-mi-1, exercise = TRUE}
+
+```
+
+```{r modeling-concrete-mi-1-hint, eval = FALSE}
+library(...)
+```
+
+```{r, include = FALSE}
+library(tidymodels)
+```
+
+###
+
+A good strategy is to spend some initial effort trying a variety of modeling approaches, determine what works best, then invest additional time tweaking/optimizing a small set of models.
+
+### Exercise 2
+
+Now load the data using `data()`, setting the parameters to `concrete` and `package = "modeldata"`.
+
+```{r modeling-concrete-mi-2, exercise = TRUE}
+
+```
+
+```{r modeling-concrete-mi-2-hint, eval = FALSE}
+data(concrete, ... =  "...")
+```
+
+```{r, include = FALSE}
+data(concrete, package = "modeldata")
+```
+
+###
+
+ It is common to have little or no *a priori* knowledge about which method will work best with a novel data set.
+ 
+### Exercise 3
+
+The data we will be using is `concrete`. Enter `glimpse(concrete)` to look at some of the data in the data set.
+
+```{r modeling-concrete-mi-3, exercise = TRUE}
+
+```
+
+```{r modeling-concrete-mi-3-hint, eval = FALSE}
+glimpse(...)
+```
+
+```{r, include = FALSE}
+glimpse(concrete)
+```
+
+###
+
+The `compressive_strength` column is the outcome. The `age` predictor tells us the age of the concrete sample at testing in days (concrete strengthens over time) and the rest of the predictors like `cement` and `water` are concrete components in units of kilograms per cubic meter.
+
+### Exercise 4
+
+Type `concrete` and pipe it to `group_by()`. Add the parameter within `across()` of `group_by()` to be `-compressive_strength.
+
+```{r modeling-concrete-mi-4, exercise = TRUE}
+
+```
+
+```{r modeling-concrete-mi-4-hint, eval = FALSE}
+concrete |>
+  ...(across(-...))
+```
+
+```{r, include = FALSE}
+concrete |>
+   group_by(across(-compressive_strength))
+```
+
+###
+
+For some cases in this data set, the same concrete formula was tested multiple times. We’d rather not include these replicate mixtures as individual data points since they might be distributed across both the training and test set. Doing so might artificially inflate our performance estimates.
+
+### Exercise 5
+
+Copy the previous code and pipe it to `summarize()`. Add the parmaeters `compressive_strength`, setting it equal to `mean(compressive_strength)` and `groups`, setting it equal to `"drop"`. Set this entire expression to `concrete1`.
+
+```{r modeling-concrete-mi-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-5-hint, eval = FALSE}
+concrete1 <-
+  ... |>
+  summarize(... = mean(...), 
+            .groups = "..."
+            )
+```
+
+```{r, include = FALSE}
+concrete1 <- 
+   concrete |>
+   group_by(across(-compressive_strength)) |>
+   summarize(compressive_strength = mean(compressive_strength),
+             .groups = "drop")
+```
+
+###
+
+`across()` is used for applying operations to multiple columns simultaneously within a data frame, usually in the context of data manipulation tasks. The `across()` function is especially useful when working with multiple columns and allows you to succinctly express complex operations.
+
+### Exercise 5
+
+Let’s split the data using the default 3:1 ratio of training-to-test and resample the training set using five repeats of 10-fold cross-validation.
+
+Type `initial_split()`. Add the parameter `concrete` and `strata`, setting it equal to `compressive_strength`. Set the entire expression to `concrete_split` using `<-`.
+
+```{r modeling-concrete-mi-5, exercise = TRUE}
+
+```
+
+```{r modeling-concrete-mi-5-hint, eval = FALSE}
+concrete_split <- initial_split(..., 
+                                strata = ...)
+```
+
+```{r, include = FALSE}
+concrete_split <- initial_split(concrete, 
+                                strata = compressive_strength)
+```
+
+###
+
+This data represents a the training set used to generate the "model" Linear regression model used by default with the **DivMelt** package. The training set contains sets of acceptable and unacceptable input samples. 
+
+### Exercise 6
+
+Type `training()` and add the parameter `concrete_split`. Set the entrie expression to `concrete_train`.
+
+```{r modeling-concrete-mi-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-6-hint, eval = FALSE}
+concrete_train <- training(...)
+```
+
+```{r, include = FALSE}
+concrete_train <- training(concrete_split)
+```
+
+###
+
+Workflow sets provide a user interface to create and manage this process. We’ll also demonstrate how to evaluate these models efficiently using the racing methods discussed in a later section of this tutorial.
+
+### Exercise 7
+
+Copy the previous code and replace `training` with `testing` and set it from `concrete_train` to `concrete_test`.
+
+```{r modeling-concrete-mi-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-7-hint, eval = FALSE}
+concrete_test  <- testing(...)
+```
+
+```{r, include = FALSE}
+concrete_test  <- testing(concrete_split)
+```
+
+###
+
+Some models (notably neural networks, KNN, and support vector machines) require predictors that have been centered and scaled, so some model workflows will require recipes with these preprocessing steps.
+
+### Exercise 8
+
+Type `vfold_cv()`. Add the parameters `concrete_train`, `strata = compressive_strength`, and `repeats = 5`.
+
+```{r modeling-concrete-mi-8, exercise = TRUE}
+
+```
+
+```{r modeling-concrete-mi-8-hint, eval = FALSE}
+concrete_folds <- 
+  vfold_cv(concrete_train = ..., 
+           strata = ..., 
+           ... = 5)
+```
+
+```{r, include = FALSE}
+concrete_folds <-
+  vfold_cv(concrete_train, 
+           strata = compressive_strength, 
+           repeats = 5)
+
+```
+
+###
+
+For other models, a traditional response surface design model expansion (i.e., quadratic and two-way interactions) is a good idea.
+
+### Exercise 9
+
+For the purposes mentioned above, two recipes need to be created. First, type `recipe()` and add the parameter `compressive_strength ~ .` and `data`, setting it equal to `concrete_train`.
+
+```{r modeling-concrete-mi-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-9-hint, eval = FALSE}
+recipe(compressive_strength ~ ., 
+       ... = concrete_train)
+```
+
+```{r, include = FALSE}
+recipe(compressive_strength ~ ., 
+       data = concrete_train)
+```
+
+###
+
+`strata`: A column in your data that defines the groups to maintain across folds.
+
+### Exercise 10
+
+Copy the previous code and pipe it to `step_normalize()`. Add the parameter `all_predictors()` and then, set the entire expression to `normalized_rec`.
+
+```{r modeling-concrete-mi-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-10-hint, eval = FALSE}
+normalized_rec <-
+  ... |>
+  step_normalize(...())
+```
+
+```{r, include = FALSE}
+normalized_rec <- 
+   recipe(compressive_strength ~ ., data = concrete_train) |>
+   step_normalize(all_predictors()) 
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 11
+
+Type in `normalized_rec` and pipe it to `step_poly()`. Add the parameter `all_predictors()`.
+
+```{r modeling-concrete-mi-11, exercise = TRUE}
+
+```
+
+```{r modeling-concrete-mi-11-hint, eval = FALSE}
+normalized_rec |>
+  step_poly(...())
+```
+
+```{r, include = FALSE}
+normalized_rec |>
+  step_poly(all_predictors())
+```
+
+###
+
+The `step_poly()`, part of the **stats** package, is a function used for selecting the optimal degree of polynomial terms in a linear regression model using stepwise selection.
+
+### Exercise 12
+
+Copy the previous code and pipe it to `step_interact()`. Add the parameter `~ all_predictors():all_predictors()`. Then, set the entire expression to `poly_recipe()`
+
+```{r modeling-concrete-mi-12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-12-hint, eval = FALSE}
+
+```
+
+```{r, include = FALSE}
+poly_recipe <- 
+   normalized_rec |>
+   step_poly(all_predictors()) |>
+   step_interact(~ all_predictors():all_predictors())
+```
+
+###
+
+`step_interact()` creates a specification of a recipe step that will create new columns that are interaction terms between two or more variables.
+
+### Exercise 13
+
+Now, the **parsnip** addin will be used to create a set of model specifications. Load the library **rules** using `library()`.
+
+```{r modeling-concrete-mi-13, exercise = TRUE}
+
+```
+
+```{r modeling-concrete-mi-13-hint, eval = FALSE}
+library(...)
+```
+
+```{r, include = FALSE}
+#library(rules)
+```
+
+###
+
+The **rules** library in R is used for working with association rule mining. It's commonly used for market basket analysis, where the goal is to discover interesting relationships between products that are frequently purchased together.
+
+### Exercise 14
+
+Now load the library **baguette** using `library()`.
+
+```{r modeling-concrete-mi-14, exercise = TRUE}
+
+```
+
+```{r modeling-concrete-mi-14-hint, eval = FALSE}
+library(...)
+```
+
+```{r, include = FALSE}
+library(baguette)
+```
+
+###
+
+**baguettte**: Tree- and rule-based models can be bagged using this package and their predictions equations are stored in an efficient format to reduce the model objects size and speed.
+
+### Exercise 15
+
+Type `linear_reg()` and add the parmeters `penalty` and `mixture`, setting them equal to `tune()`.
+
+```{r modeling-concrete-mi-15, exercise = TRUE}
+
+```
+
+```{r modeling-concrete-mi-15-hint, eval = FALSE}
+linear_reg(penalty = ..., mixture = ...)
+```
+
+```{r, include = FALSE}
+linear_reg(penalty = tune(), mixture = tune())
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 16
+
+Copy the previous code and pipe it to `set_engine()` and add the parameter `"glmnet"`. Then, set the entire expression to `linear_reg_spec` using `<-`.
+
+```{r modeling-concrete-mi-16, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-16-hint, eval = FALSE}
+linear_reg_spec <-
+  ... |>
+  set_engine("...")
+```
+
+```{r, include = FALSE}
+linear_reg_spec <- 
+   linear_reg(penalty = tune(), mixture = tune()) |>
+   set_engine("glmnet")
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 17
+
+Type in `mlp()` and add the parameters `hidden_units`, `pernalty`, and `epochs`, setting them all equal to `tune()`.
+
+```{r modeling-concrete-mi-17, exercise = TRUE}
+
+```
+
+```{r modeling-concrete-mi-17-hint, eval = FALSE}
+mlp(hidden_units = ..., penalty = tune(), ... = ...)
+```
+
+```{r, include = FALSE}
+mlp(hidden_units = tune(), penalty = tune(), epochs = tune())
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 18
+
+Copy the previous code and pipe it to `set_engine()`. Add the parameters `"nnet"` and `MaxNWts`, setting the latter equal to `2600`.
+
+```{r modeling-concrete-mi-18, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-18-hint, eval = FALSE}
+... |>
+  set_engine("nnet", ... = 2600)
+```
+
+```{r, include = FALSE}
+mlp(hidden_units = tune(), penalty = tune(), epochs = tune()) |> 
+   set_engine("nnet", MaxNWts = 2600) 
+```
+
+###
+
+The **nnet** package in R is used for fitting and training feed-forward neural networks. It provides functions to create, train, and evaluate neural network models.
+
+### Exercise 19
+
+Copy the previous code and pipe it to `set_mode()`. Add the parameter `"regression"`. Then, set the entire expression to `nnet_spec`.
+
+```{r modeling-concrete-mi-19, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-19-hint, eval = FALSE}
+nnet_spec <-
+  ... |>
+  set_mode("...")
+```
+
+```{r, include = FALSE}
+nnet_spec <-
+  mlp(hidden_units = tune(), penalty = tune(), epochs = tune()) |>
+  set_engine("nnet", MaxNWts = 2600) |>
+  set_mode("regression")
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 20
+
+Type `mars()` and add the parameter `prod_degree`, setting it equal to `tune()`.
+
+```{r modeling-concrete-mi-20, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-20-hint, eval = FALSE}
+mars(... = tune())
+```
+
+```{r, include = FALSE}
+mars(prod_degree = tune())
+```
+
+###
+
+`mars()` defines a generalized linear model that uses artificial features for some predictors. These features resemble hinge functions and the result is a model that is a segmented regression in small dimensions. This function can fit classification and regression models.
+
+### Exercise 21
+
+Copy the previous code and pipe it to `set_engine()`, setting the parameter to `"earth"`. Then pipe it to `set_mode()`, setting the parameter to `"regression"`. Then, set the entire expression to `mars_spec`.
+
+```{r modeling-concrete-mi-21, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-21-hint, eval = FALSE}
+mars_spec <-
+  ... |>
+  set_engine("...") |>
+  set_mode("...")
+```
+
+```{r, include = FALSE}
+mars_spec <- 
+   mars(prod_degree = tune()) |>
+   set_engine("earth") |>
+   set_mode("regression")
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 22
+
+Type `svm_rbf()`, adding the parameters `cost` and `rbf_sigma`, setting them both equal to `tune()`.
+
+```{r modeling-concrete-mi-22, exercise = TRUE}
+
+```
+
+```{r modeling-concrete-mi-22-hint, eval = FALSE}
+svm_rbf(cost = ..., rbf_sigma = ...)
+```
+
+```{r, include = FALSE}
+svm_rbf(cost = tune(), rbf_sigma = tune())
+```
+
+###
+
+`svm_rbf()` is a way to generate a specification of a model before fitting and allows the model to be created using different packages in R or via Spark. 
+
+### Exercise 23
+
+Copy the previous code and pipe it to `set_engine()`, setting the parameter to `"kernlab"`. Then pipe it to `set_mode()`, setting the parameter to `"regression`. Set the entire expression to `svm_r_spec`.
+
+```{r modeling-concrete-mi-23, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-23-hint, eval = FALSE}
+svm_r_spec <-
+  ... |>
+  set_engine("...") |>
+  set_mode("...")
+```
+
+```{r, include = FALSE}
+svm_r_spec <- 
+   svm_rbf(cost = tune(), rbf_sigma = tune()) |>
+   set_engine("kernlab") |>
+   set_mode("regression")
+```
+
+###
+
+<!-- PK: Knoweldge Drop -->
+
+### Exercise 24
+
+Type in `svm_poly()`, setting the parameters `cost` and `degree` to `tune()`.
+
+```{r modeling-concrete-mi-24, exercise = TRUE}
+
+```
+
+```{r modeling-concrete-mi-24-hint, eval = FALSE}
+svm_poly(cost = ..., degree = ...)
+```
+
+```{r, include = FALSE}
+svm_poly(cost = tune(), degree = tune())
+```
+
+###
+
+`svm_poly()` defines a support vector machine model. For regression, the model optimizes a robust loss function that is only affected by very large model residuals and uses polynomial functions of the predictors. 
+
+### Exercise 25
+
+Copy the previous code and pipe it to `set_engine()`, adding the parameter `"kernlab"`. Then, pipe it to `set_mode()`, adding the parameter `"regression"`. Set the entire expresssion to `svm_p_spec`.
+
+```{r modeling-concrete-mi-25, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-25-hint, eval = FALSE}
+svm_spec <-
+  ... |>
+  set_engine("...") |>
+  set_mode("...")
+```
+
+```{r, include = FALSE}
+svm_p_spec <- 
+   svm_poly(cost = tune(), degree = tune()) |>
+   set_engine("kernlab") |>
+   set_mode("regression")
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 26
+
+Type `nearest_neighbor()`, setting the parameters `neighbors`, `dist_power`,  and `weight_func` to `tune()`.
+
+```{r modeling-concrete-mi-26, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-26-hint, eval = FALSE}
+nearest_neighbor(neighbors = ..., dist_power = ..., ... = tune()) 
+```
+
+```{r, include = FALSE}
+nearest_neighbor(neighbors = tune(), dist_power = tune(), weight_func = tune()) 
+```
+
+###
+
+`nearest_neighbor()` defines a model that uses the K most similar data points from the training set to predict new samples. This function can fit classification and regression models.
+
+### Exercise 27
+
+Copy the previous code and pipe it to `set_engine()`, adding the parameter `"kknn"`. Then, pipe the code to `set_mode()`, adding the parameter `"regression"`. Set the entire expression to `knn_spec`.
+
+```{r modeling-concrete-mi-27, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-27-hint, eval = FALSE}
+knn_spec <-
+  ... |>
+  set_engine("...") >
+  set_mode("...")
+```
+
+```{r, include = FALSE}
+knn_spec <- 
+  nearest_neighbor(neighbors = tune(), dist_power = tune(),
+                    weight_func = tune()) |>
+  set_engine("kknn") |>
+  set_mode("regression")
+```
+
+###
+
+`kknn` fits a model that uses the K most similar data points from the training set to predict new samples.
+
+### Exercise 28
+
+Type `decision_tree()`, setting the parameters `cost_complexity` and `min_n` to `tune()`.
+
+```{r modeling-concrete-mi-28, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-28-hint, eval = FALSE}
+decision_tree(cost_complexity = ..., min_n = ...)
+```
+
+```{r, include = FALSE}
+decision_tree(cost_complexity = tune(), min_n = tune())
+```
+
+###
+
+`decision_tree()` defines a model as a set of ⁠if/then⁠ statements that creates a tree-based structure. This function can fit classification, regression, and censored regression models.
+
+### Exercise 29
+
+Copy the previous code and pipe it to `set_engine()`, adding the parameter `"rpart"`. Then, pipe the code to `set_mode()`, adding the parameter `"regression"`. Set the entire expression to `cart_spec`.
+
+```{r modeling-concrete-mi-29, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-29-hint, eval = FALSE}
+cart_sepc <-
+  ... |>
+  set_engine("...") |>
+  set_mode("...")
+```
+
+```{r, include = FALSE}
+cart_spec <- 
+   decision_tree(cost_complexity = tune(), min_n = tune()) |>
+   set_engine("rpart") |>
+   set_mode("regression")
+```
+
+###
+
+The **rpart** package is used for creating decision tree models through a process called recursive partitioning. The **rpart** package provides functions to build and visualize decision trees by recursively partitioning the data into subsets based on the values of predictor variables.
+
+### Exercise 30
+
+Type `bag_tree()` and hit "Run Code".
+
+```{r modeling-concrete-mi-30, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-30-hint, eval = FALSE}
+bag_tree()
+```
+
+```{r, include = FALSE}
+bag_tree()
+```
+
+###
+
+`bag_tree()` defines an ensemble of decision trees. This function can fit classification, regression, and censored regression models.
+
+### Exercise 31
+
+Copy the previous code and pipe it to `set_engine()`, adding the parameter `"rpart"` and `times = 50L`. Then, pipe the code to `set_mode()`, adding the parameter `"regression"`. Set the entire expression to `bag_cart_spec`.
+
+```{r modeling-concrete-mi-31, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-31-hint, eval = FALSE}
+
+```
+
+```{r, include = FALSE}
+bag_cart_spec <- 
+   bag_tree() |>
+   set_engine("rpart", times = 50L) |>
+   set_mode("regression")
+```
+
+###
+
+**Cubist** is a prediction-oriented regression model. Although it initially creates a tree structure, it collapses each path through the tree into a rule. A regression model is fit for each rule based on the data subset defined by the rules.
+
+### Exercise 32
+
+Type in `rand_forest()`, setting the parameters `mtry` and `min_n` to `tune()` and `trees` to `1000`.
+
+```{r modeling-concrete-mi-32, exercise = TRUE}
+
+```
+
+```{r modeling-concrete-mi-32-hint, eval = FALSE}
+rand_forest(... = tune(), ... = ..., trees = 1000)
+```
+
+```{r, include = FALSE}
+rand_forest(mtry = tune(), min_n = tune(), trees = 1000)
+```
+
+###
+
+`rand_forest()` defines a model that creates a large number of decision trees, each independent of the others. The final prediction uses all predictions from the individual trees and combines them.
+
+### Exercise 33
+
+Copy the previous code and pipe it to `set_engine()`, adding the parameter `"ranger"`. The, pipe the code to `set_mode()`, adding the parameter `"regression"`. Set the entire expression to `rf_spec`.
+
+```{r modeling-concrete-mi-33, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-33-hint, eval = FALSE}
+rf_spec <-
+  ... |>
+  set_engine("...") |>
+  set_mode("...")
+```
+
+```{r, include = FALSE}
+rf_spec <- 
+   rand_forest(mtry = tune(), min_n = tune(), trees = 1000) |>
+   set_engine("ranger") |>
+   set_mode("regression")
+```
+
+###
+
+**ranger::ranger()** fits a model that creates a large number of decision trees, each independent of the others. The final prediction uses all predictions from the individual trees and combines them.
+
+### Exercise 34
+
+Type in `boost_tree()`, setting the parameters `tree_depth`, `learn_rate`, `loss_reduction`, `min_n`, `sample_size`, and `trees` to `tune()`.
+
+```{r modeling-concrete-mi-34, exercise = TRUE}
+
+```
+
+```{r modeling-concrete-mi-34-hint, eval = FALSE}
+boost_tree(tree_depth = ..., learn_rate = ..., loss_reduction = tune(), min_n = ..., ... = tune(), ... = tune())
+```
+
+```{r, include = FALSE}
+boost_tree(tree_depth = tune(), learn_rate = tune(), loss_reduction = tune(), min_n = tune(), sample_size = tune(), trees = tune())
+```
+
+###
+
+`boost_tree()` defines a model that creates a series of decision trees forming an ensemble. Each tree depends on the results of previous trees. All trees in the ensemble are combined to produce a final prediction.
+
+### Exercise 35
+
+Copy the previous code and pipe it to `set_engine()`, adding the parameter `"xgboost"`. The, pipe the code to `set_mode()`, adding the parameter `"regression"`. Set the entire expression to `xgb_spec`.
+
+```{r modeling-concrete-mi-35, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-35-hint, eval = FALSE}
+xbg_sepc <-
+  ... |>
+  set_engine("...") |>
+  set_mode()"..."
+```
+
+```{r, include = FALSE}
+xgb_spec <- 
+  boost_tree(tree_depth = tune(), learn_rate = tune(), loss_reduction = tune(), min_n = tune(), sample_size = tune(),  trees = tune()) |>
+  set_engine("xgboost") |>
+  set_mode("regression")
+```
+
+###
+
+`xgboost::xgb.train()` creates a series of decision trees forming an ensemble. Each tree depends on the results of previous trees. All trees in the ensemble are combined to produce a final prediction.
+
+### Exercise 36
+
+Type `cubist_rules()`, setting the parameters `committees` and `neighbors` to `tune()`.
+
+```{r modeling-concrete-mi-36, exercise = TRUE}
+
+```
+
+```{r modeling-concrete-mi-36-hint, eval = FALSE}
+cubist_rules(... = tune(), neighbors - ...)
+```
+
+```{r, include = FALSE}
+cubist_rules(committees = tune(), neighbors = tune())
+```
+
+###
+
+`cubist_rules()` defines a model that derives simple feature rules from a tree ensemble and creates regression models within each rule. This function can fit regression models.
+
+### Exercise 37
+
+Copy thep previous code and pipe it to `set_engine()`, adding the parameter `"Cubist"`. Then, set the entire expression to `cubist_spec` using `<-`.
+
+```{r modeling-concrete-mi-37, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-37-hint, eval = FALSE}
+cubist_sepc <-
+  ... |>
+  set_engine("...")
+```
+
+```{r, include = FALSE}
+cubist_spec <- 
+   cubist_rules(committees = tune(), neighbors = tune()) |>
+   set_engine("Cubist")
+```
+
+###
+
+The analysis in M. Kuhn and Johnson [2013](https://www.tmwr.org/workflow-sets#ref-apm) specifies that the neural network should have up to 27 hidden units in the layer. The `extract_parameter_set_dials()` function extracts the parameter set, which we modify to have the correct parameter range
+
+### Exercise 38
+
+Type `nnet_spec` and pipe it to `extract_parameter_set_dials()`.
+
+```{r modeling-concrete-mi-38, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-38-hint, eval = FALSE}
+nnet_sepc |>
+  ...()
+```
+
+```{r, include = FALSE}
+nnet_spec |>
+  extract_parameter_set_dials()
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 39
+
+Copy the previous code and pipe it to `update()`, setting the parameter `hidden_units` to `hidden_units(c(1, 27))`. Then, set the entire expression to `nnet_param` using `<-`.
+
+```{r modeling-concrete-mi-39, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r modeling-concrete-mi-39-hint, eval = FALSE}
+nnet_param <-
+  ... |>
+  update(... = hidden_units(c(1, 27)))
+```
+
+```{r, include = FALSE}
+nnet_param <- 
+   nnet_spec |>
+   extract_parameter_set_dials() |>
+   update(hidden_units = hidden_units(c(1, 27)))
+```
+
+###
+
+Great Job! You now have learned how to screen multiple model workflows using a concrete mixture data. 
+
+## Creating the Workflow Set
+###
+
+How can we match these models to their recipes, tune them, then evaluate their performance efficiently? A workflow set offers a solution. Workflow sets take named lists of preprocessors and model specifications and combine them into an object containing multiple workflows. There are three possible kinds of preprocessors: standard R formula, recipe object (prior to estimation/prepping), **dplyr**-style selector to choose the outcome and predictors.
+
+### Exercise 1
+
+Type in `workflow_set()` and add the parameter `preproc`. Set it equal to `list(normalized = normalized_rec)`.
+
+```{r creating-the-workflo-1, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-the-workflo-1-hint, eval = FALSE}
+workflow_set(
+  preproc = list(... = normalized_rec)
+)
+```
+
+```{r, include = FALSE}
+workflow_set(
+  preproc = list(normalized = normalized_spec)
+)
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 2
+
+Copy the previous code and add the parameter `models`, setting it equal to `list()`. Within `list()`, add `SVM_radial = svm_r_spec`, `SVM_Poly = svm_p_spec`, `KNN = knn_sepc`, and `neural_network = nnet_spec`. Then, set the entire expression to `normalized`.
+
+```{r creating-the-workflo-2, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-the-workflo-2-hint, eval = FALSE}
+normalized <- 
+  workflow_set(
+    preproc = list(normalized = normalized_rec),
+    models = list(... = svm_r_spec, 
+                  SVM_poly = ..., 
+                  ... = knn_spec, 
+                  neural_network = ...)
+   )
+```
+
+```{r, include = FALSE}
+normalized <- 
+  workflow_set(
+    preproc = list(normalized = normalized_rec),
+    models = list(SVM_radial = svm_r_spec, 
+                  SVM_poly = svm_p_spec, 
+                  KNN = knn_spec, 
+                  neural_network = nnet_spec)
+   )
+```
+
+###
+
+The wflow_id column is automatically created but can be modified using a call to mutate(). The info column contains a tibble with some identifiers and the workflow object.
+
+### Exercise 3
+
+Pipe `normalized` to `extract_workflow()`, setting the parameter `id` equal to `normalized_KNN`.
+
+```{r creating-the-workflo-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-the-workflo-3-hint, eval = FALSE}
+normalized |>
+  extract_workflow(id = "...")
+```
+
+```{r, include = FALSE}
+normalized |> extract_workflow(id = "normalized_KNN")
+```
+
+###
+
+The option column is a placeholder for any arguments to use when we evaluate the workflow. For example, to add the neural network parameter object.
+
+### Exercise 4
+
+Pipe `normalized` to `option_add()`. Set the parameter `param_info` equal to `nnet_param` and set `id` equal to `normalized_neural_network`. Then, set the entire expression to `normalized1`.
+
+```{r creating-the-workflo-4, exercise = TRUE}
+
+```
+
+```{r creating-the-workflo-4-hint, eval = FALSE}
+normalized1 <-
+  normalized |>
+  option_add(... = nnet_param, id = "...")
+```
+
+```{r, include = FALSE}
+normalized1 <-
+  normalized |>
+  option_add(param_info = nnet_param, id = "normalized_neural_network")
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 5
+
+Type `workflow_variables()`. Set the parameter `outcomes` equal to `compressive_strength` and `predictors` equal to `everything()`. Then, set this expression to `model_vars` using `<-`.
+
+```{r creating-the-workflo-5, exercise = TRUE}
+
+```
+
+```{r creating-the-workflo-5-hint, eval = FALSE}
+model_vars <-
+  workflow_variables(outcomes = ...,
+                   predictors = ...())
+```
+
+```{r, include = FALSE}
+model_vars <-
+  workflow_variables(outcomes = compressive_length,
+                   predictors = everything())
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 6
+
+Type `workflow_set()`. Set the parameter `preproc` to `list(simple = model_vars)`.
+
+```{r creating-the-workflo-6, exercise = TRUE}
+
+```
+
+```{r creating-the-workflo-6-hint, eval = FALSE}
+workflow_set(preproc = list(...))
+```
+
+```{r, include = FALSE}
+workflow_set(preproc = list(simple = model_vars))
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 7
+
+Copy the previous code and add the parameter `models`. Set `models` equal to `list()`. In list, add the parameters `MARS = mars_spec`, `CART = cart_spec`, `CART_bagged = bag_cart_spec`, `RF = rf_spec`, `boosting = xgb_spec`, `Cubist = cubist_spec`. Then, set the entire expression to `no_pre_proc`.
+
+```{r creating-the-workflo-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-the-workflo-7-hint, eval = FALSE}
+no_pre_proc <- 
+  workflow_set(
+    preproc = list(simple = model_vars), 
+    models = list(MARS = ...,
+                  ... = cart_spec,
+                  CART_bagged = bag_cart_spec,
+                  RF = rf_spec,
+                  boosting = ..., 
+                  Cubist = ...
+   )
+```
+
+```{r, include = FALSE}
+
+no_pre_proc <- 
+  workflow_set(
+    preproc = list(simple = model_vars), 
+    models = list(MARS = mars_spec,
+                  CART = cart_spec,
+                  CART_bagged = bag_cart_spec,
+                  RF = rf_spec,
+                  boosting = xgb_spec, 
+                  Cubist = cubist_spec)
+   )
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 8
+
+Finally, we assemble the set that uses nonlinear terms and interactions with the appropriate models.
+
+Type `workflow_set()`. Set the parameter `preproc` equal to `list()`. Within `list()`, set the parameter `full_quad` equal to `poly_recipe`.
+
+```{r creating-the-workflo-8, exercise = TRUE}
+
+```
+
+```{r creating-the-workflo-8-hint, eval = FALSE}
+workflow_set(
+  preproc = ...(full_quad = ...)
+)
+```
+
+```{r, include = FALSE}
+workflow_set(
+  preproc = list(full_quad = poly_recipe)
+)
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 9
+
+Copy the previous code and add the parameter `models`. Set `models` equal to `list()`. Within `list()`, set the parameter `linear_reg` equal to `linear_reg_spec` and `KNN` equal to `knn_spec`. Then, set the entire expression to `with_features`.
+
+```{r creating-the-workflo-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-the-workflo-9-hint, eval = FALSE}
+with_features <- 
+  workflow_set(
+    preproc = list(full_quad = poly_recipe), 
+    models = ...(linear_reg = ..., ... = knn_spec)
+   )
+```
+
+```{r, include = FALSE}
+with_features <- 
+  workflow_set(
+    preproc = list(full_quad = poly_recipe), 
+    models = list(linear_reg = linear_reg_spec, KNN = knn_spec)
+   )
+```
+
+###
+
+These objects are tibbles with the extra class of workflow_set. Row binding does not affect the state of the sets and the result is itself a workflow set.
+
+### Exercise 10
+
+Type `bind_rows()`. Add the parameters `no_pre_proc`, `normalized`, and `with_features`.
+
+```{r creating-the-workflo-10, exercise = TRUE}
+
+```
+
+```{r creating-the-workflo-10-hint, eval = FALSE}
+bind_rows(..., normalized, with_features)
+```
+
+```{r, include = FALSE}
+bind_rows(no_pre_proc, normalized, with_features)
+
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+
+### Exercise 11
+
+Copy the previous code and pipe it to `mutate()`. Within the function, add the parameters `wflow_id = gsub("(simple_)|(normalized_)", "", wflow_id)`. Then, set the entire expression to `all_workflows` using `<-`.
+
+```{r creating-the-workflo-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-the-workflo-11-hint, eval = FALSE}
+all_workflows <-
+  ... |>
+  mutate(wflow_id = gsub(...))
+```
+
+```{r, include = FALSE}
+all_workflows <- 
+  bind_rows(no_pre_proc, normalized, with_features) |>
+  mutate(wflow_id = gsub("(simple_)|(normalized_)", "", wflow_id))
+```
+
+###
+
+Great Work! You have just created a workflow set that will be soon tuned and evaluated.
+
+## Tuning and Evaluating the Models
+###
+
+Almost all of the members of `all_workflows` contain tuning parameters. To evaluate their performance, we can use the standard tuning or resampling functions (e.g., `tune_grid()` and so on). The `workflow_map()` function will apply the same function to all of the workflows in the set; the default is `tune_grid()`.
+
+### Exercise 1
+
+Type in `control_grid()`. Add the parameters `save_pred`, setting it equal to `TRUE`, `parallel_over`, setting it equal to `"everything"`, and `save_workflow`, setting it equal to `TRUE`. Then set the whole expression to `grid_ctrl`.
+
+```{r tuning-and-evaluatin-1, exercise = TRUE}
+
+```
+
+```{r tuning-and-evaluatin-1-hint, eval = FALSE}
+grid_ctrl <-
+   control_grid(
+      save_pred = ...,
+      parallel_over = "...",
+      ...= TRUE
+   )
+```
+
+```{r, include = FALSE}
+grid_ctrl <-
+   control_grid(
+      save_pred = TRUE,
+      parallel_over = "everything",
+      save_workflow = TRUE
+   )
+```
+
+###
+
+`control_grid()` control aspects of the grid search process.
+
+### Exercise 2
+
+Pipe `all_workflows` to `workflow_map()`.
+
+```{r tuning-and-evaluatin-2, exercise = TRUE}
+
+```
+
+```{r tuning-and-evaluatin-2-hint, eval = FALSE}
+all_workflows |>
+  ...()
+```
+
+```{r, include = FALSE}
+all_workflows |>
+  workflow_map()
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 3
+
+Copy the previous code and add the parameters `seed = 1503`, `resamples = concrete_folds`, `grid = 25`, and `control = grid_ctrl`. Then, set the entire expression to `grid_results`. Type `grid_results` on the next line to see the output.
+
+```{r tuning-and-evaluatin-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tuning-and-evaluatin-3-hint, eval = FALSE}
+grid_results <-
+   ... |>
+   workflow_map(
+      seed = ...,
+      resamples = ...,
+      grid = 25,
+      ... = grid_ctrl
+   )
+```
+
+```{r, include = FALSE}
+grid_results <-
+   all_workflows %>%
+   workflow_map(
+      seed = 1503,
+      resamples = concrete_folds,
+      grid = 25,
+      control = grid_ctrl
+   )
+```
+
+###
+
+The `option` column now contains all of the options that we used in the `workflow_map()` call. This makes our results reproducible. In the result columns, the “`tune[+]`” and “`rsmp[+]`” notations mean that the object had no issues. A value such as “`tune[x]`” occurs if all of the models failed for some reason.
+
+### Exercise 4
+
+
+
+```{r tuning-and-evaluatin-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tuning-and-evaluatin-4-hint, eval = FALSE}
+
+```
+
+```{r, include = FALSE}
+
+```
+
+###
+
+
+
+## Summary
+###
+
+<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+
+```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
+```

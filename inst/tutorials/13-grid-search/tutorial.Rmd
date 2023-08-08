@@ -3,10 +3,10 @@ title: Grid Search
 author: Pratham Kancherla
 tutorial:
   id: grid-search
-output: 
+output:
   learnr::tutorial:
-    progressive: yes
-    allow_skip: yes
+    progressive: true
+    allow_skip: true
 runtime: shiny_prerendered
 description: 'Tutorial for Chapter 13: Grid Search'
 ---
@@ -14,16 +14,19 @@ description: 'Tutorial for Chapter 13: Grid Search'
 ```{r setup, include = FALSE}
 library(learnr)
 library(tutorial.helpers)
+library(finetune)
 library(knitr)
 library(tidyverse)
 library(tidymodels)
 library(tune)
 library(ggrepel)
+library(ggforce)
 library(rstanarm)
 library(tidyposterior)
 library(lme4)
 library(multilevelmod)
 library(nlme)
+library(usemodels)
 library(workflowsets)
 
 tidymodels_prefer()
@@ -32,12 +35,122 @@ knitr::opts_chunk$set(echo = FALSE)
 options(tutorial.exercise.timelimit = 60, 
         tutorial.storage = "local") 
 
+ames <- mutate(ames, Sale_Price = log10(Sale_Price))
+
+ames_split <- initial_split(ames, prop = 0.80, strata = Sale_Price)
+ames_train <- training(ames_split)
+ames_test  <-  testing(ames_split)
+
 mlp_spec <- 
   mlp(hidden_units = tune(), penalty = tune(), epochs = tune()) |>
   set_engine("nnet", trace = 0) |> 
   set_mode("classification")
 
 mlp_param <- extract_parameter_set_dials(mlp_spec)
+
+mlp_rec <- 
+  recipe(class ~ ., data = cells) |>
+  step_YeoJohnson(all_numeric_predictors()) |>
+  step_normalize(all_numeric_predictors()) |>
+  step_pca(all_numeric_predictors(), num_comp = tune()) |>
+  step_normalize(all_numeric_predictors())
+
+cells1 <- cells |> select(-case)
+
+cell_folds <- vfold_cv(cells1)
+
+mlp_wflow <- 
+  workflow() |>
+  add_model(mlp_spec) |>
+  add_recipe(mlp_rec)
+
+mlp_param <- 
+  mlp_wflow |>
+  extract_parameter_set_dials() |>
+  update(
+    epochs = epochs(c(50, 200)),
+    num_comp = num_comp(c(0, 40))
+  )
+
+roc_res <- metric_set(roc_auc)
+
+mlp_reg_tune <-
+  mlp_wflow |>
+  tune_grid(
+    cell_folds,
+    grid = mlp_param |> grid_regular(levels = 3),
+    metrics = roc_res
+  )
+
+mlp_sfd_tune <-
+  mlp_wflow |>
+  tune_grid(
+    cell_folds,
+    grid = 20,
+    param_info = mlp_param,
+    metrics = roc_res)
+
+logistic_param <- 
+  tibble(
+    num_comp = 0,
+    epochs = 125,
+    hidden_units = 1,
+    penalty = 1
+  )
+
+final_mlp_wflow <-
+  mlp_wflow |>
+  finalize_workflow(logistic_param)
+
+final_mlp_fit <-
+  final_mlp_wflow |>
+  fit(cells)
+
+xgboost_recipe <-
+  recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_novel(all_nominal_predictors()) |>
+  step_dummy(all_nominal_predictors(), one_hot = TRUE) |>
+  step_zv(all_predictors())
+
+xgboost_spec <-
+  boost_tree(trees = tune(), min_n = tune(), tree_depth = tune(),
+             learn_rate = tune(), loss_reduction = tune(),
+             sample_size = tune()) |>
+  set_mode("regression") |>
+  set_engine("xgboost")
+
+xgboost_workflow <- 
+  workflow() |>
+  add_recipe(xgboost_recipe) |>
+  add_model(xgboost_spec)
+
+xgboost_tune <-
+  tune_grid(xgboost_workflow, 
+            resamples = cell_folds,
+            grid = mlp_param)
+
+c5_spec <-
+  boost_tree(trees = tune()) |>
+  set_engine("C5.0") |>
+  set_mode("classification")
+
+coef_penalty <- 0.1
+
+spec <-
+  linear_reg(penalty = coef_penalty) |>
+  set_engine("glmnet")
+
+mcmc_args <- list(chains = 3, iter = 1000, cores = 3)
+
+mlp_sfd_race <-
+  mlp_wflow |>
+  tune_race_anova(
+    cell_folds,
+    grid = 20,
+    param_info = mlp_param,
+    metrics = roc_res,
+    control = control_race(verbose_elim = TRUE)
+  )
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -46,20 +159,19 @@ mlp_param <- extract_parameter_set_dials(mlp_spec)
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
-
 ## Introduction
-###
+### 
 
-<!-- Two to four sentence about the main topics covered in this tutorial. Why are we here? What will students get out of giving you 90 minutes of their lives? How does this tutorial connect to other tutorials? -->
+This tutorial covers [Chapter 13: Grid Search](https://www.tmwr.org/grid-search) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. In previous tutorials, we demonstrated how users can mark or tag arguments in preprocessing recipes and/or model specifications for optimization using the tune() function. Once we know what to optimize, it’s time to address the question of how to optimize the parameters. This tutorial describes grid search methods that specify the possible values of the parameters a *priori*.
 
 ## Regular and Non-Regular Grids
-###
+### 
 
-There are two main types of grids. A regular grid combines each parameter (with its corresponding set of possible values) factorially, i.e., by using all combinations of the sets. Alternatively, a nonregular grid is one where the parameter combinations are not formed from a small set of points.
+There are two main types of grids. A regular grid combines each parameter (with its corresponding set of possible values) factorially, i.e., by using all combinations of the sets. Alternatively, a non-regular grid is one where the parameter combinations are not formed from a small set of points.
 
 ### Exercise 1
 
-"MLP" stands for Multi-Layer Perceptron, which is a type of artificial neural network. MLPs are a class of feedforward neural networks that consist of multiple layers of interconnected nodes (neurons). They are commonly used for various machine learning tasks, including classification and regression.
+"MLP" stands for Multi-Layer Perceptron, which is a type of artificial neural network. MLPs are a class of feed-forward neural networks that consist of multiple layers of interconnected nodes (neurons). They are commonly used for various machine learning tasks, including classification and regression.
 
 Type `mlp()` and hit "Run Code".
 
@@ -69,15 +181,15 @@ Type `mlp()` and hit "Run Code".
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r regular-and-nonregul-1-hint, eval = FALSE}
+```{r regular-and-nonregul-1-hint-1, eval = FALSE}
 mlp()
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 mlp()
 ```
 
-###
+### 
 
 This produces the output of a single layer neural network model specification with the computational engine of **nnet**.
 
@@ -91,15 +203,15 @@ Copy the previous code and add the parameter `hidden_units`, setting it equal to
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r regular-and-nonregul-2-hint, eval = FALSE}
+```{r regular-and-nonregul-2-hint-1, eval = FALSE}
 mlp(hidden_units = ...())
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 mlp(hidden_units = tune())
 ```
 
-###
+### 
 
 In R, the `tune()` function is typically used in conjunction with the **caret** package to perform hyperparameter tuning for machine learning models.
 
@@ -113,15 +225,15 @@ Copy the previous code add the parameters `penalty` and `epochs`, setting them b
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r regular-and-nonregul-3-hint, eval = FALSE}
+```{r regular-and-nonregul-3-hint-1, eval = FALSE}
 mlp(hidden_units = tune(), ... = tune(), epochs = ...())
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 mlp(hidden_units = tune(), penalty = tune(), epochs = tune())
 ```
 
-###
+### 
 
 `penalty`	is a non-negative numeric value for the amount of weight decay and `epochs` is an integer for the number of training iterations.
 
@@ -135,17 +247,17 @@ Copy the previous code and pipe it to `set_engine()`. Add the parameters `"nnet"
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r regular-and-nonregul-4-hint, eval = FALSE}
+```{r regular-and-nonregul-4-hint-1, eval = FALSE}
 ... |>
   set_engine("...", trace = ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
  mlp(hidden_units = tune(), penalty = tune(), epochs = tune()) |> 
   set_engine("nnet", trace = 0)
 ```
 
-###
+### 
 
 Now the main arguments and Engine-Specific Arguments have been set. All that needs to be done is add the model.
 
@@ -159,20 +271,20 @@ Copy the previous code and pipe it to `set_mode()`. Add the parameter `"classifi
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r regular-and-nonregul-5-hint, eval = FALSE}
+```{r regular-and-nonregul-5-hint-1, eval = FALSE}
 mlp_sec <-
   ... |>
   set_mode("...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 mlp_spec <- 
   mlp(hidden_units = tune(), penalty = tune(), epochs = tune()) |>
   set_engine("nnet", trace = 0) |> 
   set_mode("classification")
 ```
 
-###
+### 
 
 The argument `trace = 0` prevents extra logging of the training process. The `extract_parameter_set_dials()` function can extract the set of arguments with unknown values and sets their **dials** objects.
 
@@ -186,15 +298,15 @@ Set `mlp_param` to the expression `extract_parameter_set_dials(mlp_spec)` using 
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r regular-and-nonregul-6-hint, eval = FALSE}
+```{r regular-and-nonregul-6-hint-1, eval = FALSE}
 mlp_param <- ...(mlp_spec)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 mlp_param <- extract_parameter_set_dials(mlp_spec)
 ```
 
-###
+### 
 
 `extract_parameter_set_dials()` returns a set of dials parameter objects. Many models contain tuning parameters (i.e. parameters that cannot be directly estimated from the data). These tools can be used to define objects for creating, simulating, or validating values for such parameters.
 
@@ -208,19 +320,19 @@ Now pipe `mlp_param` to `extract_parameter_dials()`. Add the parameter `"hidden_
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r regular-and-nonregul-7-hint, eval = FALSE}
+```{r regular-and-nonregul-7-hint-1, eval = FALSE}
 mlp_param |>
   extract_parameter_dials("...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 mlp_param |>
   extract_parameter_dials("hidden_units")
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
+Regular grids can be computationally expensive to use, especially when there are a medium-to-large number of tuning parameters. This is true for many models but not all. 
 
 ### Exercise 8
 
@@ -232,19 +344,19 @@ Copy the previous exercise and switch `"hidden_units"` to `"penalty"`.
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r regular-and-nonregul-8-hint, eval = FALSE}
+```{r regular-and-nonregul-8-hint-1, eval = FALSE}
 mlp_param |>
   extract_parameter_dials("...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 mlp_param |>
   extract_parameter_dials("penalty")
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
+This output indicates that the parameter objects are complete and prints their default ranges. These values will be used to demonstrate how to create different types of parameter grids.
 
 ### Exercise 9
 
@@ -256,16 +368,16 @@ Copy the previous code and switch `"penalty"` to `"epochs"`.
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r regular-and-nonregul-9-hint, eval = FALSE}
+```{r regular-and-nonregul-9-hint-1, eval = FALSE}
 mlp_param %>% extract_parameter_dials("...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 mlp_param |>
   extract_parameter_dials("epochs")
 ```
 
-###
+### 
 
 Regular grids are combinations of separate sets of parameter values. The number of possible values need not be the same for each parameter. The **tidyr** function `crossing()` is one way to create a regular grid.
 
@@ -279,28 +391,2031 @@ Type `crossing()` and add the parameters `hidden_units = 1:3`, `penalty = c(0.0,
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r regular-and-nonregul-10-hint, eval = FALSE}
+```{r regular-and-nonregul-10-hint-1, eval = FALSE}
 crossing(... = 1:3,
          penalty = ...(0.0, 0.1),
          epochs = c(..., ...)
          )
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 crossing(hidden_units = 1:3,
          penalty = c(0.0, 0.1),
          epochs = c(100, 200)
          )
 ```
 
-###
+### 
+
+`grid_regular()` can create random and regular grids for any number of parameter objects. The parameter object knows the ranges of the parameters. The **dials** package contains a set of `grid_*()` functions that take the parameter object as input to produce different types of grids. 
+
+### Exercise 11
+
+Type `grid_regular()` and add the parameter `mlp_param`. 
+
+```{r regular-and-nonregul-11, exercise = TRUE}
+
+```
+
+```{r regular-and-nonregul-11-hint-1, eval = FALSE}
+grid_regular(...)
+```
+
+```{r include = FALSE}
+grid_regular(mlp_param)
+```
+
+### 
+
+The `levels` argument is the number of levels per parameter to create. It can also take a named vector of values.
+
+### Exercise 12
+
+Copy the previous code and add the parameter `levels`, setting it equal to 2.
+
+```{r regular-and-nonregul-12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-12-hint-1, eval = FALSE}
+grid_regular(mlp_param, levels = ...)
+```
+
+```{r include = FALSE}
+grid_regular(mlp_param, levels = 2)
+```
+
+### 
+
+There are techniques for creating regular grids that do not use all possible values of each parameter set. These *fractional factorial designs* could also be used. To learn more, consult the CRAN Task View for experimental design.
+
+### Exercise 13
+
+Copy the previous code and switch the `levels` parameter to make it equal a vector of `hidden_units = 3`, `penalty = 2`, `epochs = 2`.
+
+```{r regular-and-nonregul-13, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-13-hint-1, eval = FALSE}
+grid_regular(mlp_param, levels = c(... = 3, penalty = 2, epochs = ...))
+```
+
+```{r include = FALSE}
+grid_regular(mlp_param, levels = c(hidden_units = 3, penalty = 2, epochs = 2))
+```
+
+### 
+
+Regular grids can be computationally expensive to use, especially when there are a medium-to-large number of tuning parameters. This is true for many models but not all. 
+
+### Exercise 14
+
+The `grid_random()` function generates independent uniform random numbers across the parameter ranges. 
+
+Type `grid_random()` and add the parameters `mlp_param` and `size = 1000`.
+
+```{r regular-and-nonregul-14, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-14-hint-1, eval = FALSE}
+grid_random(mlp_param, size = ...)
+```
+
+```{r include = FALSE}
+grid_random(mlp_param, size = 1000)
+```
+
+### 
+
+There are several options for creating non-regular grids. The first is to use random sampling across the range of parameters.
+
+### Exercise 15
+
+To view the summary of the previous code, copy the previous code and pipe it to `summary()`.
+
+```{r regular-and-nonregul-15, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-15-hint-1, eval = FALSE}
+... |>
+  ...()
+```
+
+```{r include = FALSE}
+grid_random(mlp_param, size = 1000) |>
+  summary()
+```
+
+### 
+
+The issue with random grids is that, with small-to-medium grids, random values can result in overlapping parameter combinations. Also, the random grid needs to cover the whole parameter space, but the likelihood of good coverage increases with the number of grid values.
+
+### Exercise 16
+
+Now we will graph the grid. Type `mlp_param` and pipe it to `grid_random()`, with the parameters `size = 20` and `original = FALSE`.
+
+```{r regular-and-nonregul-16, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-16-hint-1, eval = FALSE}
+mlp_param |>
+  grid_random(... = 20, original = ...)
+```
+
+```{r include = FALSE}
+mlp_param |>
+  grid_random(size = 20, original = FALSE)
+```
+
+### 
+
+If the parameter object has an associated transformation (such as we have for `penalty`), the random numbers are generated on the transformed scale.
+
+### Exercise 17
+
+Copy the previous code and pipe it to `ggplot()`. Within `aes()` of `ggplot()`, add the parameters `x = .panel_x` and `y = .panel_y`
+
+```{r regular-and-nonregul-17, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-17-hint-1, eval = FALSE}
+... |>
+  ggplot(...(x = .panel_x, ... = .panel_y))
+```
+
+```{r include = FALSE}
+mlp_param |>
+  grid_random(size = 20, original = FALSE) |>
+  ggplot(aes(x = .panel_x, y = .panel_y))
+```
+
+### 
+
+One advantage to using a regular grid is that the relationships and patterns between the tuning parameters and the model metrics are easily understood.
+
+### Exercise 18
+
+Copy the previous code and add `geom_point()` using `+`.
+
+```{r regular-and-nonregul-18, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-18-hint-1, eval = FALSE}
+... +
+  geom_point()
+```
+
+```{r include = FALSE}
+mlp_param |>
+  grid_random(size = 20, original = FALSE) |>
+  ggplot(aes(x = .panel_x, y = .panel_y)) +
+    geom_point()
+```
+
+### 
+
+The factorial nature of grids designs allows for examination of each parameter separately with little confounding between parameters.
+
+### Exercise 19
+
+Copy the previous code and add `geom_blank()`. Then add `facet_matrix()`.
+
+```{r regular-and-nonregul-19, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-19-hint-1, eval = FALSE}
+... +
+  geom_blank() +
+  ...()
+```
+
+```{r include = FALSE}
+mlp_param |>
+  grid_random(size = 20, original = FALSE) |>
+  ggplot(aes(x = .panel_x, y = .panel_y)) + 
+  geom_point() +
+    geom_blank() +
+    facet_matrix()
+```
+
+### 
+
+*Space-filling designs* generally find a configuration of points that cover the parameter space with the smallest chance of overlapping or redundant values.
+
+### Exercise 20
+
+Copy the previous code and add the parameters `vars(hidden_units, penalty, epochs)` and `layer.diag`, setting that equal to 2.
+
+```{r regular-and-nonregul-20, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-20-hint-1, eval = FALSE}
+... +
+  facet_matrix(vars(..., penalty, epochs), layer.diag = ...)
+```
+
+```{r include = FALSE}
+mlp_param |>
+  grid_random(size = 20, original = FALSE) |>
+  ggplot(aes(x = .panel_x, y = .panel_y)) + 
+    geom_point() +
+    geom_blank() +
+    facet_matrix(vars(hidden_units, penalty, epochs), layer.diag = 2)
+```
+
+### 
+
+The `facet_matrix()` facet allows you to put different data columns into different rows and columns in a grid of panels. It is also known as a scatter plot matrix, and if other geoms are used it is sometimes referred to as a pairs plot. 
+
+### Exercise 21
+
+Copy the previous code and add `labs()`, setting `title = "Random design with 20 candidates"`.
+
+```{r regular-and-nonregul-21, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-21-hint-1, eval = FALSE}
+... |>
+  labs(title = "...")
+```
+
+```{r include = FALSE}
+mlp_param |>
+  grid_random(size = 20, original = FALSE) |>
+  ggplot(aes(x = .panel_x, y = .panel_y)) + 
+    geom_point() +
+    geom_blank() +
+    facet_matrix(vars(hidden_units, penalty, epochs), layer.diag = 2) +
+    labs(title = "Random design with 20 candidates")
+```
+
+### 
+
+While not perfect, this Latin hypercube design spaces the points farther away from one another and allows a better exploration of the hyperparameter space.
+
+### Exercise 22
+
+Copy the previous code and change the function `grid_random()` to `grid_latin_hypercube()`. Switch the title to `"Lating Hypercube design with 20 candidates"`
+
+```{r regular-and-nonregul-22, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r regular-and-nonregul-22-hint-1, eval = FALSE}
+
+```
+
+```{r include = FALSE}
+mlp_param |>
+  grid_latin_hypercube(size = 20, original = FALSE) |>
+  ggplot(aes(x = .panel_x, y = .panel_y)) + 
+    geom_point() +
+    geom_blank() +
+    facet_matrix(vars(hidden_units, penalty, epochs), layer.diag = 2) +
+    labs(title = "Random design with 20 candidates")
+```
+
+### 
+
+Space-filling designs can be very effective at representing the parameter space. The default design used by the **tune** package is the maximum entropy design. These tend to produce grids that cover the candidate space well and drastically increase the chances of finding good results.
+
+Great Job! You now know the basics of regular and non-regular grids and how to visualize and graph them using functions such as `crossing()`, `grid_regular()`, `grid_random()`, `grid_latin_hypercube()`, etc.
+
+## Evaluating the Grid
+### 
+
+Resampling methods or a single validation set work well for choosing the best tuning parameter combination. After resampling, the user selects the most appropriate candidate parameter set, in this case. A classification data set is used to demonstrate model tuning.
+
+### Exercise 1
+
+Load the library **tidymodels** using `library()`.
+
+```{r evaluating-the-grid-1, exercise = TRUE}
+
+```
+
+```{r evaluating-the-grid-1-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(tidymodels)
+```
+
+ 
+### 
+
+The data, `cells`, consists of 56 imaging measurements on 2019 human breast cancer cells. These predictors represent shape and intensity characteristics of different parts of the cells (e.g., the nucleus, the cell boundary, etc.). 
+
+### Exercise 2
+
+Type in cells to explore the data that will be used.
+
+```{r evaluating-the-grid-2, exercise = TRUE}
+
+```
+
+```{r evaluating-the-grid-2-hint-1, eval = FALSE}
+cells
+```
+
+```{r include = FALSE}
+cells
+```
+
+### 
+
+There is a high degree of correlation between the predictors. For example, there are several different predictors that measure the size and shape of the nucleus and cell boundary. Also, individually, many predictors have skewed distributions.
+
+### Exercise 3
+
+Copy the previous code and pipe it to `select()`, adding the parameter `-case`. Then, set the entire expression to `cells` using `<-`.
+
+```{r evaluating-the-grid-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r evaluating-the-grid-3-hint-1, eval = FALSE}
+cells <- ... |>
+  select(-...)
+```
+
+```{r include = FALSE}
+cells <- cells |>
+  select(-case)
+```
+
+### 
+
+Each cell belongs to one of two classes. Since this is part of an automated lab test, the focus was on prediction capability rather than inference.
+
+### Exercise 4
+
+Type `vfold_cv()` and add the parameter `cells`. Set the entire expression to `cell_folds()`.
+
+```{r evaluating-the-grid-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r evaluating-the-grid-4-hint-1, eval = FALSE}
+cell_folds <- ...()
+```
+
+```{r include = FALSE}
+cell_folds <- vfold_cv(cells)
+```
+
+### 
+
+V-fold cross-validation (vfold_cv()) randomly splits the data into V groups of roughly equal size (called "folds"). A re-sample of the analysis data consists of V-1 of the folds while the assessment set contains the final fold.
+
+### Exercise 5
+
+Since PCA is variance based, extreme values can have a detrimental effect on these calculations. To counter this, let’s add a recipe step estimating a Yeo-Johnson transformation for each predictor.
+
+Type `recipe()` and add the parameter `class ~ .`. This might throw an error.
+
+```{r evaluating-the-grid-5, exercise = TRUE}
+
+```
+
+```{r evaluating-the-grid-5-hint-1, eval = FALSE}
+...(class ~ .)
+```
+
+```{r include = FALSE}
+recipe(class ~ .)
+```
+
+### 
+
+The `.` symbol, in this case, refers to a specific data set that is to be used during the calculation of the recipe.
+
+### Exercise 6
+
+Copy the previous code and add the `data` argument, setting it equal to `cells`.
+
+```{r evaluating-the-grid-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r evaluating-the-grid-6-hint-1, eval = FALSE}
+recipe(class ~ ., data = ...)
+```
+
+```{r include = FALSE}
+recipe(class ~ ., data = cells)
+```
+
+### 
+
+While originally intended as a transformation of the outcome, it can also be used to estimate transformations that encourage more symmetric distributions.
+
+### Exercise 7
+
+Copy the previous code and pipe it to `step_YeoJohnson()`. Add the parameter `all_numeric_predictors()`.
+
+```{r evaluating-the-grid-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r evaluating-the-grid-7-hint-1, eval = FALSE}
+... |>
+  step_YeoJohnson(...())
+```
+
+```{r include = FALSE}
+recipe(class ~ ., data = cells) |>
+  step_YeoJohnson(all_numeric_predictors())
+```
+
+### 
+
+`step_YeoJohnson()` creates a specification of a recipe step that will transform data using a simple Yeo-Johnson transformation.
+
+### Exercise 8
+
+Copy the previous code and pipe it to `step_normalize()`. Add the parameters `all_numeric_predictors()`.
+
+```{r evaluating-the-grid-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r evaluating-the-grid-8-hint-1, eval = FALSE}
+... |>
+  step_normalize(...())
+```
+
+```{r include = FALSE}
+recipe(class ~ ., data = cells) |>
+  step_YeoJohnson(all_numeric_predictors()) |>
+  step_normalize(all_numeric_predictors())
+```
+
+### 
+
+`step_normalize()` creates a specification of a recipe step that will normalize numeric data to have a standard deviation of one and a mean of zero.
+ 
+### Exercise 9
+
+Copy the previous code and pipe it to `step_pca()`. Add the parameters `all_numeric_predictors()` and `num_comp = tune()`.
+
+```{r evaluating-the-grid-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r evaluating-the-grid-9-hint-1, eval = FALSE}
+... |>
+  step_pca(...(), ... = tune())
+```
+
+```{r include = FALSE}
+recipe(class ~ ., data = cells) |>
+  step_YeoJohnson(all_numeric_predictors()) |>
+  step_normalize(all_numeric_predictors()) |>
+  step_pca(all_numeric_predictors(), num_comp = tune())
+```
+
+### 
+
+`step_pca()` creates a specification of a recipe step that will convert numeric data into one or more principal components.
+
+### Exercise 10
+
+Copy the previous code and pipe it to `step_normalize()` again. Add the parameter `all_numeric_predictors()`. Set the entire expression to `mlp_rec`.
+
+```{r evaluating-the-grid-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r evaluating-the-grid-10-hint-1, eval = FALSE}
+mlp_rec <- 
+  ... |>
+  ...(all_numeric_predictors())
+```
+
+```{r include = FALSE}
+mlp_rec <- 
+  recipe(class ~ ., data = cells) |>
+  step_YeoJohnson(all_numeric_predictors()) |>
+  step_normalize(all_numeric_predictors()) |>
+  step_pca(all_numeric_predictors(), num_comp = tune()) |>
+  step_normalize(all_numeric_predictors())
+```
+
+### 
+
+The Yeo-Johnson transformation is a mathematical transformation used to stabilize variance and make data more closely approximate a normal distribution. It is an extension of the more well-known Box-Cox transformation.
+
+### Exercise 11
+
+Now a workflow needs to be created on `mlp_rec`. Type workflow() and pipe it to `add_model()`. Add `mlp_spec` as the parameter.
+
+```{r evaluating-the-grid-11, exercise = TRUE}
+
+```
+
+```{r evaluating-the-grid-11-hint-1, eval = FALSE}
+workflow() |>
+  ...(mlp_spec)
+```
+
+```{r include = FALSE}
+workflow() |>
+  add_model(mlp_spec)
+```
+
+### 
+
+The main purposes of the Box-Cox transformation are to stabilize variance, improve normality, and linearize relationships in data. These are particularly important assumptions for many statistical methods, such as linear regression.
+
+### Exercise 12
+
+Copy the previous code and pipe it to `add_recipe()`. Add the parameter `mlp_rec`. Then, set the entire expression to `mlp_wflow` using `<-`.
+
+```{r evaluating-the-grid-12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r evaluating-the-grid-12-hint-1, eval = FALSE}
+mlp_wflow <-
+  ... |>
+  add_recipe(...)
+```
+
+```{r include = FALSE}
+mlp_wflow <- 
+  workflow() |>
+  add_model(mlp_spec) |>
+  add_recipe(mlp_rec)
+```
+
+### 
+
+The parameter object `mlp_param` will adjust a few of the default ranges by changing the number of epochs to have a smaller range (50 to 200 epochs). 
+
+### Exercise 13
+
+Type `mlp_wflow()` and pipe it to `extract_parameter_set_dials()` to extract the `epochs` column from the data set.
+
+```{r evaluating-the-grid-13, exercise = TRUE}
+
+```
+
+```{r evaluating-the-grid-13-hint-1, eval = FALSE}
+mlp_wflow |>
+  ...()
+```
+
+```{r include = FALSE}
+mlp_wflow |>
+  extract_parameter_set_dials()
+```
+
+### 
+
+`epoch` is the number of iterations in model training. Historically, the number of epochs was determined by early stopping; a separate validation set determined the length of training based on the error rate, since re-predicting the training set led to over-fitting.
+
+### Exercise 14
+
+Copy the previous code and pipe it to `update()`. Within `update()`, set `epochs` equal to `epochs(c(50, 200))`.
+
+```{r evaluating-the-grid-14, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r evaluating-the-grid-14-hint-1, eval = FALSE}
+.. |>
+  update(
+    epochs = epochs(c(..., 200))
+  )
+```
+
+```{r include = FALSE}
+mlp_wflow |>
+  extract_parameter_set_dials() |>
+  update(
+    epochs = epochs(c(50, 200))
+  )
+```
+
+### 
+
+Also, the default range for `num_comp()` defaults to a very narrow range (one to four components); this can be increased to 40 components and set the minimum value to zero to create a range.
+
+### Exercise 15
+
+Copy the previous code and add the parameter `num_comp`, setting it equal to `num_comp(c(0, 40))`. Then, set the entire expression to `mlp_param`.
+
+```{r evaluating-the-grid-15, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r evaluating-the-grid-15-hint-1, eval = FALSE}
+mlp_param <-
+  ... |>
+  update(
+   epochs = epochs(c(50, 200)),
+   num_comp = num_comp(c(0, ...)) 
+  )
+```
+
+```{r include = FALSE}
+mlp_param <- 
+  mlp_wflow |>
+  extract_parameter_set_dials() |>
+  update(
+    epochs = epochs(c(50, 200)),
+    num_comp = num_comp(c(0, 40))
+  )
+```
+
+### 
+
+In `step_pca()`, using zero PCA components is a shortcut to skip the feature extraction. In this way, the original predictors can be directly compared to the results that include PCA components.
+
+### Exercise 16
+
+The `tune_grid()` function is the primary function for conducting grid search. To start, an evaluation of a regular grid with three levels across the resamples needs to occur.
+
+Set `roc_res` to `metric_set()`, with the parameter being `roc_auc`.
+
+```{r evaluating-the-grid-16, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r evaluating-the-grid-16-hint-1, eval = FALSE}
+roc_res <- metric_set(...)
+```
+
+```{r include = FALSE}
+roc_res <- metric_set(roc_auc)
+```
+
+### 
+
+`tune_grid()` computes a set of performance metrics (e.g. accuracy or RMSE) for a pre-defined set of tuning parameters that correspond to a model or recipe across one or more resamples of the data.
+
+### Exercise 17
+
+Type `mlp_wflow` and pipe it to `tune_grid()`. Add the parameter `cell_folds`. 
+
+```{r evaluating-the-grid-17, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r evaluating-the-grid-17-hint-1, eval = FALSE}
+mlp_wflow |>
+  tune_grid(
+    ...
+  )
+```
+
+```{r include = FALSE}
+mlp_wflow |>
+  tune_grid(
+    cell_folds
+  )
+```
+
+### 
+
+`grid`: An integer or data frame. When an integer is used, the function creates a space-filling design with `grid` number of candidate parameter combinations. If specific parameter combinations exist, the `grid` parameter is used to pass them to the function.
+
+### Exercise 18
+
+Copy the previous code and add the parameter `grid` and set it equal to `mlp_param`.
+
+```{r evaluating-the-grid-18, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r evaluating-the-grid-18-hint-1, eval = FALSE}
+... |>
+  tune_grid(
+    cell_folds,
+    grid = ...
+  )
+```
+
+```{r include = FALSE}
+mlp_wflow |>
+  tune_grid(
+    cell_folds,
+    grid = mlp_param
+  )
+```
+
+### 
+
+`param_info`: An optional argument for defining the parameter ranges. The argument is most useful when `grid` is an integer.
+
+### Exercise 19
+
+Copy the previous code and pipe `mlp_param` to `grid_regular(levels = 3)`.
+
+```{r evaluating-the-grid-19, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r evaluating-the-grid-19-hint-1, eval = FALSE}
+... |>
+  tune_grid(
+    cell_folds,
+    grid = mlp_param |> ...
+  )
+```
+
+```{r include = FALSE}
+mlp_wflow |>
+  tune_grid(
+    cell_folds,
+    grid = mlp_param |> grid_regular(levels = 3)
+  )
+```
+
+### 
+
+Other than `grid` and `param_info`, the interface to `tune_grid()` is the same as `fit_resamples()`. The first argument is either a model specification or workflow. When a model is given, the second argument can be either a recipe or formula. The other required argument is an **rsample** resampling object (such as `cell_folds`).
+
+### Exercise 20
+
+Copy the previous code and add the parameter `metrics`, setting it equal to `roc_res`. Then, set the entire expression to `mlp_reg_tune` using `<-`. Type `mlp_reg_tune` on the next line to see the output
+
+```{r evaluating-the-grid-20, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r evaluating-the-grid-20-hint-1, eval = FALSE}
+mlp_reg_tune <-
+  ... |>
+  metrics = ...
+```
+
+```{r include = FALSE}
+mlp_reg_tune <-
+  mlp_wflow |>
+  tune_grid(
+    cell_folds,
+    grid = mlp_param |> grid_regular(levels = 3),
+    metrics = roc_res
+  )
+
+mlp_reg_tune
+```
+
+### 
+
+There are high-level convenience functions we can use to understand the results. First, the `autoplot()` method for regular grids shows the performance profiles across tuning parameters.
+
+### Exercise 21
+
+Type `autoplot()` and add the parameter `mlp_reg_tune`.
+
+```{r evaluating-the-grid-21, exercise = TRUE}
+
+```
+
+```{r evaluating-the-grid-21-hint-1, eval = FALSE}
+autoplot(...)
+```
+
+```{r include = FALSE}
+autoplot(mlp_reg_tune)
+```
+
+### 
+
+`scale_color_viridis_d()` is a function from the **ggplot2** package in R that allows you to change the color scale of a plot using the "viridis" color palette in the reversed direction (from high to low values). 
+
+### Exercise 22
+
+Copy the previous code and add `scale_color_viridis_d()` using `+`. Add the parameter `direction = -1`.
+
+```{r evaluating-the-grid-22, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r evaluating-the-grid-22-hint-1, eval = FALSE}
+... +
+  scale_color_viridis_d(direction = ...)
+```
+
+```{r include = FALSE}
+autoplot(mlp_reg_tune) + 
+  scale_color_viridis_d(direction = -1)
+```
+
+### 
+
+`direction = -1`: This option indicates that the color scale should proceed from high values to low values. The color transitions from the highest value to the lowest value in the data.
+
+### Exercise 23
+
+Copy the previous code and add `theme(legend.poisition = "top")`.
+
+```{r evaluating-the-grid-23, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r evaluating-the-grid-23-hint-1, eval = FALSE}
+... +
+  theme(legend.position = ... )
+```
+
+```{r include = FALSE}
+autoplot(mlp_reg_tune) + 
+  scale_color_viridis_d(direction = -1) + 
+  theme(legend.position = "top")
+```
+
+### 
+
+For these data, the amount of penalization has the largest impact on the area under the ROC curve. There are several parameter configurations that have roughly equivalent performance, which can be seen using the function `show_best()`
+
+### Exercise 24
+
+Type `show_best()` and add the parameter `mlp_reg_tune`. Then pipe it to `select()`, with the parameter being `-.estimator`.
+
+```{r evaluating-the-grid-24, exercise = TRUE}
+
+```
+
+```{r evaluating-the-grid-24-hint-1, eval = FALSE}
+
+```
+
+```{r include = FALSE}
+show_best(mlp_reg_tune) |>
+  select(-.estimator)
+```
+
+### 
+
+Based on these results, it would make sense to conduct another run of grid search with larger values of the weight decay penalty.
+
+### Exercise 25
+
+Type `mlp_wflow` and pipe it to `tune_grid()`. Add the parameter `cell_folds` and `metrics = roc_res`. 
+
+```{r evaluating-the-grid-25, exercise = TRUE}
+
+```
+
+```{r evaluating-the-grid-25-hint-1, eval = FALSE}
+mlp_wflow |>
+  tune_grid(cell_folds,
+            metrics = roc_res)
+```
+
+```{r include = FALSE}
+mlp_wflow |>
+  tune_grid(cell_folds,
+            metrics = roc_res)
+```
+
+### 
+
+To use a space-filling design, either the `grid` argument can be given an integer or one of the `grid_*()` functions can produce a data frame.
+
+### Exercise 26
+
+Copy the previous code and add the parameters `grid` and `param_info`. Set them equal to `20` and `mlp_param`, respectfully. Then, set the entire expression to `mlp_sfd_tune`.
+
+```{r evaluating-the-grid-26, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r evaluating-the-grid-26-hint-1, eval = FALSE}
+mlp_sfd_tune <-
+  ... |>
+  tune_grid(
+    cell_folds
+    grid = ...,
+    param_info = ...,
+    metrics = roc_res
+  )
+```
+
+```{r include = FALSE}
+mlp_sfd_tune <-
+  mlp_wflow |>
+  tune_grid(
+    cell_folds,
+            grid = 20,
+            param_info = mlp_param,
+            metrics = roc_res
+            )
+```
+
+### 
+
+In the context of the `tune_grid()` function, the `"grid"` parameter is used to specify a grid of values for hyperparameters that you want to tune during the process of hyperparameter optimization using the **tune** package in R.
+
+### Exercise 27
+
+Type `autoplot()` and add the parameter `mlp_sfd_tune`. Hit "Run Code".
+
+```{r evaluating-the-grid-27, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r evaluating-the-grid-27-hint-1, eval = FALSE}
+autoplot(...)
+```
+
+```{r include = FALSE}
+autoplot(mlp_sfd_tune)
+```
+
+### 
+
+The penalty parameter appears to result in better performance with smaller amounts of weight decay. Since each point in each panel is shared with the other three tuning parameters, the trends in one panel can be affected by the others.
+
+### Exercise 28
+
+Type `show_best()` and add the parameter `mlp_sfd_tune()`. Then pipe the expression to `select()`, with the parameter being `-.estimator`. 
+
+```{r evaluating-the-grid-28, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r evaluating-the-grid-28-hint-1, eval = FALSE}
+show_best(...) |>
+  ...(-.estimator)
+```
+
+```{r include = FALSE}
+show_best(mlp_sfd_tune) |>
+  select(-.estimator)
+```
+
+### 
+
+Generally, it is a good idea to evaluate the models over multiple metrics so that different aspects of the model fit are taken into account. Also, it often makes sense to choose a slightly suboptimal parameter combination that is associated with a simpler model.
+
+### 
+
+Great Job! You now know how to evaluate grids using functions such as `tune_grid()` `step_YeoJohnson()`, `show_best()` etc.
 
 
+## Finalizing the Model
+### 
+
+If one of the sets of possible model parameters found via `show_best()` were an attractive final option for these data, we might wish to evaluate how well it does on the test set. However, the results of `tune_grid()` only provide the substrate to choose appropriate tuning parameters. The function does not fit a final model.
+
+### Exercise 1
+
+`select_best()` will choose the parameters with the numerically best results. Type `select_best()` and add the parameters `mlp_reg_tune` and `metric = "roc_auc"`.
+
+```{r finalizing-the-model-1, exercise = TRUE}
+
+```
+
+```{r finalizing-the-model-1-hint-1, eval = FALSE}
+select_best(..., metric = "...")
+```
+
+```{r include = FALSE}
+select_best(mlp_reg_tune, metric = "roc_auc")
+```
+
+### 
+
+A model with a single hidden unit trained for 125 epochs on the original predictors with a large amount of penalization has performance competitive with this option, and is simpler. This is basically penalized logistic regression! 
+
+### Exercise 2
+
+To manually specify these parameters, we can create a tibble with these values and then use a finalization function. Type `tibble()` and add the parameters `num_comp`, `epochs`, `hidden_units`, `penalty`. Set them equal to `0`, `125`, `1`, and `1`, respectfully. Set this entire expression to `logistic_param` using `<-`.
+
+```{r finalizing-the-model-2, exercise = TRUE}
+
+```
+
+```{r finalizing-the-model-2-hint-1, eval = FALSE}
+logistic_param <-
+  tibble(
+  num_comp = 0,
+  epochs = ...,
+  hidden_units = ...,
+  ... = 1
+)
+```
+
+```{r include = FALSE}
+logistic_param <- 
+  tibble(
+    num_comp = 0,
+    epochs = 125,
+    hidden_units = 1,
+    penalty = 1
+  )
+```
+
+### 
+
+The `finalize_*` functions take a list or tibble of tuning parameter values and update objects with those values.
+
+### Exercise 3
+
+Type `mlp_wflow` and pipe it to `finalize_workflow()`, adding the parameter `logistic_param`. Set the entire expression to `final_mlp_wflow`.
+
+```{r finalizing-the-model-3, exercise = TRUE}
+
+```
+
+```{r finalizing-the-model-3-hint-1, eval = FALSE}
+final_mlp_wflow <-
+  mlp_wflow |>
+  finalize_workflow(...)
+```
+
+```{r include = FALSE}
+final_mlp_wflow <-
+  mlp_wflow |>
+  finalize_workflow(logistic_param)
+```
+
+### 
+
+No more values of tune() are included in this finalized workflow. Now the model can be fit to the entire training set.
+
+### Exercise 4
+
+Type `final_mlp_wflow` and pipe it to `fit(cells)`. Set the entire expression to `final_mlp_fit` and hit "Run Code".
+
+```{r finalizing-the-model-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r finalizing-the-model-4-hint-1, eval = FALSE}
+final_mlp_fit <-
+  final_mlp_wflow |>
+  fit(...)
+```
+
+```{r include = FALSE}
+final_mlp_fit <-
+  final_mlp_wflow |>
+  fit(cells)
+```
+
+### 
+
+Great Job! You now know how to finalize a model using functions such as `finalizing_workflow()`.
+
+## Tools for Creating Tuning Specifications
+### 
+
+The **usemodels** package can take a data frame and model formula, then write out R code for tuning the model. The code also creates an appropriate recipe whose steps depend on the requested model as well as the predictor data.
+
+### Exercise 1
+
+Load the library **usemodels** using `library()`.
+
+```{r tools-for-creating-t-1, exercise = TRUE}
+
+```
+
+```{r tools-for-creating-t-1-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+#library(usemodels)
+```
+
+### 
+
+### Exercise 2
+
+For example, xgboost modeling code could be created with for the Ames housing data. Type `use_xgboost()` and add the parameters `Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude`, `data = ames_train`, and `verbose = TRUE`.
+
+```{r tools-for-creating-t-2, exercise = TRUE}
+
+```
+
+```{r tools-for-creating-t-2-hint-1, eval = FALSE}
+use_xgboost(Sale_Price ~ ..., data = ames_train, ... = TRUE)
+```
+
+```{r include = FALSE}
+# use_xgboost(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built +
+#               Bldg_Type + Latitude + Longitude, 
+#             data = ames_train,
+#             verbose = TRUE)
+```
+
+### 
+
+XGBoost (Extreme Gradient Boosting) is a popular machine learning algorithm that is known for its high performance and flexibility. It's widely used for classification, regression, and ranking problems.
+
+### Exercise 3
+
+Copy the previous code and replace `use_xgboost` with `recipe`. Remove the argument `verbose = TRUE` and set `formula` equal to the first argument in the function.
+
+```{r tools-for-creating-t-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-creating-t-3-hint-1, eval = FALSE}
+recipe(..., 
+       data = ...)
+```
+
+```{r include = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built +
+         Bldg_Type + Latitude + Longitude, 
+       data = ames_train)
+```
+
+### 
+
+`step_novel()` is useful when you may have factor levels that have not yet been seen in the data (i.e. not present in levels() ).
+
+
+### Exercise 4
+
+Copy the previous code and pipe it to `step_novel()`. Add the parameter `all_nominal_predictors()` and hit "Run Code".
+
+```{r tools-for-creating-t-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-creating-t-4-hint-1, eval = FALSE}
+... |>
+  step_novel(...())
+```
+
+```{r include = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built +
+         Bldg_Type + Latitude + Longitude, 
+       data = ames_train) |>
+  step_novel(all_nominal_predictors())
+```
+
+### 
+
+`step_dummy()` creates a *specification* of a recipe step that will convert nominal data (e.g. character or factors) into one or more numeric binary model terms for the levels of the original data.
+
+### Exercise 5
+
+Copy the previous code and pipe it to `step_dummy()`. Add the parameter `all_nominal_predictors()` and `one_hot = TRUE`.
+
+```{r tools-for-creating-t-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-creating-t-5-hint-1, eval = FALSE}
+... |>
+  step_dummy(...(), one_hot = ...)
+```
+
+```{r include = FALSE}
+recipe(formula = Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built +
+         Bldg_Type + Latitude + Longitude, 
+       data = ames_train) |>
+  step_novel(all_nominal_predictors()) |>
+  step_dummy(all_nominal_predictors(), one_hot = TRUE)
+```
+
+### 
+
+`step_zv()` creates a specification of a recipe step that will remove variables that contain only a single value.
+
+### Exercise 6
+
+Copy the previous code and pipe it to `step_zv()`. Add the parameter `all_predictors()`. Then, set the entire expression to `xgboost_recipe` using `<-`.
+
+```{r tools-for-creating-t-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-creating-t-6-hint-1, eval = FALSE}
+xgboost_recipe <-
+  ... |>
+  step_zv(...())
+```
+
+```{r include = FALSE}
+xgboost_reicpe <- recipe(formula = Sale_Price ~ Neighborhood +
+                           Gr_Liv_Area + Year_Built +
+                           Bldg_Type + Latitude + Longitude, 
+                         data = ames_train) |>
+  step_novel(all_nominal_predictors()) |>
+  step_dummy(all_nominal_predictors(), one_hot = TRUE) |>
+  step_zv(all_predictors())
+```
+
+### 
+
+`boost_tree()` defines a model that creates a series of decision trees forming an ensemble. This function can fit classification, regression, and censored regression models.
+
+### Exercise 7
+
+Type `boost_tree()`. Add the parameters `trees`, `min_n`, `tree_depth`, `learn_rate`, `loss_reduction`, `sample_size()`. Set them all equal to `tune()`.
+
+```{r tools-for-creating-t-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-creating-t-7-hint-1, eval = FALSE}
+boost_tree(trees = tune(), min_n = tune(), tree_depth = ...(), learn_rate = ...(), loss_reduction = tune(), sample_size = ...())
+```
+
+```{r include = FALSE}
+boost_tree(trees = tune(), min_n = tune(), tree_depth = tune(),
+           learn_rate = tune(), loss_reduction = tune(), sample_size =
+             tune())
+```
+
+### 
+
+The **usemodels** package can also be used to create model fitting code with no tuning by setting the argument `tune = FALSE`.
+
+### Exercise 8
+
+Copy the previous code and pipe it to `set_mode()`. Add the parameter `"regression"` and hit "Run Code".
+
+```{r tools-for-creating-t-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-creating-t-8-hint-1, eval = FALSE}
+... |>
+  set_mode("...")
+```
+
+```{r include = FALSE}
+boost_tree(trees = tune(), min_n = tune(), tree_depth = tune(),
+           learn_rate = tune(), loss_reduction = tune(), sample_size =
+             tune()) |>
+  set_mode("regression")
+```
+
+### 
+
+Tuning in linear regression often involves comparing different models using metrics like Mean Squared Error (MSE), R-squared, or adjusted R-squared to determine the best fit for the data.
+
+### Exercise 9
+
+Copy the previous code and pipe it to `set_engine()`. Add the parameter `"xgboost"`. Then, set the entire expression to `xgboost_spec` using `<-`.
+
+```{r tools-for-creating-t-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-creating-t-9-hint-1, eval = FALSE}
+
+```
+
+```{r include = FALSE}
+xgboost_spec <-
+  boost_tree(trees = tune(), min_n = tune(), tree_depth = tune(),
+             learn_rate = tune(), loss_reduction = tune(), sample_size =
+               tune()) |>
+  set_mode("regression") |>
+  set_engine("xgboost")
+```
+
+### 
+
+Regularization methods like Ridge (L2 regularization) and LASSO (L1 regularization) can be applied to linear regression to prevent over-fitting and control the magnitude of coefficients.
+
+### Exercise 10
+
+Now we will create a workflow. Type `workflow()` and pipe it to `add_recipe()`. Add the parameter we created earlier, `xgboost_recipe()` and hit "Run Code".
+
+```{r tools-for-creating-t-10, exercise = TRUE}
+
+```
+
+```{r tools-for-creating-t-10-hint-1, eval = FALSE}
+workflow() |>
+  add_recipe(...)
+```
+
+```{r include = FALSE}
+workflow() |>
+  add_recipe(xgboost_recipe)
+```
+
+### 
+
+Feature selection is a form of tuning where you choose a subset of relevant independent variables to include in the model. Techniques like step-wise regression or LASSO (L1 regularization) can help achieve this.
+
+### Exercise 11
+
+Copy the previous code and add `add_model()`. Add the parameter we created earlier, `xgboost_spec`. Then, set the entire expression to `xgboost_workflow` using `<-`.
+
+```{r tools-for-creating-t-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-creating-t-11-hint-1, eval = FALSE}
+xgboost_workflow <-
+  ... |>
+  add_model(...)
+```
+
+```{r include = FALSE}
+xgboost_workflow <- 
+  workflow() |>
+  add_recipe(xgboost_recipe) |>
+  add_model(xgboost_spec)
+```
+
+### 
+
+Early stopping is a technique used in iterative algorithms (like gradient descent in neural networks) where the learning process is halted when the model's performance on a validation set stops improving.
+
+### Exercise 12
+
+Now a `tune_grid()` is the final step. Type `tune_grid()`. Enter the first parameter as `xgboost_workflow` and hit "Run Code".
+
+```{r tools-for-creating-t-12, exercise = TRUE}
+
+```
+
+```{r tools-for-creating-t-12-hint-1, eval = FALSE}
+tune_grid(...)
+```
+
+```{r include = FALSE}
+tune_grid(xgboost_workflow)
+```
+
+### 
+
+In R, `stop()` is a built-in function used to raise an error, stop the execution of the current function, and terminate the program if necessary conditions are not met.
+
+### Exercise 13
+
+Copy the previous code and add the parameters `resamples` and `grid`. Set `resamples` to `stop("add your rsample object")` and `grid` to `stop("add number of candidate points")`. Then, set the entire expression to `xgboost_tune`.
+
+```{r tools-for-creating-t-13, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-creating-t-13-hint-1, eval = FALSE}
+xgboost_tune <-
+  tune_grid(xgboost_workflow, 
+            resamples = ...("add your rsample object"), 
+            ... = stop("add number of candidate points"))
+```
+
+```{r include = FALSE}
+xgboost_tune <-
+  tune_grid(xgboost_workflow, 
+            resamples = stop("add your rsample object"), 
+            grid = stop("add number of candidate points"))
+```
+
+### 
+
+Based on what **usemodels** understands about the data, this code is the minimal preprocessing required. Notice that it is our responsibility, as the modeling practitioner, to choose what `resamples` to use for tuning, as well as what kind of `grid`.
+
+Great Job! You now know how to use the tools for creating tuning specifications by using functions such as `use_xgboost()`, `boost_tree()`, `tune_grid()`, etc.
+
+## Tools for Efficient Grid Search
+### 
+
+It is possible to make grid search more computationally efficient by applying a few different tricks and optimizations. This section describes several techniques.
+
+If a boosted C5.0 classification model [M. Kuhn and Johnson 2013](https://www.tmwr.org/grid-search#ref-apm) was fit to the cell data, we can tune the number of boosting iterations (`trees`). With all other parameters set at their default values, we can evaluate iterations from 1 to 100 on the same resamples as used previously.
+
+### Exercise 1
+
+Type `boost_tree()` and add the parameter `trees`, setting it equal to `tune()`.
+
+```{r tools-for-efficient--1, exercise = TRUE}
+
+```
+
+```{r tools-for-efficient--1-hint-1, eval = FALSE}
+boost_tree(trees = ...())
+```
+
+```{r include = FALSE}
+boost_tree(trees = tune())
+```
+
+### 
+
+Boosting models can typically make predictions across multiple values for the number of boosting iterations.
+
+### Exercise 2
+
+Copy the previous code and pipe to `set_engine()`. Add the parameter `"C5.0"` and hit "Run Code".
+
+```{r tools-for-efficient--2, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-efficient--2-hint-1, eval = FALSE}
+boost_tree(trees = tune()) |>
+  ...("C5.0")
+```
+
+```{r include = FALSE}
+boost_tree(trees = tune()) |>
+  set_engine("C5.0")
+```
+
+### 
+
+Regularization methods, such as the **glmnet** model, can make simultaneous predictions across the amount of regularization used to fit the model.
+
+### Exercise 3
+
+Copy the previous code and pipe it to `set_mode()`. Add the parameter `"classification"`. Then, set the entire expression to `c5_spec` using `<-`.
+
+```{r tools-for-efficient--3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-efficient--3-hint-1, eval = FALSE}
+c5_spec <-
+  ... |>
+  set_mode("...")
+```
+
+```{r include = FALSE}
+c5_spec <-
+  boost_tree(trees = tune()) |>
+  set_engine("C5.0") |>
+  set_mode("classification")
+```
+
+### 
+
+Multivariate adaptive regression splines (MARS) adds a set of nonlinear features to linear regression models [Friedman 1991](https://www.tmwr.org/grid-search#ref-Friedman:1991p109). The number of terms to retain is a tuning parameter, and it is computationally fast to make predictions across many values of this parameter from a single model fit.
+
+### Exercise 4
+
+Type `c5_spec` and pipe it to `tune_grid()`. Add the parameter `class ~ .` and hit "Run Code".
+
+```{r tools-for-efficient--4, exercise = TRUE}
+
+```
+
+```{r tools-for-efficient--4-hint-1, eval = FALSE}
+c5_spec |>
+  tune_grid(
+    ...
+  )
+```
+
+```{r include = FALSE}
+c5_spec |>
+  tune_grid(
+    class ~ .
+  )
+```
+
+### 
+
+Partial least squares (PLS) is a supervised version of principal component analysis [Geladi and Kowalski 1986](https://www.tmwr.org/grid-search#ref-Geladi:1986). It creates components that maximize the variation in the predictors (like PCA) but simultaneously tries to maximize the correlation between these predictors and the outcome. 
+
+### Exercise 5
+
+Copy the previous code and add the parameter `resamples`, setting it equal to `cell_folds`.
+
+```{r tools-for-efficient--5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-efficient--5-hint-1, eval = FALSE}
+
+```
+
+```{r include = FALSE}
+c5_spec |>
+  tune_grid(
+    class ~ .,
+    resamples = cell_folds
+  )
+```
+
+### 
+
+In many implementations, a single model fit can compute predicted values across many values of `num_comp`. As a result, a PLS model created with 100 components can also make predictions for any `num_comp <= 100`, assuming 100 predictors were fit.
+
+### Exercise 6
+
+Copy the previous code and add the parameters `grid`, setting it equal to `data.frame(trees = 1:100)`, and `metrics`, setting it equal to `roc_res`.
+
+```{r tools-for-efficient--6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-efficient--6-hint-1, eval = FALSE}
+... |>
+  tune_grid(
+    class ~ .,
+    resamples = cell_folds,
+    grid = ...(trees = 1:100),
+    metrics = ...
+  )
+```
+
+```{r include = FALSE}
+c5_spec |>
+  tune_grid(
+    class ~ .,
+    resamples = cell_folds,
+    grid = data.frame(trees = 1:100),
+    metrics = roc_res
+  )
+```
+
+### 
+
+Without the submodel optimization, the call to tune_grid() used 62.2 minutes to resample 100 submodels. With the optimization, the same call took 100 seconds (a 37-fold speed-up).
+
+### Exercise 7
+
+When tuning models via grid search, there are two distinct loops: one over resamples and another over the unique tuning parameter combinations. In pseudocode, this process would look like:
+
+
+```{r tools-for-efficient--7, exercise = TRUE}
+for (rs in resamples) {
+  # Create analysis and assessment sets
+  # Preprocess data (e.g. formula or recipe)
+  for (mod in configurations) {
+    # Fit model {mod} to the {rs} analysis set
+    # Predict the {rs} assessment set
+  }
+}
+```
+
+This is the optimal scenario when the pre-processing method is expensive.
+
+Downsides
+-  It limits the achievable speed-ups when the pre-processing is not expensive
+
+-  The number of parallel workers is limited by the number of resamples. For example, with 10-fold cross-validation you can use only 10 parallel workers even when the computer has more than 10 cores.
+
+### Exercise 8
+
+Instead of parallel processing the resamples, an alternate scheme combines the loops over resamples and models into a single loop. In pseudocode, this process would look like:
+
+```{r tools-for-efficient--8, exercise = TRUE}
+all_tasks <- crossing(resamples, configurations)
+
+for (iter in all_tasks) {                           
+  # Create analysis and assessment sets for {iter}
+  # Preprocess data (e.g. formula or recipe)
+  # Fit model {iter} to the {iter} analysis set
+  # Predict the {iter} assessment set
+}
+```
+
+In this case, parallelization now occurs over the single loop. However, the work related to data pre-processing is repeated multiple times. If those steps are expensive, this approach will be inefficient.
+
+### Exercise 9
+
+If we define a variable to use as a model parameter and then pass it to a function like linear_reg(), the variable is typically defined in the global environment.
+
+Type `coef_penalty` and set it to `0.1` using `<-`.
+
+```{r tools-for-efficient--9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-efficient--9-hint-1, eval = FALSE}
+coef_penalty <- ...
+```
+
+```{r include = FALSE}
+coef_penalty <- 0.1
+```
+
+### 
+
+What do we mean by “environment” here? Think of an environment in R as a place to store variables that you can work with.
+
+### Exercise 10
+
+Type `linear_reg()` and add the parameter `penalty`, setting it equal to `coef_penalty`.
+
+```{r tools-for-efficient--10, exercise = TRUE}
+
+```
+
+```{r tools-for-efficient--10-hint-1, eval = FALSE}
+linear_reg(penalty = ...)
+```
+
+```{r include = FALSE}
+linear_reg(penalty = coef_penalty)
+```
+
+### 
+
+What is the benefit of using the submodel optimization method in conjunction with parallel processing? Between the submodel optimization trick and parallel processing, there was a total 282-fold speed-up over the most basic grid search code.
+
+### Exercise 11
+
+Copy the previous code and pipe it to `set_engine()`, adding the parameter `"glmnet"`. Then, set the entire expression `spec`.
+
+```{r tools-for-efficient--11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-efficient--11-hint-1, eval = FALSE}
+spec <-
+  ... |>
+  set_engine("...")
+```
+
+```{r include = FALSE}
+spec <-
+  linear_reg(penalty = coef_penalty) |>
+  set_engine("glmnet")
+```
+
+### 
+
+Models created with the parsnip package save arguments like these as quosures; these are objects that track both the name of the object as well as the environment where it lives.
+
+### Exercise 12
+
+Run the code below to see the global variable in the environment.
+
+```{r tools-for-efficient--12, exercise = TRUE}
+spec$args$penalty
+```
+
+```{r tools-for-efficient--12-hint-1, eval = FALSE}
+spec$args$penalty
+```
+
+```{r include = FALSE}
+spec$args$penalty
+```
+
+### 
+
+The model specification defined by `spec` works correctly when run in a user’s regular session because that session is also using the global environment; R can easily find the object `coef_penalty`.
+
+### Exercise 13
+
+The !! operator can splice a single value into an object. Copy the code from exercise 11. Put `!!` in front of `coef_penalty`. Then, run `spec` on the next line.
+
+```{r tools-for-efficient--13, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-efficient--13-hint-1, eval = FALSE}
+spec <- 
+  linear_reg(penalty = ...coef_penalty) |>
+  set_engine("glmnet")
+```
+
+```{r include = FALSE}
+spec <- 
+  linear_reg(penalty = !!coef_penalty) |>
+  set_engine("glmnet")
+```
+
+### 
+
+When writing code that will be run in parallel, it is a good idea to insert the actual data into the objects rather than the reference to the object. The **rlang** and **dplyr** packages can be very helpful for this.
+
+### Exercise 14
+
+When you have multiple external values to insert into an object, the !!! operator can help. Type `list()` and add the parameters `chains`, `iter`, `cores`. Set them equal to `3`, `1000`, and `3`, respectfully. Set the entire expression to `mcmc_args`.
+
+```{r tools-for-efficient--14, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-efficient--14-hint-1, eval = FALSE}
+mcmc_args <- list(chains = ..., iter = 1000,  = ...)
+```
+
+```{r include = FALSE}
+mcmc_args <- list(chains = 3, iter = 1000, cores = 3)
+```
+
+### 
+
+When such a model is evaluated with parallel workers, it may fail. Depending on the particular technology that is used for parallel processing, the workers may not have access to the global environment.
+
+### Exercise 15
+
+Type `linear_reg()` and pipe it to `set_engine()`. Add the parameters `"stan"` and `!!!mcmc_args`.
+
+```{r tools-for-efficient--15, exercise = TRUE}
+
+```
+
+```{r tools-for-efficient--15-hint-1, eval = FALSE}
+linear_reg() |>
+  set_engine("...", ...mcmc_args)
+```
+
+```{r include = FALSE}
+linear_reg() |>
+  set_engine("stan", !!!mcmc_args)
+```
+
+### 
+
+Recipe selectors are another place where you might want access to global variables.
+
+### Exercise 16
+
+Load the library **stringr** using `library()`.
+
+```{r tools-for-efficient--16, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-efficient--16-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(stringr)
+```
+
+### 
+
+The **stringr** package is a popular and powerful package in R for working with strings. It provides a set of functions that simplify and streamline common string operations. 
+
+### Exercise 17
+
+Type `str_subset()` and add the parameters `names(cells)` and `ch_2`. Set the entire expression to `ch_2_vars` using `<-`.
+
+```{r tools-for-efficient--17, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-efficient--17-hint-1, eval = FALSE}
+ch_2_vars <- str_subset(names(...), "...")
+```
+
+```{r include = FALSE}
+ch_2_vars <- str_subset(names(cells), "ch_2")
+```
+
+### 
+
+We could hard-code these into a recipe step but it would be better to reference them programmatically in case the data change.
+
+### Exercise 18
+
+Type `recipe()` and add the parameter `class ~ .` and `data = cells`. Hit "Run Code".
+
+```{r tools-for-efficient--18, exercise = TRUE}
+
+```
+
+```{r tools-for-efficient--18-hint-1, eval = FALSE}
+recipe(..., data = ...)
+```
+
+```{r include = FALSE}
+recipe(class ~ ., data = cells)
+```
+
+### 
+
+Note that the increased computational savings will vary from model to model and are also affected by the size of the grid, the number of resamples, etc. A very computationally efficient model may not benefit as much from parallel processing
+
+### Exercise 19
+
+Copy the previous code and pipe it to `step_spatialsign()`. Add the parameter `!!!ch_2_vars` and hit "Run Code".
+
+```{r tools-for-efficient--19, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-efficient--19-hint-1, eval = FALSE}
+... |>
+  ...(!!!ch_2_vars)
+```
+
+```{r include = FALSE}
+recipe(class ~ ., data = cells) |>
+  step_spatialsign(!!!ch_2_vars)
+```
+
+### 
+
+The **finetune** package contains functions for racing. The `tune_race_anova()` function conducts an ANOVA model to test for statistical significance of the different model configurations. 
+
+### Exercise 20
+
+Type `mlp_wflow` and pipe it to `tune_race_anova()`. Add the parameters `cell_folds`, `grid = 20`, `param_info = mlp_param`, and `metrics = roc_res`.
+
+```{r tools-for-efficient--20, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-efficient--20-hint-1, eval = FALSE}
+mlp_wflow |>
+  tune_race_anova(
+    cell_folds,
+    grid = ...,
+    param_info = ...,
+    ... = roc_res,
+```
+
+```{r include = FALSE}
+# mlp_wflow |>
+#   tune_race_anova(
+#     cell_folds,
+#     grid = 20,
+#     param_info = mlp_param,
+#     metrics = roc_res
+#     )
+```
+
+### 
+
+Bayesian optimization is a more advanced approach that uses probabilistic models to select the next set of hyperparameters to evaluate, based on the past results. The **mlrMBO** package provides Bayesian optimization capabilities in R.
+### Exercise 21
+
+Copy the previous code and add the parameter `control`, setting it equal to `control_race()`. Within this function, put `verbose_elim = TRUE`. Then, set the entire expression to `mlp_sfd_race` using `<-`.
+
+```{r tools-for-efficient--21, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-efficient--21-hint-1, eval = FALSE}
+mlp_sfd_race <-
+  mlp_wflow |>
+  tune_race_anova(
+    cell_folds,
+    grid = 20,
+    param_info = mlp_param,
+    metrics = roc_res,
+    control = ...(verbose_elim = TRUE)
+  )
+```
+
+```{r include = FALSE}
+# mlp_sfd_race <-
+#   mlp_wflow |>
+#   tune_race_anova(
+#     cell_folds,
+#     grid = 20,
+#     param_info = mlp_param,
+#     metrics = roc_res,
+#     control = control_race(verbose_elim = TRUE)
+#   )
+```
+
+### 
+
+As shown in the animation above, there were two tuning parameter combinations under consideration once the full set of resamples were evaluated. show_best() returns the best models (ranked by performance) but returns only the configurations that were never eliminated.
+
+### Exercise 22
+
+Type `show_best()`. Add the parameters `mlp_sfd_race` and `n = 10`.
+
+```{r tools-for-efficient--22, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tools-for-efficient--22-hint-1, eval = FALSE}
+show_best(..., n = ...)
+```
+
+```{r include = FALSE}
+show_best(mlp_sfd_race, n = 10)
+```
+
+### 
+
+Excellent Work! You now know how to use various tools for efficient grid searching, such as sub-model optimization, parallel processing, benchmarking boosted trees, learning how to access global variables, and racing methods.
 
 ## Summary
-###
+### 
 
-<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+This tutorial covered [Chapter 13: Grid Search](https://www.tmwr.org/grid-search) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. In previous tutorials, we demonstrated how users can mark or tag arguments in preprocessing recipes and/or model specifications for optimization using the tune() function. Once what to optimize was known, we addressed the question of how to optimize the parameters. This tutorial described grid search methods that specify the possible values of the parameters *a priori*.
 
 ```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
 ```
