@@ -199,7 +199,9 @@ roc_res <- metric_set(roc_auc)
 
 ### 
 
-These were the variables created in the "Grid Search" tutorial, and will be used for this tutorial.
+These were the variables created in the "Grid Search" tutorial, and will be used for this tutorial. `cells` is a tibble that consists of 56 imaging measurements on 2019 human breast cancer cells. These predictors represent shape and intensity characteristics of different parts of the cells.
+
+Because of the high degree of correlation between predictors, PCA feature extraction was used to decorrelate the predictors.
 
 ### Exercise 5
 
@@ -1317,7 +1319,7 @@ As you can see, the `show_best()` function showed the top 5 mean areas under the
 
 ### 
 
-<!-- AK: I want to add the video from section 14.2.3 in the textbook but not sure how to. -->
+[Section 14.2.3](https://www.tmwr.org/iterative-search) of [*Tidy Modeling with R*](https://www.tmwr.org/index.html) shows a visualization of this search.
 
 ## Simulated Annealing
 ### 
@@ -1750,8 +1752,7 @@ knitr::include_graphics("images/pic10.png")
 
 ### 
 
-<!-- AK: I want to add the video from section 14.3.2 in the textbook but not sure how to. -->
-
+[Section 14.3.2](https://www.tmwr.org/iterative-search) of [*Tidy Modeling with R*](https://www.tmwr.org/index.html) shows a visualization of the search path, which helps to understand where the search process did well and where it went astray.
 
 ## Summary
 ### 
