@@ -60,6 +60,90 @@ concrete_folds <-
 normalized_rec <- 
    recipe(compressive_strength ~ ., data = concrete_train) |>
    step_normalize(all_predictors()) 
+
+linear_reg_spec <- 
+   linear_reg(penalty = tune(), mixture = tune()) |>
+   set_engine("glmnet")
+
+nnet_spec <- 
+   mlp(hidden_units = tune(), penalty = tune(), epochs = tune()) |>
+   set_engine("nnet", MaxNWts = 2600) |>
+   set_mode("regression")
+
+mars_spec <- 
+  mars(prod_degree = tune()) |> #<- use GCV to choose terms
+  set_engine("earth") |>
+  set_mode("regression")
+
+svm_r_spec <- 
+  svm_rbf(cost = tune(), rbf_sigma = tune()) |>
+  set_engine("kernlab") |>
+  set_mode("regression")
+
+svm_p_spec <- 
+  svm_poly(cost = tune(), degree = tune()) |>
+  set_engine("kernlab") |>
+  set_mode("regression")
+
+knn_spec <- 
+  nearest_neighbor(neighbors = tune(), dist_power = tune(), weight_func = tune()) |>
+  set_engine("kknn") |>
+  set_mode("regression")
+
+cart_spec <- 
+  decision_tree(cost_complexity = tune(), min_n = tune()) |>
+  set_engine("rpart") |>
+  set_mode("regression")
+
+bag_cart_spec <- 
+  bag_tree() |>
+  set_engine("rpart", times = 50L) |>
+  set_mode("regression")
+
+rf_spec <- 
+  rand_forest(mtry = tune(), min_n = tune(), trees = 1000) |>
+  set_engine("ranger") |>
+  set_mode("regression")
+
+xgb_spec <- 
+   boost_tree(tree_depth = tune(), learn_rate = tune(), loss_reduction = tune(), min_n = tune(), sample_size = tune(), trees = tune()) |>
+  set_engine("xgboost") |>
+  set_mode("regression")
+
+cubist_spec <- 
+  cubist_rules(committees = tune(), neighbors = tune()) |>
+  set_engine("Cubist") 
+
+normalized <- 
+  workflow_set(
+    preproc = list(normalized = normalized_rec),
+    models = list(SVM_radial = svm_r_spec, 
+                  SVM_poly = svm_p_spec, 
+                  KNN = knn_spec, 
+                  neural_network = nnet_spec)
+   )
+
+model_vars <-
+  workflow_variables(outcomes = compressive_length,
+                   predictors = everything())
+
+normalized |> extract_workflow(id = "normalized_KNN")
+
+normalized1 <-
+  normalized |>
+  option_add(param_info = nnet_param, id = "normalized_neural_network")
+
+no_pre_proc <- 
+  workflow_set(
+    preproc = list(simple = model_vars), 
+    models = list(MARS = mars_spec,
+                  CART = cart_spec,
+                  CART_bagged = bag_cart_spec,
+                  RF = rf_spec,
+                  boosting = xgb_spec, 
+                  Cubist = cubist_spec)
+   )
+
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -1020,6 +1104,281 @@ nnet_param <-
    nnet_spec |>
    extract_parameter_set_dials() |>
    update(hidden_units = hidden_units(c(1, 27)))
+```
+
+###
+
+Great Job! You now have learned how to screen multiple model workflows using a concrete mixture data. 
+
+## Creating the Workflow Set
+###
+
+How can we match these models to their recipes, tune them, then evaluate their performance efficiently? A workflow set offers a solution. Workflow sets take named lists of preprocessors and model specifications and combine them into an object containing multiple workflows. There are three possible kinds of preprocessors: standard R formula, recipe object (prior to estimation/prepping), **dplyr**-style selector to choose the outcome and predictors.
+
+### Exercise 1
+
+Type in `workflow_set()` and add the parameter `preproc`. Set it equal to `list(normalized = normalized_rec)`.
+
+```{r creating-the-workflo-1, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-the-workflo-1-hint, eval = FALSE}
+workflow_set(
+  preproc = list(... = normalized_rec)
+)
+```
+
+```{r, include = FALSE}
+workflow_set(
+  preproc = list(normalized = normalized_spec)
+)
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 2
+
+Copy the previous code and add the parameter `models`, setting it equal to `list()`. Within `list()`, add `SVM_radial = svm_r_spec`, `SVM_Poly = svm_p_spec`, `KNN = knn_sepc`, and `neural_network = nnet_spec`. Then, set the entire expression to `normalized`.
+
+```{r creating-the-workflo-2, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-the-workflo-2-hint, eval = FALSE}
+normalized <- 
+  workflow_set(
+    preproc = list(normalized = normalized_rec),
+    models = list(... = svm_r_spec, 
+                  SVM_poly = ..., 
+                  ... = knn_spec, 
+                  neural_network = ...)
+   )
+```
+
+```{r, include = FALSE}
+normalized <- 
+  workflow_set(
+    preproc = list(normalized = normalized_rec),
+    models = list(SVM_radial = svm_r_spec, 
+                  SVM_poly = svm_p_spec, 
+                  KNN = knn_spec, 
+                  neural_network = nnet_spec)
+   )
+```
+
+###
+
+The wflow_id column is automatically created but can be modified using a call to mutate(). The info column contains a tibble with some identifiers and the workflow object.
+
+### Exercise 3
+
+Pipe `normalized` to `extract_workflow()`, setting the parameter `id` equal to `normalized_KNN`.
+
+```{r creating-the-workflo-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-the-workflo-3-hint, eval = FALSE}
+normalized |>
+  extract_workflow(id = "...")
+```
+
+```{r, include = FALSE}
+normalized |> extract_workflow(id = "normalized_KNN")
+```
+
+###
+
+The option column is a placeholder for any arguments to use when we evaluate the workflow. For example, to add the neural network parameter object.
+
+### Exercise 4
+
+Pipe `normalized` to `option_add()`. Set the parameter `param_info` equal to `nnet_param` and set `id` equal to `normalized_neural_network`. Then, set the entire expression to `normalized1`.
+
+```{r creating-the-workflo-4, exercise = TRUE}
+
+```
+
+```{r creating-the-workflo-4-hint, eval = FALSE}
+normalized1 <-
+  normalized |>
+  option_add(... = nnet_param, id = "...")
+```
+
+```{r, include = FALSE}
+normalized1 <-
+  normalized |>
+  option_add(param_info = nnet_param, id = "normalized_neural_network")
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 5
+
+Type `workflow_variables()`. Set the parameter `outcomes` equal to `compressive_strength` and `predictors` equal to `everything()`. Then, set this expression to `model_vars` using `<-`.
+
+```{r creating-the-workflo-5, exercise = TRUE}
+
+```
+
+```{r creating-the-workflo-5-hint, eval = FALSE}
+model_vars <-
+  workflow_variables(outcomes = ...,
+                   predictors = ...())
+```
+
+```{r, include = FALSE}
+model_vars <-
+  workflow_variables(outcomes = compressive_length,
+                   predictors = everything())
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 6
+
+Type `workflow_set()`. Set the parameter `preproc` to `list(simple = model_vars)`.
+
+```{r creating-the-workflo-6, exercise = TRUE}
+
+```
+
+```{r creating-the-workflo-6-hint, eval = FALSE}
+workflow_set(preproc = list(...))
+```
+
+```{r, include = FALSE}
+workflow_set(preproc = list(simple = model_vars))
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 7
+
+Copy the previous code and add the parameter `models`. Set `models` equal to `list()`. In list, add the parameters `MARS = mars_spec`, `CART = cart_spec`, `CART_bagged = bag_cart_spec`, `RF = rf_spec`, `boosting = xgb_spec`, `Cubist = cubist_spec`. Then, set the entire expression to `no_pre_proc`.
+
+```{r creating-the-workflo-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-the-workflo-7-hint, eval = FALSE}
+no_pre_proc <- 
+  workflow_set(
+    preproc = list(simple = model_vars), 
+    models = list(MARS = ...,
+                  ... = cart_spec,
+                  CART_bagged = bag_cart_spec,
+                  RF = rf_spec,
+                  boosting = ..., 
+                  Cubist = ...
+   )
+```
+
+```{r, include = FALSE}
+
+no_pre_proc <- 
+  workflow_set(
+    preproc = list(simple = model_vars), 
+    models = list(MARS = mars_spec,
+                  CART = cart_spec,
+                  CART_bagged = bag_cart_spec,
+                  RF = rf_spec,
+                  boosting = xgb_spec, 
+                  Cubist = cubist_spec)
+   )
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 8
+
+Finally, we assemble the set that uses nonlinear terms and interactions with the appropriate models.
+
+Type `workflow_set()`. Set the parameter `preproc` equal to `list()`. Within `list()`, set the parameter `full_quad` equal to `poly_recipe`.
+
+```{r creating-the-workflo-8, exercise = TRUE}
+
+```
+
+```{r creating-the-workflo-8-hint, eval = FALSE}
+workflow_set(
+  preproc = ...(full_quad = ...)
+)
+```
+
+```{r, include = FALSE}
+workflow_set(
+  preproc = list(full_quad = poly_recipe)
+)
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 9
+
+Copy the previous code and add the parameter `models`. Set `models` equal to `list()`. Within `list()`, set the parameter `linear_reg` equal to `linear_reg_spec` and `KNN` equal to `knn_spec`. Then, set the entire expression to `with_features`.
+
+```{r creating-the-workflo-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-the-workflo-9-hint, eval = FALSE}
+with_features <- 
+  workflow_set(
+    preproc = list(full_quad = poly_recipe), 
+    models = ...(linear_reg = ..., ... = knn_spec)
+   )
+```
+
+```{r, include = FALSE}
+with_features <- 
+  workflow_set(
+    preproc = list(full_quad = poly_recipe), 
+    models = list(linear_reg = linear_reg_spec, KNN = knn_spec)
+   )
+```
+
+###
+
+These objects are tibbles with the extra class of workflow_set. Row binding does not affect the state of the sets and the result is itself a workflow set.
+
+### Exercise 10
+
+Type `bind_rows()`. Add the parameters `no_pre_proc`, `normalized`, and `with_features`.
+
+```{r creating-the-workflo-10, exercise = TRUE}
+
+```
+
+```{r creating-the-workflo-10-hint, eval = FALSE}
+
+```
+
+```{r, include = FALSE}
+
 ```
 
 ###
