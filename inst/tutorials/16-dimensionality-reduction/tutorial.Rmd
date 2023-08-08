@@ -20,6 +20,8 @@ library(tidymodels)
 library(beans)
 library(corrplot)
 library(bestNormalize)
+library(ggforce)
+library(learntidymodels)
 tidymodels_prefer()
 
 knitr::opts_chunk$set(echo = FALSE)
@@ -63,6 +65,18 @@ p2 <-
   ggplot(aes(x = area)) + 
   geom_histogram(bins = 30, color = "white", fill = "red", alpha = 1/3) + 
   ggtitle("Processed validation set data")
+
+plot_validation_results <- function(recipe, dat = assessment(bean_val$splits[[1]])) {
+  recipe |>
+    prep() |>
+    bake(new_data = dat) |>
+    ggplot(aes(x = .panel_x, y = .panel_y, color = class, fill = class)) +
+    geom_point(alpha = 0.4, size = 0.5) +
+    geom_autodensity(alpha = 0.3) +
+    facet_matrix(vars(-class), layer.diag = 2) + 
+    scale_color_brewer(palette = "Dark2") + 
+    scale_fill_brewer(palette = "Dark2")
+}
 
 
 ```
@@ -769,15 +783,15 @@ Let’s estimate `bean_rec` using the training set data, with `prep()`. In the c
 
 ```
 
-```{r recipes-in-the-wild-1-hint, eval = FALSE}
+```{r recipes-in-the-wild-1-hint-1, eval = FALSE}
 prep(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 prep(bean_rec)
 ```
 
-###
+### 
 
 Note in the output that the steps have been trained and that the selectors are no longer general (i.e., `all_numeric_predictors()`); they now show the actual columns that were selected. 
 
@@ -793,15 +807,15 @@ Copy the previous code and assign it to a new variable named `bean_rec_trained`.
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r recipes-in-the-wild-2-hint, eval = FALSE}
+```{r recipes-in-the-wild-2-hint-1, eval = FALSE}
 ... <- prep(bean_rec)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 bean_rec_trained <- prep(bean_rec)
 ```
 
-###
+### 
 
 Remember that `prep()` for a recipe is like `fit()` for a model.
 
@@ -817,13 +831,13 @@ bean_rec_trained |>
   prep(verbose = TRUE)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 #bean_rec_trained |> 
 #  step_dummy(cornbread) |>  # <- not a real predictor
 #  prep(verbose = TRUE)
 ```
 
-###
+### 
 
 In geenral, if you encounter errors when working with a recipe, `prep()` can be used with its `verbose` option to troubleshoot.
 
@@ -835,17 +849,17 @@ Another option that can help you understand what happens in the analysis is `log
 
 ```
 
-```{r recipes-in-the-wild-4-hint, eval = FALSE}
+```{r recipes-in-the-wild-4-hint-1, eval = FALSE}
 bean_rec |> 
   prep(... = ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 bean_rec |> 
   prep(log_changes = TRUE)
 ```
 
-###
+### 
 
 Since `prep()` has to execute the recipe as it proceeds, it may be advantageous to keep this version of the training set so that, if that data set is to be used later, redundant calculations can be avoided. However, if the training set is big, it may be problematic to keep such a large amount of data in memory. Use `retain = FALSE` to avoid this.
 
@@ -859,17 +873,17 @@ In the code chunk below, pipe `bean_val$splits` to `pluck()`. Inside this functi
 
 ```
 
-```{r recipes-in-the-wild-5-hint, eval = FALSE}
+```{r recipes-in-the-wild-5-hint-1, eval = FALSE}
 bean_val$splits |>
   ...(1)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 bean_val$splits |>
   pluck(1)
 ```
 
-###
+### 
 
 `pluck()` implements a generalized form of the double bracket operator, `[[`, that allow you to index deeply and flexibly into data structures.
 
@@ -883,19 +897,19 @@ Copy the previous code and pipe it to `assessment()`. Then, press "Run code".
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r recipes-in-the-wild-6-hint, eval = FALSE}
+```{r recipes-in-the-wild-6-hint-1, eval = FALSE}
 bean_val$splits |>
   pluck(1) |>
   ...()
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 bean_val$splits |>
   pluck(1) |>
   assessment()
 ```
 
-###
+### 
 
 In this scenario, `assessment()` returns the code as a data frame (specifically a tibble).
 
@@ -909,21 +923,21 @@ Copy the previous code and assign it to a new variable named `bean_validation`.
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r recipes-in-the-wild-7-hint, eval = FALSE}
+```{r recipes-in-the-wild-7-hint-1, eval = FALSE}
 ... <- 
   bean_val$splits |>
   pluck(1) |>
   assessment()
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 bean_validation <- 
   bean_val$splits |>
   pluck(1) |>
   assessment()
 ```
 
-###
+### 
 
 This [link](https://recipes.tidymodels.org/reference/bake.html) contains more information about `bake()`.
 
@@ -935,15 +949,15 @@ Now, lets process `bean_validation` with `bake()`. In the code chunk below, type
 
 ```
 
-```{r recipes-in-the-wild-8-hint, eval = FALSE}
+```{r recipes-in-the-wild-8-hint-1, eval = FALSE}
 bake(..., new_data = ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 bake(bean_rec_trained, new_data = bean_validation)
 ```
 
-###
+### 
 
 By using `bake()`, the validation set samples have now been processed.
 
@@ -957,15 +971,15 @@ Copy the previous code and assign it to a new variable named `bean_val_processed
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r recipes-in-the-wild-9-hint, eval = FALSE}
+```{r recipes-in-the-wild-9-hint-1, eval = FALSE}
 ... <- bake(bean_rec_trained, new_data = bean_validation)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 bean_val_processed <- bake(bean_rec_trained, new_data = bean_validation)
 ```
 
-###
+### 
 
 Another potential consequence of having a multitude of predictors is possible harm to a model. The simplest example is a method like ordinary linear regression where the number of predictors should be less than the number of data points used to fit the model. 
 
@@ -978,24 +992,23 @@ p1
 p2
 ```
 
-
 In the code chunk below, pipe `bean_validation` to `ggplot()`. Inside this function, using `aes()`, set `x` to `area`.
 
 ```{r recipes-in-the-wild-10, exercise = TRUE}
 
 ```
 
-```{r recipes-in-the-wild-10-hint, eval = FALSE}
+```{r recipes-in-the-wild-10-hint-1, eval = FALSE}
 bean_validation |> 
   ...(aes(x = ...))
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 bean_validation |> 
   ggplot(aes(x = area))
 ```
 
-###
+### 
 
 Another potential consequence of having a multitude of predictors is multicollinearity, where between-predictor correlations can negatively impact the mathematical operations used to estimate a model.
 
@@ -1009,19 +1022,19 @@ Copy the previous code and add `geom_histogram()`. Inside this function, set `bi
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r recipes-in-the-wild-11-hint, eval = FALSE}
+```{r recipes-in-the-wild-11-hint-1, eval = FALSE}
 bean_validation |> 
   ggplot(aes(x = area)) +
   geom_histogram(bins = ..., alpha = ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 bean_validation |> 
   ggplot(aes(x = area)) +
   geom_histogram(bins = 30, alpha = 1/3)
 ```
 
-###
+### 
 
 If there are an extremely large number of predictors, it is fairly unlikely that there are an equal number of real underlying effects. Predictors may be measuring the same latent effect(s), and thus such predictors will be highly correlated. Many dimensionality reduction techniques thrive in this situation. In fact, most can be effective only when there are such relationships between predictors that can be exploited.
 
@@ -1035,19 +1048,19 @@ Copy the previous code. Inside `geom_histogram()`, set `color` to `"white"` and 
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r recipes-in-the-wild-12-hint, eval = FALSE}
+```{r recipes-in-the-wild-12-hint-1, eval = FALSE}
 bean_validation |> 
   ggplot(aes(x = area)) +
   geom_histogram(bins = 30, alpha = 1/3, color = "...", fill = "...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 bean_validation |> 
   ggplot(aes(x = area)) +
   geom_histogram(bins = 30, alpha = 1/3, color = "white", fill = "blue")
 ```
 
-###
+### 
 
 When starting a new modeling project, reducing the dimensions of the data may provide some intuition about how hard the modeling problem may be.
 
@@ -1059,28 +1072,27 @@ Copy the previous code and add `ggtitle()`. Inside this function, type in `"Orig
 p1
 ```
 
-
 ```{r recipes-in-the-wild-13, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r recipes-in-the-wild-13-hint, eval = FALSE}
+```{r recipes-in-the-wild-13-hint-1, eval = FALSE}
 bean_validation |> 
   ggplot(aes(x = area)) +
   geom_histogram(bins = 30, alpha = 1/3, color = "white", fill = "blue") +
   ggtitle("...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 bean_validation |> 
   ggplot(aes(x = area)) +
   geom_histogram(bins = 30, alpha = 1/3, color = "white", fill = "blue") +
   ggtitle("Original validation set data")
 ```
 
-###
+### 
 
 `ggtitle()` is another way to add a title to a graph. `labs()` also has the capibility of doing this, but it's good to know other ways as well. 
 
@@ -1098,17 +1110,17 @@ Pipe `bean_val_processed` to `ggplot()`. Inside this function, using `aes()`, se
 
 ```
 
-```{r recipes-in-the-wild-14-hint, eval = FALSE}
+```{r recipes-in-the-wild-14-hint-1, eval = FALSE}
 bean_val_processed |>
   ...(aes(x = ...))
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 bean_val_processed |>
   ggplot(aes(x = area))
 ```
 
-###
+### 
 
 Principal component analysis (PCA) is one of the most straightforward methods for reducing the number of columns in the data set because it relies on linear methods and is unsupervised (i.e., does not consider the outcome data).
 
@@ -1122,19 +1134,19 @@ Copy the previous code and add `geom_histogram()`. Inside this function, set `bi
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r recipes-in-the-wild-15-hint, eval = FALSE}
+```{r recipes-in-the-wild-15-hint-1, eval = FALSE}
 bean_val_processed |>
   ggplot(aes(x = area)) +
   geom_histogram(bins = ..., alpha = ..., color = "...", fill = "...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 bean_val_processed |>
   ggplot(aes(x = area)) +
   geom_histogram(bins = 30, alpha = 1/3, color = "white", fill = "red")
 ```
 
-###
+### 
 
 For a high-dimensional classification problem, an initial plot of the main PCA components might show a clear separation between the classes. If this is the case, then it is fairly safe to assume that a linear classifier might do a good job. However, the converse is not true; a lack of separation does not mean that the problem is insurmountable.
 
@@ -1146,28 +1158,27 @@ Copy the previous code and add `ggtitle()`. Inside this function, type `"Process
 p2
 ```
 
-
 ```{r recipes-in-the-wild-16, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r recipes-in-the-wild-16-hint, eval = FALSE}
+```{r recipes-in-the-wild-16-hint-1, eval = FALSE}
 bean_val_processed |>
   ggplot(aes(x = area)) +
   geom_histogram(bins = 30, alpha = 1/3, color = "white", fill = "red") +
   ggtitle("...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 bean_val_processed |>
   ggplot(aes(x = area)) +
   geom_histogram(bins = 30, alpha = 1/3, color = "white", fill = "red") +
   ggtitle("Processed validation set data")
 ```
 
-###
+### 
 
 As you can see, the processed validation set data is much more different than the original validation set data.
 
@@ -1183,28 +1194,613 @@ bake(bean_rec_trained, new_data = NULL) |> nrow()
 bean_val$splits |> pluck(1) |> analysis() |> nrow()
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 bake(bean_rec_trained, new_data = NULL) |> nrow()
 
 bean_val$splits |> pluck(1) |> analysis() |> nrow()
 ```
 
-###
+### 
 
 If the training set is not pathologically large, using this value of `retain` can save a lot of computational time.
 
 Also, additional selectors can be used in the call to specify which columns to return. The default selector is `everything()`, but more specific directives can be used.
 
-###
+### 
 
 Congrats! You have learned how to bake a recipe with the use of `bake()`. 
 
 
 ## Feature Extraction Techniques
-###
+### 
 
- 
+Since recipes are the primary option in tidymodels for dimensionality reduction, let’s write a function that will estimate the transformation and plot the resulting data in a scatter plot matrix via the **ggforce** package.
 
+### Exercise 1
+
+Load the **ggforce** package using `library()`.
+
+```{r feature-extraction-t-1, exercise = TRUE}
+
+```
+
+```{r feature-extraction-t-1-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(ggforce)
+```
+
+### 
+
+**ggforce** is an accelerated version of the **ggplot2** package.
+
+### Exercise 2
+
+Now, lets start creating the function. In the code chunk below, type in `function(){}`. Inside the parenthesis, type in `recipe` and set `data` to `assessment(bean_val$splits[[1]])`.
+
+```{r feature-extraction-t-2, exercise = TRUE}
+
+```
+
+```{r feature-extraction-t-2-hint-1, eval = FALSE}
+function(..., dat = ...(bean_val$splits[[...]])) {
+  
+}
+```
+
+```{r include = FALSE}
+function(recipe, dat = assessment(bean_val$splits[[1]])) {
+  
+}
+```
+
+### 
+
+Methods such as PCA represent the original predictors using a smaller subset of new features. All of the original predictors are required to compute these new features. The exception to this are sparse methods that have the ability to completely remove the impact of predictors when creating the new features.
+
+### Exercise 3
+
+Copy the previous code. Inside the function, pipe `recipe` to `prep()`.
+
+```{r feature-extraction-t-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r feature-extraction-t-3-hint-1, eval = FALSE}
+function(recipe, dat = assessment(bean_val$splits[[1]])) {
+  recipe |>
+    ...()
+}
+```
+
+```{r include = FALSE}
+function(recipe, dat = assessment(bean_val$splits[[1]])) {
+  recipe |>
+    prep()
+}
+```
+
+### 
+
+[Chapter 19](https://r4ds.had.co.nz/functions.html#choosing-names) of the [*R for Data Science*](https://r4ds.hadley.nz/) textbook provides information about functions `function()`.
+
+### Exercise 4
+
+Copy the previous code. Pipe `prep()` to `bake()`. Inside `bake()`, set `new_data` to `dat`.
+
+```{r feature-extraction-t-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r feature-extraction-t-4-hint-1, eval = FALSE}
+function(recipe, dat = assessment(bean_val$splits[[1]])) {
+  recipe |>
+    prep() |>
+    ...(new_data = dat)
+}
+```
+
+```{r include = FALSE}
+function(recipe, dat = assessment(bean_val$splits[[1]])) {
+  recipe |>
+    prep() |>
+    bake(new_data = dat)
+}
+```
+
+### 
+
+The `new_data` argument is a data frame or tibble for whom the preprocessing will be applied. If `NULL` is given to `new_data`, the pre-processed training data will be returned (assuming that `prep(retain = TRUE)` was used).
+
+### Exercise 5
+
+Copy the previous code and pipe `bake()` to `ggplot()`. Inside this function, using `aes()`, set `x` to `.panel_x`, `y` to `.panel_y`, `color` to `class`, and `fill` to `class`.
+
+```{r feature-extraction-t-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r feature-extraction-t-5-hint-1, eval = FALSE}
+function(recipe, dat = assessment(bean_val$splits[[1]])) {
+  recipe |>
+    prep() |>
+    bake(new_data = dat) |>
+    ggplot(...(x = ..., y = ..., color = class, fill = class))
+}
+```
+
+```{r include = FALSE}
+function(recipe, dat = assessment(bean_val$splits[[1]])) {
+  recipe |>
+    prep() |>
+    bake(new_data = dat) |>
+    ggplot(aes(x = .panel_x, y = .panel_y, color = class, fill = class))
+}
+```
+
+### 
+
+Another type of dimensionality reduction tecnique is t-Distributed Stochastic Neighbor Embedding, or t-SNE. t-SNE is particularly useful for reducing high-dimensional data to two or three dimensions, which can then be visualized.
+
+### Exercise 6
+
+Copy the previous code and add `geom_point()` to the graph. Inside `geom_point()`, set `alpha` to `0.4` and `size` to `0.5`. 
+
+```{r feature-extraction-t-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r feature-extraction-t-6-hint-1, eval = FALSE}
+function(recipe, dat = assessment(bean_val$splits[[1]])) {
+  recipe |>
+    prep() |>
+    bake(new_data = dat) |>
+    ggplot(aes(x = .panel_x, y = .panel_y, color = class, fill = class)) +
+    geom_point(alpha = ..., size = ...)
+}
+```
+
+```{r include = FALSE}
+function(recipe, dat = assessment(bean_val$splits[[1]])) {
+  recipe |>
+    prep() |>
+    bake(new_data = dat) |>
+    ggplot(aes(x = .panel_x, y = .panel_y, color = class, fill = class)) +
+    geom_point(alpha = 0.4, size = 0.5)
+}
+```
+
+### 
+
+As a reminder, the `alpha` argument inside `geom_point()` controls the transparency or opacity of the points.
+
+### Exercise 7
+
+Copy the previous code and add `geom_autodensity()` to the plot. Inside this function, set `alpha` to `0.3`.
+
+```{r feature-extraction-t-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r feature-extraction-t-7-hint-1, eval = FALSE}
+function(recipe, dat = assessment(bean_val$splits[[1]])) {
+  recipe |>
+    prep() |>
+    bake(new_data = dat) |>
+    ggplot(aes(x = .panel_x, y = .panel_y, color = class, fill = class)) +
+    geom_point(alpha = 0.4, size = 0.5) +
+    geom_autodensity(alpha = ...)
+}
+```
+
+```{r include = FALSE}
+function(recipe, dat = assessment(bean_val$splits[[1]])) {
+  recipe |>
+    prep() |>
+    bake(new_data = dat) |>
+    ggplot(aes(x = .panel_x, y = .panel_y, color = class, fill = class)) +
+    geom_point(alpha = 0.4, size = 0.5) +
+    geom_autodensity(alpha = 0.3)
+}
+```
+
+### 
+
+`geom_autodensity()` is a distribution geoms that fills the panel and works with discrete and continuous data.
+
+### Exercise 8
+
+Copy the previous code and add `facet_matrix()` to the graph. Inside `facet_matrix()`, type `vars(-class)` and set `layer.diag` to `2`.
+
+```{r feature-extraction-t-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r feature-extraction-t-8-hint-1, eval = FALSE}
+function(recipe, dat = assessment(bean_val$splits[[1]])) {
+  recipe |>
+    prep() |>
+    bake(new_data = dat) |>
+    ggplot(aes(x = .panel_x, y = .panel_y, color = class, fill = class)) +
+    geom_point(alpha = 0.4, size = 0.5) +
+    geom_autodensity(alpha = 0.3) +
+    facet_matrix(...(-class), layer.diag = ...)
+}
+```
+
+```{r include = FALSE}
+function(recipe, dat = assessment(bean_val$splits[[1]])) {
+  recipe |>
+    prep() |>
+    bake(new_data = dat) |>
+    ggplot(aes(x = .panel_x, y = .panel_y, color = class, fill = class)) +
+    geom_point(alpha = 0.4, size = 0.5) +
+    geom_autodensity(alpha = 0.3) +
+    facet_matrix(vars(-class), layer.diag = 2)
+}
+```
+
+### 
+
+`facet_matrix()` allows you to put different data columns into different rows and columns in a grid of panels.
+
+### Exercise 9
+
+Copy the previous code and add `scale_color_brewer()` to the graph. Inside this function, set `palette` to `"Dark2"`.
+
+```{r feature-extraction-t-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r feature-extraction-t-9-hint-1, eval = FALSE}
+function(recipe, dat = assessment(bean_val$splits[[1]])) {
+  recipe |>
+    prep() |>
+    bake(new_data = dat) |>
+    ggplot(aes(x = .panel_x, y = .panel_y, color = class, fill = class)) +
+    geom_point(alpha = 0.4, size = 0.5) +
+    geom_autodensity(alpha = 0.3) +
+    facet_matrix(vars(-class), layer.diag = 2) + 
+    scale_color_brewer(palette = "...")
+}
+```
+
+```{r include = FALSE}
+function(recipe, dat = assessment(bean_val$splits[[1]])) {
+  recipe |>
+    prep() |>
+    bake(new_data = dat) |>
+    ggplot(aes(x = .panel_x, y = .panel_y, color = class, fill = class)) +
+    geom_point(alpha = 0.4, size = 0.5) +
+    geom_autodensity(alpha = 0.3) +
+    facet_matrix(vars(-class), layer.diag = 2) + 
+    scale_color_brewer(palette = "Dark2")
+}
+```
+
+### 
+
+As a reminder, `scale_color_brewer()` is a function that provides sequential, diverging and qualitative colour schemes.
+
+### Exercise 10
+
+Copy the previous code and add `scale_fill_brewer()` to the graph. Inside this function, set `palette` to `"Dark2"`.
+
+```{r feature-extraction-t-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r feature-extraction-t-10-hint-1, eval = FALSE}
+function(recipe, dat = assessment(bean_val$splits[[1]])) {
+  recipe |>
+    prep() |>
+    bake(new_data = dat) |>
+    ggplot(aes(x = .panel_x, y = .panel_y, color = class, fill = class)) +
+    geom_point(alpha = 0.4, size = 0.5) +
+    geom_autodensity(alpha = 0.3) +
+    facet_matrix(vars(-class), layer.diag = 2) + 
+    scale_color_brewer(palette = "Dark2") + 
+    scale_fill_brewer(palette = "...")
+}
+```
+
+```{r include = FALSE}
+function(recipe, dat = assessment(bean_val$splits[[1]])) {
+  recipe |>
+    prep() |>
+    bake(new_data = dat) |>
+    ggplot(aes(x = .panel_x, y = .panel_y, color = class, fill = class)) +
+    geom_point(alpha = 0.4, size = 0.5) +
+    geom_autodensity(alpha = 0.3) +
+    facet_matrix(vars(-class), layer.diag = 2) + 
+    scale_color_brewer(palette = "Dark2") + 
+    scale_fill_brewer(palette = "Dark2")
+}
+```
+
+### 
+
+`scale_fill_brewer()` fills in the data on the graph with a certain color (in this case it is `"Dark2"`).
+
+### Exercise 11
+
+Finally, copy the previous code and assign the entire function to a new variable named `plot_validation_results`.
+
+```{r feature-extraction-t-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r feature-extraction-t-11-hint-1, eval = FALSE}
+... <- function(recipe, dat = assessment(bean_val$splits[[1]])) {
+  recipe |>
+    prep() |>
+    bake(new_data = dat) |>
+    ggplot(aes(x = .panel_x, y = .panel_y, color = class, fill = class)) +
+    geom_point(alpha = 0.4, size = 0.5) +
+    geom_autodensity(alpha = 0.3) +
+    facet_matrix(vars(-class), layer.diag = 2) + 
+    scale_color_brewer(palette = "Dark2") + 
+    scale_fill_brewer(palette = "Dark2")
+}
+```
+
+```{r include = FALSE}
+plot_validation_results <- function(recipe, dat = assessment(bean_val$splits[[1]])) {
+  recipe |>
+    prep() |>
+    bake(new_data = dat) |>
+    ggplot(aes(x = .panel_x, y = .panel_y, color = class, fill = class)) +
+    geom_point(alpha = 0.4, size = 0.5) +
+    geom_autodensity(alpha = 0.3) +
+    facet_matrix(vars(-class), layer.diag = 2) + 
+    scale_color_brewer(palette = "Dark2") + 
+    scale_fill_brewer(palette = "Dark2")
+}
+```
+
+### 
+
+This function will be reused several times in this tutorial.
+
+### Exercise 12
+
+PCA has been mentioned several times already in this book, and it’s time to go into more detail. PCA is an unsupervised method that uses linear combinations of the predictors to define new features. These features attempt to account for as much variation as possible in the original data.
+
+Let's add `step_pca()` to the original recipe and use the function to visualize the results on the validation set. In the code chunk below, pipe `bean_rec_trained` to `step_pca()`. Inside this function, type in `all_numeric_predictors()` and set `num_comp` to `4`.
+
+```{r feature-extraction-t-12, exercise = TRUE}
+
+```
+
+```{r feature-extraction-t-12-hint-1, eval = FALSE}
+bean_rec_trained |>
+  step_pca(...(), num_comp = ...)
+```
+
+```{r include = FALSE}
+bean_rec_trained |>
+  step_pca(all_numeric_predictors(), num_comp = 4)
+```
+
+### 
+
+`step_pca()` creates a specification of a recipe step that will convert numeric data into one or more principal components.
+
+### Exercise 13
+
+Copy the previous code and pipe it to the function you created, `plot_validation_results()`. Then, pipe that function to `ggtitle("Principal Component Analysis")` (view the hint if you are confused).
+
+```{r feature-extraction-t-13, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r feature-extraction-t-13-hint-1, eval = FALSE}
+bean_rec_trained |>
+  step_pca(all_numeric_predictors(), num_comp = 4) |>
+  ...() |>
+  ggtitle("...")
+```
+
+```{r include = FALSE}
+bean_rec_trained |>
+  step_pca(all_numeric_predictors(), num_comp = 4) |>
+  plot_validation_results() |>
+  ggtitle("Principal Component Analysis")
+```
+
+### 
+
+As you can see, the first two components `PC1` and `PC2`, especially when used together, do an effective job distinguishing between or separating the classes. This may lead you to expect that the overall problem of classifying these beans will not be especially difficult.
+
+### Exercise 14
+
+Recall that PCA is unsupervised. For these data, it turns out that the PCA components that explain the most variation in the predictors also happen to be predictive of the classes. What features are driving performance? The **learntidymodels** package has functions that can help visualize the top features for each component.
+
+Load the **learntidymodels** package using `library()`.
+
+```{r feature-extraction-t-14, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r feature-extraction-t-14-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(learntidymodels)
+```
+
+### 
+
+Click [here](https://github.com/tidymodels/learntidymodels) to learn more about this package.
+
+### Exercise 15
+
+In the code chunk below, pipe `bean_rec_trained` to `step_pca()`. Inside this function, type in `all_numeric_predictors()` and set `num_comp` to `4`.
+
+```{r feature-extraction-t-15, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r feature-extraction-t-15-hint-1, eval = FALSE}
+bean_rec_trained |>
+  step_pca(...(), num_comp = ...)
+```
+
+```{r include = FALSE}
+bean_rec_trained |>
+  step_pca(all_numeric_predictors(), num_comp = 4)
+```
+
+### 
+
+As a reminder, `all_numeric_predictors()` is a function that is used to select variables in a formula that have certain roles.
+
+### Exercise 16
+
+Copy the previous code and pipe it to `prep()`. 
+
+```{r feature-extraction-t-16, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r feature-extraction-t-16-hint-1, eval = FALSE}
+bean_rec_trained |>
+  step_pca(all_numeric_predictors(), num_comp = 4) |>
+  ...()
+```
+
+```{r include = FALSE}
+bean_rec_trained |>
+  step_pca(all_numeric_predictors(), num_comp = 4) |>
+  prep()
+```
+
+### 
+
+Here is an image that summarizes recipe-related functions:
+
+```{r}
+knitr::include_graphics("images/pic2.png")
+```
+
+### Exercise 17
+
+Copy the previous code and pipe it to ` plot_top_loadings()`. Inside this function, type in `component_number <= 4` as the first argument and set `n` to `5` as the second argument.
+
+```{r feature-extraction-t-17, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r feature-extraction-t-17-hint-1, eval = FALSE}
+bean_rec_trained |>
+  step_pca(all_numeric_predictors(), num_comp = 4) |>
+  prep() |>
+  plot_top_loadings(component_number <= 4, ... = ...)
+```
+
+```{r include = FALSE}
+bean_rec_trained |>
+  step_pca(all_numeric_predictors(), num_comp = 4) |>
+  prep() |>
+  plot_top_loadings(component_number <= 4, n = 5)
+```
+
+### 
+
+`plot_top_loadings()` is a function that produces a plot of the `n` largest component loadings.
+
+### Exercise 18
+
+Copy the previous code and pipe it to `scale_fill_brewer()`. Inside this function, set `palette` to `"Paired"`,
+
+```{r feature-extraction-t-18, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r feature-extraction-t-18-hint-1, eval = FALSE}
+bean_rec_trained |>
+  step_pca(all_numeric_predictors(), num_comp = 4) |>
+  prep() |>
+  plot_top_loadings(component_number <= 4, n = 5) |>
+  scale_fill_brewer(palette = "...")
+```
+
+```{r include = FALSE}
+bean_rec_trained |>
+  step_pca(all_numeric_predictors(), num_comp = 4) |>
+  prep() |>
+  plot_top_loadings(component_number <= 4, n = 5) |>
+  scale_fill_brewer(palette = "Paired")
+```
+
+### 
+
+This [link](https://r-graph-gallery.com/38-rcolorbrewers-palettes.html) provides the various color palettes that the **RColorBrewer** package provides.
+
+### Exercise 19
+
+Copy the previous code and pipe it to `ggtitle()`. Inside this function, pass in `"Principal Component Analysis"`.
+
+```{r feature-extraction-t-19, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r feature-extraction-t-19-hint-1, eval = FALSE}
+bean_rec_trained |>
+  step_pca(all_numeric_predictors(), num_comp = 4) |>
+  prep() |>
+  plot_top_loadings(component_number <= 4, n = 5) |>
+  scale_fill_brewer(palette = "Paired") |>
+  ggtitle("...")
+```
+
+```{r include = FALSE}
+bean_rec_trained |>
+  step_pca(all_numeric_predictors(), num_comp = 4) |>
+  prep() |>
+  plot_top_loadings(component_number <= 4, n = 5) |>
+  scale_fill_brewer(palette = "Paired") |>
+  ggtitle("Principal Component Analysis")
+```
+
+### 
+
+The top loadings are mostly related to the cluster of correlated predictors shown in the top-left portion of the previous correlation plot: perimeter, area, major axis length, and convex area. These are all related to bean size. 
 
 ## Summary
 ### 
