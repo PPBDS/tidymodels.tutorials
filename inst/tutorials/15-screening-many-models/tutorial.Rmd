@@ -144,6 +144,9 @@ no_pre_proc <-
                   Cubist = cubist_spec)
    )
 
+all_workflows <- 
+  bind_rows(no_pre_proc, normalized, with_features) |>
+  mutate(wflow_id = gsub("(simple_)|(normalized_)", "", wflow_id))
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -1374,6 +1377,149 @@ Type `bind_rows()`. Add the parameters `no_pre_proc`, `normalized`, and `with_fe
 ```
 
 ```{r creating-the-workflo-10-hint, eval = FALSE}
+bind_rows(..., normalized, with_features)
+```
+
+```{r, include = FALSE}
+bind_rows(no_pre_proc, normalized, with_features)
+
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+
+### Exercise 11
+
+Copy the previous code and pipe it to `mutate()`. Within the function, add the parameters `wflow_id = gsub("(simple_)|(normalized_)", "", wflow_id)`. Then, set the entire expression to `all_workflows` using `<-`.
+
+```{r creating-the-workflo-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r creating-the-workflo-11-hint, eval = FALSE}
+all_workflows <-
+  ... |>
+  mutate(wflow_id = gsub(...))
+```
+
+```{r, include = FALSE}
+all_workflows <- 
+  bind_rows(no_pre_proc, normalized, with_features) |>
+  mutate(wflow_id = gsub("(simple_)|(normalized_)", "", wflow_id))
+```
+
+###
+
+Great Work! You have just created a workflow set that will be soon tuned and evaluated.
+
+## Tuning and Evaluating the Models
+###
+
+Almost all of the members of `all_workflows` contain tuning parameters. To evaluate their performance, we can use the standard tuning or resampling functions (e.g., `tune_grid()` and so on). The `workflow_map()` function will apply the same function to all of the workflows in the set; the default is `tune_grid()`.
+
+### Exercise 1
+
+Type in `control_grid()`. Add the parameters `save_pred`, setting it equal to `TRUE`, `parallel_over`, setting it equal to `"everything"`, and `save_workflow`, setting it equal to `TRUE`. Then set the whole expression to `grid_ctrl`.
+
+```{r tuning-and-evaluatin-1, exercise = TRUE}
+
+```
+
+```{r tuning-and-evaluatin-1-hint, eval = FALSE}
+grid_ctrl <-
+   control_grid(
+      save_pred = ...,
+      parallel_over = "...",
+      ...= TRUE
+   )
+```
+
+```{r, include = FALSE}
+grid_ctrl <-
+   control_grid(
+      save_pred = TRUE,
+      parallel_over = "everything",
+      save_workflow = TRUE
+   )
+```
+
+###
+
+`control_grid()` control aspects of the grid search process.
+
+### Exercise 2
+
+Pipe `all_workflows` to `workflow_map()`.
+
+```{r tuning-and-evaluatin-2, exercise = TRUE}
+
+```
+
+```{r tuning-and-evaluatin-2-hint, eval = FALSE}
+all_workflows |>
+  ...()
+```
+
+```{r, include = FALSE}
+all_workflows |>
+  workflow_map()
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 3
+
+Copy the previous code and add the parameters `seed = 1503`, `resamples = concrete_folds`, `grid = 25`, and `control = grid_ctrl`. Then, set the entire expression to `grid_results`. Type `grid_results` on the next line to see the output.
+
+```{r tuning-and-evaluatin-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tuning-and-evaluatin-3-hint, eval = FALSE}
+grid_results <-
+   ... |>
+   workflow_map(
+      seed = ...,
+      resamples = ...,
+      grid = 25,
+      ... = grid_ctrl
+   )
+```
+
+```{r, include = FALSE}
+grid_results <-
+   all_workflows %>%
+   workflow_map(
+      seed = 1503,
+      resamples = concrete_folds,
+      grid = 25,
+      control = grid_ctrl
+   )
+```
+
+###
+
+The `option` column now contains all of the options that we used in the `workflow_map()` call. This makes our results reproducible. In the result columns, the “`tune[+]`” and “`rsmp[+]`” notations mean that the object had no issues. A value such as “`tune[x]`” occurs if all of the models failed for some reason.
+
+### Exercise 4
+
+
+
+```{r tuning-and-evaluatin-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tuning-and-evaluatin-4-hint, eval = FALSE}
 
 ```
 
