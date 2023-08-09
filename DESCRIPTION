@@ -24,13 +24,20 @@ Suggests:
     censored,
     corrplot,
     corrr,
+    DALEXtra,
+    discrim,
     doParallel,
+    embed,
+    fastICA,
     finetune,
     ggrepel,
     ggforce,
     kernlab,
+    klaR,
     lme4,
     learnr,
+    mda,
+    mixOmics,
     multilevelmod,
     nlme,
     ranger,
@@ -44,5 +51,6 @@ Suggests:
     tidyposterior,
     tidyverse,
     tutorial.helpers,
-    usemodels
+    usemodels,
+    xgboost
 Config/testthat/edition: 3
