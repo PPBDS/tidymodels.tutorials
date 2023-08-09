@@ -147,6 +147,70 @@ no_pre_proc <-
 all_workflows <- 
   bind_rows(no_pre_proc, normalized, with_features) |>
   mutate(wflow_id = gsub("(simple_)|(normalized_)", "", wflow_id))
+
+grid_results <-
+   all_workflows %>%
+   workflow_map(
+      seed = 1503,
+      resamples = concrete_folds,
+      grid = 25,
+      control = grid_ctrl
+   )
+
+grid_ctrl <-
+   control_grid(
+      save_pred = TRUE,
+      parallel_over = "everything",
+      save_workflow = TRUE
+   )
+
+grid_results <-
+   all_workflows |>
+   workflow_map(
+      seed = 1503,
+      resamples = concrete_folds,
+      grid = 25,
+      control = grid_ctrl
+   )
+
+race_ctrl <-
+   control_race(
+      save_pred = TRUE,
+      parallel_over = "everything",
+      save_workflow = TRUE
+   )
+
+race_results <-
+  all_workflows |>
+  workflow_map(
+    "tune_race_anova",
+    seed = 1503,
+    resamples = concrete_folds,
+    grid = 25,
+    control = race_ctrl
+   )
+
+matched_results <-
+  rank_results(race_results, select_best = TRUE) |>
+  select(wflow_id, .metric, race = mean, config_race = .config) |>
+  inner_join(
+    rank_results(grid_results, select_best = TRUE) |>
+      select(wflow_id, .metric, complete = mean,
+             config_complete = .config, model),
+    by = c("wflow_id", ".metric")
+  ) |>
+  filter(.metric == "rmse")
+
+best_results <-
+  race_results |>
+  extract_workflow_set_result("boosting") |>
+  select_best(metric = "rmse")
+
+boosting_test_results <-
+  race_results |>
+  extract_workflow("boosting") |>
+  finalize_workflow(best_results)|>
+  last_fit(split = concrete_split)
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
@@ -158,7 +222,7 @@ all_workflows <-
 ## Introduction
 ###
 
-<!-- Two to four sentence about the main topics covered in this tutorial. Why are we here? What will students get out of giving you 90 minutes of their lives? How does this tutorial connect to other tutorials? -->
+This tutorial covers [Chapter 15: Grid Search](https://www.tmwr.org/workflow-sets) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This chapter will illustrate how to use workflow sets to investigate multiple models or feature engineering strategies in such a situation. Racing methods can more efficiently rank models than fitting every candidate model being considered.
 
 ## Modeling Concrete Mixture Strength
 ###
@@ -1496,13 +1560,15 @@ grid_results <-
 
 ```{r, include = FALSE}
 grid_results <-
-   all_workflows %>%
+   all_workflows |>
    workflow_map(
       seed = 1503,
       resamples = concrete_folds,
       grid = 25,
       control = grid_ctrl
    )
+
+grid_results
 ```
 
 ###
@@ -1511,30 +1577,933 @@ The `option` column now contains all of the options that we used in the `workflo
 
 ### Exercise 4
 
-
+Pipe `grid_results` into `rank_results()`. Then, pipe `rank_results()` to `filter()`. Add the parameter `.metric == "rmse"`.
 
 ```{r tuning-and-evaluatin-4, exercise = TRUE}
 
 ```
 
-<button onclick = "transfer_code(this)">Copy previous code</button>
-
 ```{r tuning-and-evaluatin-4-hint, eval = FALSE}
-
+grid_results |>
+  ...() |>
+  filter(.metric = "...")
 ```
 
 ```{r, include = FALSE}
+grid_results |>
+  rank_results() |>
+  filter(.metric = "rmse")
+```
 
+###
+
+There are a few convenience functions for examining results such as `grid_results`. The `rank_results()` function will order the models by some performance metric. 
+
+### Exercise 5
+
+Copy the previous code and filter it to `select()`. Add the parameter `model`, `.config`, `rank`, and `rmse`, setting it equal to `mean`.
+
+```{r tuning-and-evaluatin-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tuning-and-evaluatin-5-hint, eval = FALSE}
+... |>
+  select(..., .config, ... = mean, rank)
+```
+
+```{r, include = FALSE}
+grid_results |>
+   rank_results() |>
+   filter(.metric == "rmse") |>
+   select(model, .config, rmse = mean, rank)
+```
+
+###
+
+Also by default, the function ranks all of the candidate sets; that’s why the same model can show up multiple times in the output. An option, called `select_best`, can be used to rank the models using their best tuning parameter combination.
+
+
+### Exercise 6
+
+Type `autoplot()`. Add the parameters `grid_results`, `rank_metric = "rmse"`, `metric = "rmse"`, and `select_best = TRUE`.
+
+```{r tuning-and-evaluatin-6, exercise = TRUE}
+
+```
+
+```{r tuning-and-evaluatin-6-hint, eval = FALSE}
+autoplot(
+  grid_results,
+  rank_metric = "...",
+  metric = "rmse",
+  ... = TRUE)
+```
+
+```{r, include = FALSE}
+autoplot(
+  grid_results,
+  rank_metric = "rmse",
+  metric = "rmse",
+  select_best = TRUE)
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 7
+
+Copy the previous code and add `geom_text()`. Within `aes()` of `geom_text()`, add the parameters `y`, setting it equal to `mean - 1/2`, and `label`, setting it equal to `wflow_id`.
+
+```{r tuning-and-evaluatin-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tuning-and-evaluatin-7-hint, eval = FALSE}
+... +
+  geom_text(aes(y = ..., label = ...))
+```
+
+```{r, include = FALSE}
+autoplot(
+  grid_results,
+  rank_metric = "rmse",
+  metric = "rmse",
+  select_best = TRUE
+  ) +
+  geom_text(aes(y = mean - 1/2, label = wflow_id))
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 8
+
+Copy the previous code and add the parametes `angle = 90` and `hjust = 1` outside of the `aes()` in `geom_text()`.
+
+```{r tuning-and-evaluatin-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tuning-and-evaluatin-8-hint, eval = FALSE}
+... +
+  geom_text(aes(y = mean - 1/2, lable = wflow_id), angle = ..., hjust = ...)
+```
+
+```{r, include = FALSE}
+autoplot(
+  grid_results,
+  rank_metric = "rmse",
+  metric = "rmse",
+  select_best = TRUE
+  ) +
+  geom_text(aes(y = mean - 1/2, label = wflow_id), angle = 90, hjust = 1)
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 9
+
+Copy the previous code and add `lims()`. Add the parameter `y` and set it equal to a vector consistent of `3.5` and `9.5`.
+
+```{r tuning-and-evaluatin-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tuning-and-evaluatin-9-hint, eval = FALSE}
+... +
+  lims(y = c(..., ...))
+```
+
+```{r, include = FALSE}
+autoplot(
+  grid_results,
+  rank_metric = "rmse",
+  metric = "rmse",
+  select_best = TRUE
+  ) +
+  geom_text(aes(y = mean - 1/2, label = wflow_id), angle = 90, hjust = 1) +
+  lims(y = c(3.5, 9.5))
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 10
+
+Copy the previous code and add `theme()`. Add the parameter `legend.position` and set it equal to `"none"`.
+
+```{r tuning-and-evaluatin-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r tuning-and-evaluatin-10-hint, eval = FALSE}
+... +
+  theme(legend.position = "...")
+```
+
+```{r, include = FALSE}
+autoplot(
+  grid_results,
+  rank_metric = "rmse",
+  metric = "rmse",
+  select_best = TRUE
+  ) +
+  geom_text(aes(y = mean - 1/2, label = wflow_id), angle = 90, hjust = 1) +
+  lims(y = c(3.5, 9.5)) +
+  theme(legend.position = "none")
+```
+
+###
+
+In case you want to see the tuning parameter results for a specific model, the `id` argument can take a single value from the `wflow_id` column for which model to plot.
+
+### Exercise 11
+
+Type `autoplot()` and add the parametes `grid_results`, `id`, setting it equal to `"Cubist"`, and `metric`, setting equal `"rmse"`.
+
+```{r tuning-and-evaluatin-11, exercise = TRUE}
+
+```
+
+```{r tuning-and-evaluatin-11-hint, eval = FALSE}
+autoplot(grid_results, id = "...", metric = "...")
+```
+
+```{r, include = FALSE}
+autoplot(grid_results, id = "Cubist", metric = "rmse")
+```
+
+###
+
+There are also methods for `collect_predictions()` and `collect_metrics()`. The example model screening with our concrete mixture data fits a total of 12,600 models. Using 2 workers in parallel, the estimation process took 2 hours to complete.
+
+Great Job! You have learned to tune and evaluate the models that we have created in the previous section successfully.
+
+## Efficiently Screening Models
+###
+
+With a workflow set, we can use the `workflow_map()` function for this racing approach. Recall that after we pipe in our workflow set, the argument we use is the function to apply to the workflows; in this case, we can use a value of `"tune_race_anova"`.
+
+### Exercise 1
+
+Type `control_race()`. Add the parameters `save_pred`, setting it equal to `TRUE`, `parallel_over`, setting it equal to `"everything"`, and `save_workflow`, setting it equal to `TRUE`. Set the entire expression to `race_ctrl`.
+
+```{r efficiently-screenin-1, exercise = TRUE}
+
+```
+
+```{r efficiently-screenin-1-hint, eval = FALSE}
+race_ctrl <-
+  control_race(
+    save_pred = ...,
+    parallel_over = "...",
+    save_workflow = ...
+  )
+```
+
+```{r, include = FALSE}
+race_ctrl <-
+   control_race(
+      save_pred = TRUE,
+      parallel_over = "everything",
+      save_workflow = TRUE
+   )
+```
+
+###
+
+`control_race()` control aspects of the grid search racing process.
+
+### Exercise 2
+
+Type `all_workflows` and pipe it to `workflow_map()`. Add the parameter `"tune_race_anova"`.
+
+```{r efficiently-screenin-2, exercise = TRUE}
+
+```
+
+```{r efficiently-screenin-2-hint, eval = FALSE}
+all_workflows |>
+  workflow_map(
+    "..."
+  )
+```
+
+```{r, include = FALSE}
+all_workflows |>
+  workflow_map(
+    "tune_race_anova"
+  )
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 3
+
+Copy the previous code and add the parameters `seed = 1503`, `resamples = concrete_folds`, `grid = 25`, and `control = race_ctrl`. Set the entire expression to `race_results`. Type `race_results` to see the outcome.
+
+```{r efficiently-screenin-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r efficiently-screenin-3-hint, eval = FALSE}
+race_results <-
+  ... |>
+  workflow_map(
+    "tune_race_anova",
+    seed = ...,
+    resamples = ...,
+    grid = ...,
+    control = race_ctrl
+  )
+```
+
+```{r, include = FALSE}
+race_results <-
+  all_workflows |>
+  workflow_map(
+    "tune_race_anova",
+    seed = 1503,
+    resamples = concrete_folds,
+    grid = 25,
+    control = race_ctrl
+   )
+```
+
+###
+
+The new object looks very similar, although the elements of the result column show a value of "race[+]", indicating a different type of object.
+
+### Exercise 4
+
+Type `autoplot()` and add the parameters `race_results`, `rank_metrics`, setting it equal to `"rmse"`, `metric`, setting it equal to `"rmse"`, and `select_best`, setting it equal to `TRUE`.
+
+```{r efficiently-screenin-4, exercise = TRUE}
+
+```
+
+```{r efficiently-screenin-4-hint, eval = FALSE}
+autoplot(
+  race_results,
+  rank_metric = "...",  
+  metric = "...",       
+  select_best = ...    
+) 
+```
+
+```{r, include = FALSE}
+autoplot(
+  race_results,
+  rank_metric = "rmse",  
+  metric = "rmse",       
+  select_best = TRUE    
+) 
 ```
 
 ###
 
 
+<!-- PK: Knowledge Drop-->
+
+### Exercise 5
+
+Copy the previous code and add `geom_text()`. Within `aes()` of `geom_text()`, add the parameters `y = mean - 1/2` and `label = wflow_id`.
+
+```{r efficiently-screenin-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r efficiently-screenin-5-hint, eval = FALSE}
+... +
+  geom_text(aes(y = ..., label = ...))
+```
+
+```{r, include = FALSE}
+autoplot(
+  race_results,
+  rank_metric = "rmse",  
+  metric = "rmse",       
+  select_best = TRUE    
+) +
+  geom_text(aes(y = mean - 1/2, label = wflow_id))
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 6
+
+Copy the previous code and add `lims()`. Add the parameter `y` and set it equal to a vector consistent of `3.0` and `9.5`.
+
+```{r efficiently-screenin-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r efficiently-screenin-6-hint, eval = FALSE}
+... +
+  lims(y = c(..., ...))
+```
+
+```{r, include = FALSE}
+autoplot(
+  race_results,
+  rank_metric = "rmse",  
+  metric = "rmse",       
+  select_best = TRUE    
+) +
+  geom_text(aes(y = mean - 1/2, label = wflow_id)) +
+  lims(y = c(3.0, 9.5))
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 7
+
+Copy the previous code and add `theme()`. Add the parameter `legned.position` and set it equal to `"none"`.
+
+```{r efficiently-screenin-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r efficiently-screenin-7-hint, eval = FALSE}
+... +
+  theme(... = "none")
+```
+
+```{r, include = FALSE}
+autoplot(
+  race_results,
+  rank_metric = "rmse",  
+  metric = "rmse",       
+  select_best = TRUE    
+) +
+  geom_text(aes(y = mean - 1/2, label = wflow_id)) +
+  lims(y = c(3.0, 9.5)) +
+  theme(legend.position = "none")
+```
+
+###
+
+Overall, the racing approach estimated a total of 1,050 models, 8.33% of the full set of 12,600 models in the full grid. As a result, the racing approach was 4.7-fold faster.
+
+### Exercise 8
+
+Did we get similar results? For both objects, we rank the results, merge them, and plot them against one another.
+
+Type `rank_results()` and add the parameters `race_results` and `select_best`, setting it equal to `TRUE`.
+
+```{r efficiently-screenin-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r efficiently-screenin-8-hint, eval = FALSE}
+rank_results(..., select_best = ...)
+```
+
+```{r, include = FALSE}
+rank_results(race_results, select_best = TRUE)
+```
+
+###
+
+<!-- PK: Knowledge Drops -->
+
+### Exercise 9
+
+Copy the previous code and pipe it to `select()`. Add the parameters `wflow_id`, `.metric`, `race = mean`, and `config_race = .config`.
+
+```{r efficiently-screenin-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r efficiently-screenin-9-hint, eval = FALSE}
+... |>
+  select(wflow_id, .metric, race = mean, config_race = .config)
+```
+
+```{r, include = FALSE}
+rank_results(race_results, select_best = TRUE) |>
+   select(wflow_id, .metric, race = mean, config_race = .config)
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 10
+
+Copy the previous code and pipe it to `inner_join()`. Add the parameter `rank_results()`, add the parameters `grid_results` and `select_best = TRUE`.
+
+```{r efficiently-screenin-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r efficiently-screenin-10-hint, eval = FALSE}
+... |>
+  inner_join(
+    rank_results(..., select_best = ...)
+  )
+```
+
+```{r, include = FALSE}
+rank_results(race_results, select_best = TRUE) |>
+   select(wflow_id, .metric, race = mean, config_race = .config) |>
+  inner_join(
+    rank_results(grid_results, select_best = TRUE)
+  )
+```
+
+###
+
+<!-- PK: Knowledge Drops -->
+
+### Exercise 11
+
+Copy the previous code and pipe `race_results()` inside `inner_join()` to `select()`. Add the `wflow_id`, `.metric`, `complete = mean`, `config_complete = .config`, and `model`.
+
+```{r efficiently-screenin-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r efficiently-screenin-11-hint, eval = FALSE}
+... |>
+  inner_join(
+    ... |>
+      select(..., .metric, ... = mean, ... = .config, model.)
+  )
+```
+
+```{r, include = FALSE}
+rank_results(race_results, select_best = TRUE) |>
+   select(wflow_id, .metric, race = mean, config_race = .config) |>
+  inner_join(
+    rank_results(grid_results, select_best = TRUE) |>
+      select(wflow_id, .metric, complete = mean, config_complete = .config, model)
+  )
+```
+
+###
+
+<!-- PK: Knowledge Drop-->
+
+### Exercise 12
+
+Copy the previous code and add the parameter`by` inside `inner_join()`, setting it equal to a vector consistent `"wflow_id"` and `".metric"`.
+
+```{r efficiently-screenin-12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r efficiently-screenin-12-hint, eval = FALSE}
+... |>
+  inner_join(
+    ...,
+    by = c("...", "...")
+  )
+```
+
+```{r, include = FALSE}
+rank_results(race_results, select_best = TRUE) |>
+   select(wflow_id, .metric, race = mean, config_race = .config) |>
+  inner_join(
+    rank_results(grid_results, select_best = TRUE) |>
+      select(wflow_id, .metric, complete = mean, config_complete = .config, model),
+    by = c("wflow_id", ".metric")
+  )
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 13
+
+Copy the previous code and, outside of `inner_join()`, pipe it to `filter()`. Add the parameter `.metric == "rmse"`. Then set the entire expression to `matched_results`.
+
+```{r efficiently-screenin-13, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r efficiently-screenin-13-hint, eval = FALSE}
+matched_results <-
+  ... |>
+  filter(.metric == "...")
+```
+
+```{r, include = FALSE}
+matched_results <-
+  rank_results(race_results, select_best = TRUE) |>
+  select(wflow_id, .metric, race = mean, config_race = .config) |>
+  inner_join(
+    rank_results(grid_results, select_best = TRUE) |>
+      select(wflow_id, .metric, complete = mean,
+             config_complete = .config, model),
+    by = c("wflow_id", ".metric")
+  ) |>
+  filter(.metric == "rmse")
+```
+
+###
+
+<!-- PK: Knowledge Drop-->
+
+### Exercise 14
+
+Type `matched_results` and pipe it to `ggplot()`. Within `aes()` of `ggplot()`, add the parametes `x`, setting to `complete`, and `y`, setting it equal to `race`.
+
+```{r efficiently-screenin-14, exercise = TRUE}
+
+```
+
+```{r efficiently-screenin-14-hint, eval = FALSE}
+matched_results |>
+  ggplot(aes(x = ..., y = ...))
+```
+
+```{r, include = FALSE}
+matched_results |>
+  ggplot(aes(x = complete, y = race))
+```
+
+###
+
+<!-- PK: Knowledge Drop-->
+
+### Exercise 15
+
+Copy the previous code and add it to `geom_abline()`. Add the parameter `lty`, setting it equal to `3`.
+
+```{r efficiently-screenin-15, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r efficiently-screenin-15-hint, eval = FALSE}
+... |>
+  geom_abline(lty = ...)
+```
+
+```{r, include = FALSE}
+matched_results |>
+  ggplot(aes(x = complete, y = race)) +
+    geom_abline(lty = 3)
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 16
+
+Copy the previous code and add `geom_point()`. Then, add `geom_text_repel()`. Within `aes()` of `geom_text_repel()`, set `label` equal to `model`.
+
+```{r efficiently-screenin-16, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r efficiently-screenin-16-hint, eval = FALSE}
+... +
+  ...() +
+  geom_text_repel(aes(label = ...))
+```
+
+```{r, include = FALSE}
+matched_results |>
+  ggplot(aes(x = complete, y = race)) +
+    geom_abline(lty = 3) +
+    geom_point() +
+    geom_text_repel(aes(label = model))
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 17
+
+Copy the previous code and add `coord_obs_pred()`. Then, add `labs()`. Add the parameters `x`, setting `"Complete Grid RMSE`, and `y`, setting it equal to `"Racing RMSE"`.
+
+```{r efficiently-screenin-17, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r efficiently-screenin-17-hint, eval = FALSE}
+... +
+  coord_obs_pred() +
+  labs(x = "...", y = "...")
+```
+
+```{r, include = FALSE}
+matched_results |>
+  ggplot(aes(x = complete, y = race)) +
+    geom_abline(lty = 3) +
+    geom_point() +
+    geom_text_repel(aes(label = model)) +
+    coord_obs_pred() +
+    labs(x = "Complete Grid RMSE", y = "Racing RMSE")
+```
+
+###
+
+Great Job! You now know how to efficiently screen models by using methods such as `control_race()`, `workflow_map()`, `rank_results()`, etc.
+
+## Finalizing a Model
+###
+
+Similar to what we have shown in previous chapters, the process of choosing the final model and fitting it on the training set is straightforward. The first step is to pick a workflow to finalize. Since the boosted tree model worked well, we’ll extract that from the set, update the parameters with the numerically best settings, and fit to the training set.
+
+### Exercise 1
+
+Type in `race_results` and pipe it to `extract_workflow_set_result()`. Add the parameter `"boosting"`.
+
+```{r finalizing-a-model-1, exercise = TRUE}
+
+```
+
+```{r finalizing-a-model-1-hint, eval = FALSE}
+race_results |>
+  extract_workflow_set_result("...")
+```
+
+```{r, include = FALSE}
+race_results |>
+  extract_workflow_set_result("boosting")
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 2
+
+Copy the previous code and pipe it to `select_best()`. Add the parameter `metric` and set it equal to `"rmse"`. Then, set the entire expression to `best_results`.
+
+```{r finalizing-a-model-2, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r finalizing-a-model-2-hint, eval = FALSE}
+best_results <-
+  ... |>
+  select_best(metric = "rmse")
+```
+
+```{r, include = FALSE}
+best_results <-
+  race_results |>
+  extract_workflow_set_result("boosting") |>
+  select_best(metric = "rmse")
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 3
+
+Type `race_results` and pipe it to `extract_workflow("boosting")`. Then pipe it to `finalize_workflow()`, adding the parameter `best_results`.
+
+```{r finalizing-a-model-3, exercise = TRUE}
+
+```
+
+```{r finalizing-a-model-3-hint, eval = FALSE}
+race_results |>
+  extract_workflow("...") |>
+  finalize_workflow(...)
+```
+
+```{r, include = FALSE}
+race_results |>
+  extract_workflow("boosting") |>
+  finalize_workflow(best_results)
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 4
+
+Copy the previous code and pipe it to `last_fit()`. Add the parameter `split`, setting it equal to `concrete_split`. Then, set the entire expression to `boosting_test_results` using `<-`.
+
+```{r finalizing-a-model-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r finalizing-a-model-4-hint, eval = FALSE}
+boosting_test_results <-
+  ... |>
+  last_fit(split = ...)
+```
+
+```{r, include = FALSE}
+boosting_test_results <-
+  race_results |>
+  extract_workflow("boosting") |>
+  finalize_workflow(best_results)|>
+  last_fit(split = concrete_split)
+```
+
+###
+
+We can see the test set metrics results, and visualize the predictions in the next exercise.
+
+### Exercise 5
+
+Type `collect_metrics()` and add the parameter `boosting_test_results`.
+
+```{r finalizing-a-model-5, exercise = TRUE}
+
+```
+
+```{r finalizing-a-model-5-hint, eval = FALSE}
+collect_metrics(...)
+```
+
+```{r, include = FALSE}
+collect_metrics(boosting_test_results)
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 6
+
+Pipe `boosting_test_results` to `collect_predictions()`. Then, pipe it to `ggplot()` and within `aes()`, set `x` to `compressive_strength` and `y` to `.pred`.
+
+```{r finalizing-a-model-6, exercise = TRUE}
+
+```
+
+```{r finalizing-a-model-6-hint, eval = FALSE}
+boosting_test_results |>
+  ...() |>
+  ggplot(aes(x = ..., y = .pred))
+```
+
+```{r, include = FALSE}
+boosting_test_results |>
+  collect_predictions() |>
+  ggplot(aes(x = compressive_strength, y = .pred))
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 7
+
+Copy the previous code and add `geom_abline()`, setting the parameter `color` equal to `"gray50"` and `lty` equal to `2`.
+
+```{r finalizing-a-model-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r finalizing-a-model-7-hint, eval = FALSE}
+... +
+  geom_abline(color = "...", lty = ...)
+```
+
+```{r, include = FALSE}
+boosting_test_results |>
+  collect_predictions() |>
+  ggplot(aes(x = compressive_strength, y = .pred)) +
+    geom_abline(color = "gray50", lty = 2)
+```
+
+###
+
+<!-- PK: Knowledge Drop -->
+
+### Exercise 8
+
+Copy the previous code and add `geom_point()`. Add the parameter `alpha = 0.5`. Then add `coord_orbs_pred()`. Finally, add `labs()`, and set `x` equal to `"observed"` and `y` equal to `"predicted"`.
+
+```{r finalizing-a-model-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r finalizing-a-model-8-hint, eval = FALSE}
+... +
+  geom_point(alpha = ...) +
+  coord_orbs_pred() +
+  labs(x = "...", y = "...")
+```
+
+```{r, include = FALSE}
+boosting_test_results |>
+  collect_predictions() |>
+  ggplot(aes(x = compressive_strength, y = .pred)) +
+    geom_abline(color = "gray50", lty = 2) +
+    geom_point(alpha = 0.5) +
+    coord_orbs_pred() +
+    labs(x = "observed", y = "predicted")
+```
+
+###
+
+Great Job! You have now learned how to finalize a model and finalize the model that we have been working on this tutorial.
 
 ## Summary
 ###
 
-<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+This tutorial covers [Chapter 15: Grid Search](https://www.tmwr.org/workflow-sets) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This chapter illustrated how to use workflow sets to investigate multiple models or feature engineering strategies in such a situation. Racing methods can more efficiently rank models than fitting every candidate model being considered.
 
 ```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
 ```
