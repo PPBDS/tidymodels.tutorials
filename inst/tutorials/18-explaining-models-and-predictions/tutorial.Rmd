@@ -16,8 +16,11 @@ library(learnr)
 library(tutorial.helpers)
 library(knitr)
 
+library(tidymodels)
 library(DALEXtra)
 library(forcats)
+
+tidymodels_prefer()
 
 
 knitr::opts_chunk$set(echo = FALSE)
