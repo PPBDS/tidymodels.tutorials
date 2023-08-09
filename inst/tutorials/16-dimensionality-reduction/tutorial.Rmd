@@ -3055,7 +3055,7 @@ The reason you have to specify `dplyr::select()` is to ensure you don't use the 
 The image below illustrates these rankings:
 
 ```{r}
-knitr::include_graphcis("images/pic5.png")
+knitr::include_graphics("images/pic5.png")
 ```
 
 ###
