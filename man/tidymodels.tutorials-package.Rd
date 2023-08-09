@@ -6,7 +6,7 @@
 \alias{tidymodels.tutorials-package}
 \title{tidymodels.tutorials: Tutorials for Tidy Modeling with R}
 \description{
-What the package does (one paragraph).
+This package provides tutorials for Tidy Modeling with R by Max Kuhn and Julia Silge. In an ideal world, students would read the book and type in all the associated R commands themselves. Sadly, that often does not happen. These tutorials allow students to demonstrate (and their instructors to be sure) that all work has been completed. See the tutorial.helpers package for a background discussion of the tool and approach.
 }
 \author{
 \strong{Maintainer}: David Kane \email{dave.kane@gmail.com} (\href{https://orcid.org/0000-0002-6660-3934}{ORCID}) [copyright holder]
