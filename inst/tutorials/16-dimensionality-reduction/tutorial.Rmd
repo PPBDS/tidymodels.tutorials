@@ -27,6 +27,8 @@ library(baguette)
 library(discrim)
 library(mixOmics)
 library(xgboost)
+library(mda)
+library(klaR)
 tidymodels_prefer()
 
 knitr::opts_chunk$set(echo = FALSE)

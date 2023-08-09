@@ -132,6 +132,8 @@ updated_param <-
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
+<!-- DK: Earlier in the tutorial, we should run each of the commands like `lloss() |> mutate(model = "logistic")` separately and explain why the resulting tibble has 200 rows, and what the rows mean. Only after that do we combine all those results into one big tibble with bind_rows(). -->
+
 ## Introduction
 ### 
 
@@ -1014,6 +1016,10 @@ bind_rows(
 )
 ```
 
+<!-- DK: Note that a warning appears when you run  -->
+<!-- `lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")` -->
+<!-- both here and in later steps. The cause of this is, presumably, that using a c-log-log link function causes some of the estimated probabilities to be 0 or 1. Not sure what we should do about that, other than add a knowledge drop pointing out the warning so that students are not concerned. -->
+
 ```{r include = FALSE}
 bind_rows(
   lloss() |> mutate(model = "logistic"),
@@ -1097,6 +1103,8 @@ Copy the previous code and pipe it to `group_by()`. Inside this function, type i
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
+
+<!-- DK: Don't use group_by(). Use .by within summary. -->
 
 ```{r what-do-we-optimize-34-hint-1, eval = FALSE}
 bind_rows(
