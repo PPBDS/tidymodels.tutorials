@@ -32,7 +32,7 @@ Suggests:
     ggrepel,
     ggforce,
     kernlab,
-    klaR.
+    klaR,
     lme4,
     learnr,
     mda,
