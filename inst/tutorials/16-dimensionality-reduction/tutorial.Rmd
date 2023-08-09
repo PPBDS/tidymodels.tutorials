@@ -26,6 +26,7 @@ library(embed)
 library(baguette)
 library(discrim)
 library(mixOmics)
+library(xgboost)
 tidymodels_prefer()
 
 knitr::opts_chunk$set(echo = FALSE)
