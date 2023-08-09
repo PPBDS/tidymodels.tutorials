@@ -24,6 +24,7 @@ Suggests:
     censored,
     corrplot,
     corrr,
+    DALEXtra,
     discrim,
     doParallel,
     embed,
@@ -50,5 +51,6 @@ Suggests:
     tidyposterior,
     tidyverse,
     tutorial.helpers,
-    usemodels
+    usemodels,
+    xgboost
 Config/testthat/edition: 3
