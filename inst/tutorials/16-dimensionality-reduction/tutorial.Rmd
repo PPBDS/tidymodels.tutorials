@@ -154,7 +154,6 @@ bean_res <-
 
 # AK: Getting a lot of warnings/weird output when running "bean_res"
 
-# AK: A lot of the code in the "Modeling" Section requires the mixOmics package, which isn't on CRAN. Would it be possible to install and use this package?
 
 rankings <-
   rank_results(bean_res, select_best = TRUE) |>
