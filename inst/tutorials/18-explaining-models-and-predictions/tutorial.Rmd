@@ -1,0 +1,562 @@
+---
+title: Explaining Models and Predictions
+author: Aryan Kancherla
+tutorial:
+  id: explaining-models-and-predictions
+output:
+  learnr::tutorial:
+    progressive: yes
+    allow_skip: yes
+runtime: shiny_prerendered
+description: 'Tutorial for Chapter 18: Explaining Models and Predictions'
+---
+
+```{r setup, include = FALSE}
+library(learnr)
+library(tutorial.helpers)
+library(knitr)
+
+library(DALEXtra)
+library(forcats)
+
+
+knitr::opts_chunk$set(echo = FALSE)
+options(tutorial.exercise.timelimit = 60, 
+        tutorial.storage = "local") 
+
+ames_update <- ames |>
+  mutate(Sale_Price = log10(Sale_Price))
+
+set.seed(502)
+ames_strata_split <- initial_split(ames_update, prop = 0.80, strata = Sale_Price)
+ames_train <- training(ames_strata_split)
+
+ames_rec <- 
+  recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + 
+           Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |> 
+  step_other(Neighborhood, threshold = 0.01) |> 
+  step_dummy(all_nominal_predictors()) |> 
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_") ) |> 
+  step_ns(Latitude, Longitude, deg_free = 20)
+  
+lm_model <- linear_reg() |> set_engine("lm")
+
+lm_wflow <- 
+  workflow() |> 
+  add_model(lm_model) |> 
+  add_recipe(ames_rec)
+
+lm_fit <- fit(lm_wflow, ames_train)
+
+vip_features <- c("Neighborhood", "Gr_Liv_Area", "Year_Built", "Bldg_Type", "Latitude", "Longitude")
+
+vip_train <- 
+  ames_train |> 
+  select(all_of(vip_features))
+
+explainer_lm <-
+  explain_tidymodels(
+    lm_fit, 
+    data = vip_train, 
+    y = ames_train$Sale_Price,
+    label = "lm + interactions",
+    verbose = FALSE
+)
+
+rf_model <- 
+  rand_forest(trees = 1000) |> 
+  set_engine("ranger") |> 
+  set_mode("regression")
+
+rf_wflow <- 
+  workflow() |> 
+  add_formula(
+    Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + 
+      Latitude + Longitude) |> 
+  add_model(rf_model) 
+
+rf_fit <- rf_wflow |> fit(data = ames_train)
+
+explainer_rf <- 
+  explain_tidymodels(
+    rf_fit, 
+    data = vip_train, 
+    y = ames_train$Sale_Price,
+    label = "random forest",
+    verbose = FALSE
+  )
+
+```
+
+```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
+```
+
+```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
+```
+
+## Introduction
+### 
+
+<!-- Two to four sentence about the main topics covered in this tutorial. Why are we here? What will students get out of giving you 90 minutes of their lives? How does this tutorial connect to other tutorials? -->
+
+## Software for Model Explanations 
+### 
+
+In Section [1.2](https://www.tmwr.org/software-modeling#model-types) of Chapter [1](https://www.tmwr.org/software-modeling), a taxonomy of models were outlined and suggested that models typically are built as one or more of descriptive, inferential, or predictive. The chapter suggested that model performance, as measured by appropriate metrics (like RMSE for regression or area under the ROC curve for classification), can be important for all modeling applications. Similarly, model explanations, answering *why* a model makes the predictions it does, can be important whether the purpose of your model is largely descriptive, to test a hypothesis, or to make a prediction.
+
+### Exercise 1
+
+Load the **DALEXtra** library using `library()`.
+
+```{r software-for-model-e-1, exercise = TRUE}
+
+```
+
+```{r software-for-model-e-1-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(DALEXtra)
+```
+
+### 
+
+The tidymodels framework does not itself contain software for model explanations. Instead, models trained and evaluated with tidymodels can be explained with other, supplementary software in R packages such as **lime**, **vip**, and **DALEX**.
+
+**DALEXtra**, which is an add-on package for **DALEX**, provides support for tidymodels. 
+
+### Exercise 2
+
+In Chapters [10](https://www.tmwr.org/resampling) and [11](https://www.tmwr.org/compare), several models were trained and compared to predict the price of homes in Ames, IA, including a linear model with interactions and a random forest model, with the results shown below:
+
+```{r}
+knitr::include_graphics("images/pic1.png")
+```
+
+### 
+
+**vip** functions are chosen for *model-based* methods that take advantage of model structure (and are often faster)
+**DALEX** functions are chosen for *model-agnostic* methods that can be applied to any model
+
+### Exercise 3
+
+Let’s build model-agnostic explainers for both of these models (see the graph from the previous exercise) to find out why they make these predictions.
+
+In the code chunk below, create a vector that contains `"Neighborhood"`, `"Gr_Liv_Area"`, `"Year_Built"`, `"Bldg_Type"`, `"Latitude"`, and `"Longitude"`.
+
+```{r software-for-model-e-3, exercise = TRUE}
+
+```
+
+```{r software-for-model-e-3-hint-1, eval = FALSE}
+c("...", "...", "...", "Bldg_Type", "Latitude", "Longitude")
+```
+
+```{r include = FALSE}
+c("Neighborhood", "Gr_Liv_Area", "Year_Built", "Bldg_Type", "Latitude", "Longitude")
+```
+
+### 
+
+Answering the question “why?” allows modeling practitioners to understand which features were important in predictions and even how model predictions would change under different values for the features. 
+
+
+### Exercise 4
+
+Copy the previous code and assign it to a new variable named `vip_features`.
+
+```{r software-for-model-e-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r software-for-model-e-4-hint-1, eval = FALSE}
+... <- c("Neighborhood", "Gr_Liv_Area", "Year_Built", "Bldg_Type", "Latitude", "Longitude")
+```
+
+```{r include = FALSE}
+vip_features <- c("Neighborhood", "Gr_Liv_Area", "Year_Built", "Bldg_Type", "Latitude", "Longitude")
+```
+
+### 
+
+For some models, like linear regression, it is usually clear how to explain why the model makes its predictions. The structure of a linear model contains coefficients for each predictor that are typically straightforward to interpret.
+
+### Exercise 5
+
+Load the **tidymodels** package using `library()`. Then, on a new line, type in `tidymodels_prefer()` to get rid of naming conflicts.
+
+```{r software-for-model-e-5, exercise = TRUE}
+
+```
+
+```{r software-for-model-e-5-hint-1, eval = FALSE}
+library(...)
+tidymodels_prefer()
+```
+
+```{r include = FALSE}
+library(tidymodels)
+tidymodels_prefer()
+```
+
+### 
+
+As a reminder, the `ames` data set comes from the **modeldata** package, which is loaded when you load the **tidymodels** package.
+
+### Exercise 6
+
+Since the models from the graph in Exercise 2 use Ames data set, the code for the splits and recipes are needed. Press "Run code". 
+
+```{r software-for-model-e-6, exercise = TRUE}
+ames_update <- ames |>
+  mutate(Sale_Price = log10(Sale_Price))
+
+set.seed(502)
+ames_strata_split <- initial_split(ames_update, prop = 0.80, strata = Sale_Price)
+ames_train <- training(ames_strata_split)
+
+ames_rec <- 
+  recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + 
+           Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |> 
+  step_other(Neighborhood, threshold = 0.01) |> 
+  step_dummy(all_nominal_predictors()) |> 
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_") ) |> 
+  step_ns(Latitude, Longitude, deg_free = 20)
+  
+lm_model <- linear_reg() |> set_engine("lm")
+
+lm_wflow <- 
+  workflow() |> 
+  add_model(lm_model) |> 
+  add_recipe(ames_rec)
+
+lm_fit <- fit(lm_wflow, ames_train)
+```
+
+```{r include = FALSE}
+ames_update <- ames |>
+  mutate(Sale_Price = log10(Sale_Price))
+
+set.seed(502)
+ames_strata_split <- initial_split(ames_update, prop = 0.80, strata = Sale_Price)
+ames_train <- training(ames_strata_split)
+
+ames_rec <- 
+  recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + 
+           Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |> 
+  step_other(Neighborhood, threshold = 0.01) |> 
+  step_dummy(all_nominal_predictors()) |> 
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_") ) |> 
+  step_ns(Latitude, Longitude, deg_free = 20)
+  
+lm_model <- linear_reg() |> set_engine("lm")
+
+lm_wflow <- 
+  workflow() |> 
+  add_model(lm_model) |> 
+  add_recipe(ames_rec)
+
+lm_fit <- fit(lm_wflow, ames_train)
+```
+
+### 
+
+These are the variables you coded in the past tutorials for the `ames` data set. See the "Feature Engineering with recipes" tutorial or Chapter [8](https://www.tmwr.org/recipes) to review this.
+
+### Exercise 7
+
+In the code chunk below, pipe `ames_train` to `select()`. Inside this function, type `all_of()`. Inside `all_of()`, type in `vip_features`. 
+
+```{r software-for-model-e-7, exercise = TRUE}
+
+```
+
+```{r software-for-model-e-7-hint-1, eval = FALSE}
+... |> 
+  select(all_of(...))
+```
+
+```{r include = FALSE}
+ames_train |> 
+  select(all_of(vip_features))
+```
+
+### 
+
+`all_of()` is a function that selects variables from character vectors.
+
+### Exercise 8
+
+Copy the previous code and assign it to a new variable named `vip_train`.
+
+```{r software-for-model-e-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r software-for-model-e-8-hint-1, eval = FALSE}
+... <- 
+  ames_train |> 
+  select(all_of(vip_features))
+```
+
+```{r include = FALSE}
+vip_train <- 
+  ames_train |> 
+  select(all_of(vip_features))
+```
+
+### 
+
+Przemyslaw Biecek and Tomasz Burzykowski's [*Explanatory Model Analysis*](https://ema.drwhy.ai/) book provide a thorough exploration of how to use **DALEX** for model explanations.
+
+### Exercise 9
+
+Now, let's generate some information about the model. In the code chunk below, type in `explain_tidymodels()`. Inside this function, type in `lm_fit`, set `data` to `vip_train`, and set `y` to `ames_train$Sale_Price`.
+
+```{r software-for-model-e-9, exercise = TRUE}
+
+```
+
+```{r software-for-model-e-9-hint-1, eval = FALSE}
+explain_tidymodels(
+    ..., 
+    data = vip_train, 
+    y = ...$...
+)
+```
+
+```{r include = FALSE}
+explain_tidymodels(
+    lm_fit, 
+    data = vip_train, 
+    y = ames_train$Sale_Price
+)
+```
+
+### 
+
+`explain_tidymodels()` is a function (from the **DALEXtra** package) that creates an explainer from your tidymodels workflow. In this scenario, the function is being used for the linear model `lm_fit`.
+
+### Exercise 10
+
+Copy the previous code. Inside `explain_tidymodels()`, set `label` to `"lm + interactions"` and `verbose` to `FALSE`.
+
+```{r software-for-model-e-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r software-for-model-e-10-hint-1, eval = FALSE}
+explain_tidymodels(
+    lm_fit, 
+    data = vip_train, 
+    y = ames_train$Sale_Price,
+    ... = "lm + interactions",
+    verbose = ...
+)
+```
+
+```{r include = FALSE}
+explain_tidymodels(
+    lm_fit, 
+    data = vip_train, 
+    y = ames_train$Sale_Price,
+    label = "lm + interactions",
+    verbose = FALSE
+)
+```
+
+### 
+
+For other models, like random forests that can capture nonlinear behavior by design, it is less transparent how to explain the model’s predictions from only the structure of the model itself. Instead, we can apply model explainer algorithms to generate understanding of predictions.
+
+### Exercise 11
+
+Copy the previous code and assign it to a new variable named `explainer_lm`.
+
+```{r software-for-model-e-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r software-for-model-e-11-hint-1, eval = FALSE}
+... <-
+  explain_tidymodels(
+    lm_fit, 
+    data = vip_train, 
+    y = ames_train$Sale_Price,
+    label = "lm + interactions",
+    verbose = FALSE
+)
+```
+
+```{r include = FALSE}
+explainer_lm <-
+  explain_tidymodels(
+    lm_fit, 
+    data = vip_train, 
+    y = ames_train$Sale_Price,
+    label = "lm + interactions",
+    verbose = FALSE
+)
+```
+
+### 
+
+Click [here](https://search.r-project.org/CRAN/refmans/DALEXtra/html/explain_tidymodels.html) to learn more about the `explain_tidymodels()` function.
+
+### Exercise 12
+
+Press "Run code".
+
+```{r software-for-model-e-12, exercise = TRUE}
+rf_model <- 
+  rand_forest(trees = 1000) |> 
+  set_engine("ranger") |> 
+  set_mode("regression")
+
+rf_wflow <- 
+  workflow() |> 
+  add_formula(
+    Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + 
+      Latitude + Longitude) |> 
+  add_model(rf_model) 
+
+rf_fit <- rf_wflow |> fit(data = ames_train)
+```
+
+```{r include = FALSE}
+rf_model <- 
+  rand_forest(trees = 1000) |> 
+  set_engine("ranger") |> 
+  set_mode("regression")
+
+rf_wflow <- 
+  workflow() |> 
+  add_formula(
+    Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + 
+      Latitude + Longitude) |> 
+  add_model(rf_model) 
+
+rf_fit <- rf_wflow |> fit(data = ames_train)
+```
+
+### 
+
+These were the variables you created in the "Resampling for Evaluating Performance" tutorial. `rf_model` is a random forest model that has `1000` trees. Then, this model is used to create a random forest workflow, adding `Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude` as the formula. Then, this model is fitted, with `data` being `ames_train`.
+
+Visit Chapter [10](https://www.tmwr.org/resampling) to review this process.
+
+### Exercise 13
+
+In the code chunk below, type in `explain_tidymodels()`. Inside this function, type in `rf_fit`, set `data` to `vip_train`, and set `y` to `ames_train$Sale_Price`.
+
+```{r software-for-model-e-13, exercise = TRUE}
+
+```
+
+```{r software-for-model-e-13-hint-1, eval = FALSE}
+explain_tidymodels(
+    ..., 
+    data = ..., 
+    ... = ames_train$Sale_Price
+)
+```
+
+```{r include = FALSE}
+explain_tidymodels(
+    rf_fit, 
+    data = vip_train, 
+    y = ames_train$Sale_Price
+)
+```
+
+### 
+
+There are two types of model explanations, *global* and *local.* Global model explanations provide an overall understanding aggregated over a whole set of observations; local model explanations provide information about a prediction for a single observation.
+
+### Exercise 14
+
+Copy the previous code. Inside `explain_tidymodels()`, set `label` to `"random forest"` and set `verbose` to `FALSE`.
+
+```{r software-for-model-e-14, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r software-for-model-e-14-hint-1, eval = FALSE}
+explain_tidymodels(
+    rf_fit, 
+    data = vip_train, 
+    y = ames_train$Sale_Price,
+    label = "...",
+    ... = FALSE
+  )
+```
+
+```{r include = FALSE}
+explain_tidymodels(
+    rf_fit, 
+    data = vip_train, 
+    y = ames_train$Sale_Price,
+    label = "random forest",
+    verbose = FALSE
+  )
+```
+
+### 
+
+A linear model is typically straightforward to interpret and explain; you may not often find yourself using separate model explanation algorithms for a linear model. However, it can sometimes be difficult to understand or explain the predictions of even a linear model once it has splines and interaction terms!
+
+### Exercise 15
+
+Copy the previous code and assign it to a new variable named `explainer_rf`.
+
+```{r software-for-model-e-15, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r software-for-model-e-15-hint-1, eval = FALSE}
+... <- 
+  explain_tidymodels(
+    rf_fit, 
+    data = vip_train, 
+    y = ames_train$Sale_Price,
+    label = "random forest",
+    verbose = FALSE
+  )
+```
+
+```{r include = FALSE}
+explainer_rf <- 
+  explain_tidymodels(
+    rf_fit, 
+    data = vip_train, 
+    y = ames_train$Sale_Price,
+    label = "random forest",
+    verbose = FALSE
+  )
+```
+
+### 
+
+## Summary
+### 
+
+<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+
+```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
+```
