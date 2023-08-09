@@ -180,7 +180,7 @@ rda_res <-
 ## Introduction
 ### 
 
-<!-- Two to four sentence about the main topics covered in this tutorial. Why are we here? What will students get out of giving you 90 minutes of their lives? How does this tutorial connect to other tutorials? -->
+This tutorial covers [Chapter 16: Dimensionality Reduction](https://www.tmwr.org/dimensionality) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. In this tutorial, you will learn about creating correlation matrices, with the use of `corrplot()`, prepping and baking recipes, with the use of `prep()` and `bake()`, feature extraction tecniques such as PCA, PLS, ICA, and UMAP, and advanced modeling, using functions such as `finalize_workflow()` and `workflow_map()`. The data that is used in this tutorial comes from the [**beans**](https://cran.r-project.org/web/packages/beans/index.html) package. There are many packages used in this tutorial, some of which are [**corrplot**](https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html), [**mixOmics**](https://www.bioconductor.org/packages/release/bioc/html/mixOmics.html), and [**embed**](https://cran.r-project.org/web/packages/embed/index.html).
 
 ## A Picture Is Worth A Thousand...Beans
 ### 
@@ -663,7 +663,7 @@ bean_train |>
 
 ### 
 
-`cor()` is a function that computes the correlation coefficient between numeric variables in a dataset. 
+`cor()` is a function that computes the correlation coefficient between numeric variables in a data set. 
 
 ### Exercise 23
 
@@ -929,7 +929,7 @@ bean_rec_trained |>
 
 ### 
 
-In geenral, if you encounter errors when working with a recipe, `prep()` can be used with its `verbose` option to troubleshoot.
+In general, if you encounter errors when working with a recipe, `prep()` can be used with its `verbose` option to troubleshoot.
 
 ### Exercise 4
 
@@ -1033,7 +1033,7 @@ This [link](https://recipes.tidymodels.org/reference/bake.html) contains more in
 
 ### Exercise 8
 
-Now, lets process `bean_validation` with `bake()`. In the code chunk below, type in `bake()`. Inside this funciton, type in `bean_rec_trained` and set `new_data` to `bean_validation`.
+Now, lets process `bean_validation` with `bake()`. In the code chunk below, type in `bake()`. Inside this function, type in `bean_rec_trained` and set `new_data` to `bean_validation`.
 
 ```{r recipes-in-the-wild-8, exercise = TRUE}
 
@@ -1184,7 +1184,7 @@ bean_validation |>
 
 ### 
 
-`ggtitle()` is another way to add a title to a graph. `labs()` also has the capibility of doing this, but it's good to know other ways as well. 
+`ggtitle()` is another way to add a title to a graph. `labs()` also has the capability of doing this, but it's good to know other ways as well. 
 
 ### Exercise 14
 
@@ -1438,7 +1438,7 @@ function(recipe, dat = assessment(bean_val$splits[[1]])) {
 
 ### 
 
-Another type of dimensionality reduction tecnique is t-Distributed Stochastic Neighbor Embedding, or t-SNE. t-SNE is particularly useful for reducing high-dimensional data to two or three dimensions, which can then be visualized.
+Another type of dimensionality reduction technique is t-Distributed Stochastic Neighbor Embedding, or t-SNE. t-SNE is particularly useful for reducing high-dimensional data to two or three dimensions, which can then be visualized.
 
 ### Exercise 6
 
@@ -1586,7 +1586,7 @@ function(recipe, dat = assessment(bean_val$splits[[1]])) {
 
 ### 
 
-As a reminder, `scale_color_brewer()` is a function that provides sequential, diverging and qualitative colour schemes.
+As a reminder, `scale_color_brewer()` is a function that provides sequential, diverging and qualitative color schemes.
 
 ### Exercise 10
 
@@ -2964,17 +2964,17 @@ Copy the previous code and pipe it to `mutate()`. Inside this function, set `met
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r modeling-31-hint, eval = FALSE}
+```{r modeling-31-hint-1, eval = FALSE}
 rank_results(bean_res, select_best = TRUE) |>
   mutate(... = ...(wflow_id, ~ str_split(.x, "_", simplify = TRUE)[...]))
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rank_results(bean_res, select_best = TRUE) |>
   mutate(method = map_chr(wflow_id, ~ str_split(.x, "_", simplify = TRUE)[1]))
 ```
 
-###
+### 
 
 In general, `map` function transform their input by applying a function to each element of a list or atomic vector and returning an object of the same length as the input.
 
@@ -2988,19 +2988,19 @@ Copy the previous code and assign it to a new variable named `rankings`.
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r modeling-32-hint, eval = FALSE}
+```{r modeling-32-hint-1, eval = FALSE}
 ... <-
   rank_results(bean_res, select_best = TRUE) |>
   mutate(method = map_chr(wflow_id, ~ str_split(.x, "_", simplify = TRUE)[1]))
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rankings <-
   rank_results(bean_res, select_best = TRUE) |>
   mutate(method = map_chr(wflow_id, ~ str_split(.x, "_", simplify = TRUE)[1]))
 ```
 
-###
+### 
 
 This code has now ranked the models by their validation set estimates of the area under the ROC curve.
 
@@ -3014,15 +3014,15 @@ Now, let's extract the top 5 ranked models. In the code chunk below, type in `fi
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r modeling-33-hint, eval = FALSE}
+```{r modeling-33-hint-1, eval = FALSE}
 filter(rankings, ... <= ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 filter(rankings, rank <= 5)
 ```
 
-###
+### 
 
 As you can see, by filtering the data, you were able to display the top 5 ranked models.
 
@@ -3036,17 +3036,17 @@ Copy the previous code and pipe it to `dplyr::select()`. Inside this function, p
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r modeling-34-hint, eval = FALSE}
+```{r modeling-34-hint-1, eval = FALSE}
 filter(rankings, rank <= 5) |>
   dplyr::select(..., mean, ..., method)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 filter(rankings, rank <= 5) |>
   dplyr::select(rank, mean, model, method)
 ```
 
-###
+### 
 
 The reason you have to specify `dplyr::select()` is to ensure you don't use the `select()` function from a different package.
 
@@ -3058,7 +3058,7 @@ The image below illustrates these rankings:
 knitr::include_graphics("images/pic5.png")
 ```
 
-###
+### 
 
 It is clear from these results that most models give very good performance; there are few bad choices here.
 
@@ -3072,17 +3072,17 @@ In the code chunk below, pipe `bean_res` to `extract_workflow()`. Inside this fu
 
 ```
 
-```{r modeling-36-hint, eval = FALSE}
+```{r modeling-36-hint-1, eval = FALSE}
 bean_res |> 
   extract_workflow("...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 bean_res |> 
   extract_workflow("pls_rda")
 ```
 
-###
+### 
 
 `extract_workflow()` returns the workflow object.
 
@@ -3096,7 +3096,7 @@ Copy the previous code and pipe it to `finalize_workflow()`. Inside this functio
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r modeling-37-hint, eval = FALSE}
+```{r modeling-37-hint-1, eval = FALSE}
 bean_res |> 
   extract_workflow("pls_rda") |>
   finalize_workflow(
@@ -3105,7 +3105,7 @@ bean_res |>
   )
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 bean_res |> 
   extract_workflow("pls_rda") |>
   finalize_workflow(
@@ -3114,7 +3114,7 @@ bean_res |>
   )
 ```
 
-###
+### 
 
 The `finalize_*` functions take a list or tibble of tuning parameter values and update objects with those values.
 
@@ -3128,7 +3128,7 @@ Copy the previous code and pipe `extract_workflow_set_result("pls_rda")` to `sel
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r modeling-38-hint, eval = FALSE}
+```{r modeling-38-hint-1, eval = FALSE}
 bean_res |> 
   extract_workflow("pls_rda") |>
   finalize_workflow(
@@ -3138,7 +3138,7 @@ bean_res |>
   )
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 bean_res |> 
   extract_workflow("pls_rda") |>
   finalize_workflow(
@@ -3148,7 +3148,7 @@ bean_res |>
   )
 ```
 
-###
+### 
 
 As a reminder, `select_best()` displays the top sub-models and their performance estimates.
 
@@ -3162,7 +3162,7 @@ Copy the previous code and pipe the entire `finalize_workflow()` function to `la
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r modeling-39-hint, eval = FALSE}
+```{r modeling-39-hint-1, eval = FALSE}
 bean_res |> 
   extract_workflow("pls_rda") |>
   finalize_workflow(
@@ -3173,7 +3173,7 @@ bean_res |>
   last_fit(split = ..., metrics = metric_set(...))
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 bean_res |> 
   extract_workflow("pls_rda") |>
   finalize_workflow(
@@ -3184,7 +3184,7 @@ bean_res |>
   last_fit(split = bean_split, metrics = metric_set(roc_auc))
 ```
 
-###
+### 
 
 `last_fit()` emulates the process where, after determining the best model, the final fit on the entire training set is needed and is then evaluated on the test set.
 
@@ -3198,7 +3198,7 @@ Copy the previous exercise and assign the entire code to a new variable named `r
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r modeling-40-hint, eval = FALSE}
+```{r modeling-40-hint-1, eval = FALSE}
 ... <- 
   bean_res |> 
   extract_workflow("pls_rda") |>
@@ -3210,7 +3210,7 @@ Copy the previous exercise and assign the entire code to a new variable named `r
   last_fit(split = bean_split, metrics = metric_set(roc_auc))
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rda_res <- 
   bean_res |> 
   extract_workflow("pls_rda") |>
@@ -3222,7 +3222,7 @@ rda_res <-
   last_fit(split = bean_split, metrics = metric_set(roc_auc))
 ```
 
-###
+### 
 
 <!-- AK: Add knowledge drop -->
 
@@ -3234,26 +3234,31 @@ What are the results for our metric (multiclass ROC AUC) on the testing set? Let
 
 ```
 
-```{r modeling-41-hint, eval = FALSE}
+```{r modeling-41-hint-1, eval = FALSE}
 collect_metrics(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 collect_metrics(rda_res)
 ```
 
-###
+### 
 
 As you can see, the results are pretty good!
 
-###
+### 
 
 Congrats! You have created many models, ranked them by their validation set estimates of the area under the ROC curve, and finalized the workflow.
 
 ## Summary
 ### 
 
-<!-- Two to four sentences which bring the lessons of the tutorial together for the student. What do they know now that they did not know before? How does this tutorial connect to other tutorials? OK if this is very similar to the Introduction. You made a promise as to what they would learn. You (we hope!) kept that promise.-->
+In this tutorial, you have learned:
+
+- How to create a correlation matrix using `corrplot()`
+- How to prep and bake a recipe using `prep()` and `bake()`
+- Various feature extraction techniques, such as PCA, PLS, ICA, and UMAP
+- How to perform advanced modeling, using functions such as `workflow_map()` and `finalize_workflow()`
 
 ```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
 ```
