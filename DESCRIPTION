@@ -7,12 +7,12 @@ Authors@R:
            role = c("aut", "cre", "cph"),
            email = "dave.kane@gmail.com",
            comment = c(ORCID = "0000-0002-6660-3934"))
-Description: This package provides tutorials for Tidy Modeling with R by
-  Max Kuhn and Julia Silge. In an ideal world, students would read the book
-  and type in all the associated R commands themselves. Sadly, that often does
-  not happen. These tutorials allow students to demonstrate (and their
-  instructors to be sure) that all work has been completed. See the
-  tutorial.helpers package for a background discussion of the tool and approach.
+Description: Tutorials for Tidy Modeling with R by Max Kuhn and Julia Silge.
+  In an ideal world, students would read the book and type in all the
+  associated R commands themselves. Sadly, that often does not happen.
+  These tutorials allow students to demonstrate (and their instructors to be
+  sure) that all work has been completed. See the tutorial.helpers package
+  for a background discussion of the tool and approach.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -24,13 +24,20 @@ Suggests:
     censored,
     corrplot,
     corrr,
+    DALEXtra,
+    discrim,
     doParallel,
+    embed,
+    fastICA,
     finetune,
     ggrepel,
     ggforce,
     kernlab,
+    klaR,
     lme4,
     learnr,
+    mda,
+    mixOmics,
     multilevelmod,
     nlme,
     ranger,
@@ -44,5 +51,6 @@ Suggests:
     tidyposterior,
     tidyverse,
     tutorial.helpers,
-    usemodels
+    usemodels,
+    xgboost
 Config/testthat/edition: 3
