@@ -123,11 +123,11 @@ bean_rec1 <-
   step_normalize(all_numeric_predictors())
 
 pls_rec <- 
-  bean_rec |> 
+  bean_rec1 |> 
   step_pls(all_numeric_predictors(), outcome = "class", num_comp = tune())
 
 umap_rec <- 
-  bean_rec |>
+  bean_rec1 |>
   step_umap(
     all_numeric_predictors(),
     outcome = "class",
@@ -154,9 +154,6 @@ bean_res <-
     metrics = metric_set(roc_auc),
     control = ctrl
   )
-
-# AK: Getting a lot of warnings/weird output when running "bean_res"
-
 
 rankings <-
   rank_results(bean_res, select_best = TRUE) |>
@@ -231,6 +228,30 @@ tidymodels_prefer()
 This is an excerpt from Koklu's and ÖZKAN's manuscript:
 
 "The primary objective of this study is to provide a method for obtaining uniform seed varieties from crop production, which is in the form of population, so the seeds are not certified as a sole variety. Thus, a computer vision system was developed to distinguish seven different registered varieties of dry beans with similar features in order to obtain uniform seed classification. For the classification model, images of 13,611 grains of 7 different registered dry beans were taken with a high-resolution camera".
+
+### Exercise 3
+
+Load the **xgboost**, **klaR**, and **mda** libraries using `library()`.
+
+```{r a-picture-is-worth-a-3, exercise = TRUE}
+
+```
+
+```{r a-picture-is-worth-a-3-hint, eval = FALSE}
+library(...)
+library(...)
+library(...)
+```
+
+```{r, include = FALSE}
+library(xgboost)
+library(klaR)
+library(mda)
+```
+
+###
+
+These libraries will be used later on in this tutorial.
 
 ### Exercise 3
 
@@ -2572,12 +2593,12 @@ Now, lets create a PLS recipe, which builds off of `bean_rec1`. In the code chun
 ```
 
 ```{r modeling-19-hint-1, eval = FALSE}
-bean_rec |> 
+bean_rec1 |> 
   step_pls(...(), outcome = "...", num_comp = ...())
 ```
 
 ```{r include = FALSE}
-bean_rec |> 
+bean_rec1 |> 
   step_pls(all_numeric_predictors(), outcome = "class", num_comp = tune())
 ```
 
@@ -2597,13 +2618,13 @@ Copy the previous code and assign it to a new variable named `pls_rec`.
 
 ```{r modeling-20-hint-1, eval = FALSE}
 ... <- 
-  bean_rec |> 
+  bean_rec1 |> 
   step_pls(all_numeric_predictors(), outcome = "class", num_comp = tune())
 ```
 
 ```{r include = FALSE}
 pls_rec <- 
-  bean_rec |> 
+  bean_rec1 |> 
   step_pls(all_numeric_predictors(), outcome = "class", num_comp = tune())
 ```
 
@@ -2613,7 +2634,7 @@ Dimensionality reduction can be a helpful method for exploratory data analysis a
 
 ### Exercise 21
 
-Now, let's create a UMAP recipe. In the code chunk below, pipe `bean_rec` to `step_umap()`. Inside this function, type in `all_numeric_predictors()` as the first argument. Then, set `outcome` to `"class"` as the second argument.
+Now, let's create a UMAP recipe. In the code chunk below, pipe `bean_rec1` to `step_umap()`. Inside this function, type in `all_numeric_predictors()` as the first argument. Then, set `outcome` to `"class"` as the second argument.
 
 ```{r modeling-21, exercise = TRUE}
 
@@ -2622,7 +2643,7 @@ Now, let's create a UMAP recipe. In the code chunk below, pipe `bean_rec` to `st
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r modeling-21-hint-1, eval = FALSE}
-bean_rec |>
+bean_rec1 |>
   step_umap(
     ...(),
     outcome = "..."
@@ -2630,7 +2651,7 @@ bean_rec |>
 ```
 
 ```{r include = FALSE}
-bean_rec |>
+bean_rec1 |>
   step_umap(
     all_numeric_predictors(),
     outcome = "class"
@@ -2652,7 +2673,7 @@ Copy the previous code. Inside `step_umap()`, set `num_comp`, `neighbors`, and `
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
 ```{r modeling-22-hint-1, eval = FALSE}
-bean_rec |>
+bean_rec1 |>
   step_umap(
     all_numeric_predictors(),
     outcome = "class",
@@ -2663,7 +2684,7 @@ bean_rec |>
 ```
 
 ```{r include = FALSE}
-bean_rec |>
+bean_rec1 |>
   step_umap(
     all_numeric_predictors(),
     outcome = "class",
@@ -2689,7 +2710,7 @@ Copy the previous code and assign it to a new variable named `umap_rec`.
 
 ```{r modeling-23-hint-1, eval = FALSE}
 ... <- 
-  bean_rec |>
+  bean_rec1 |>
   step_umap(
     all_numeric_predictors(),
     outcome = "class",
@@ -2701,7 +2722,7 @@ Copy the previous code and assign it to a new variable named `umap_rec`.
 
 ```{r include = FALSE}
 umap_rec <- 
-  bean_rec |>
+  bean_rec1 |>
   step_umap(
     all_numeric_predictors(),
     outcome = "class",
