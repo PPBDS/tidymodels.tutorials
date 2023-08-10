@@ -57,19 +57,17 @@ lloss <- function(...) {
     select(id, id2, .metric, .estimate)
 }
 
-resampled_res <- 
-  bind_rows(
+resampled_res <- bind_rows(
   lloss() |> mutate(model = "logistic"),
   lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
   lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
 ) |>
   mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
-  group_by(model, .metric) |>
   summarize(
-    .groups = "drop",
+    .by = c("model", ".metric"),
     mean = mean(.estimate, na.rm = TRUE),
     std_err = sd(.estimate, na.rm = TRUE) / sqrt(n())
-)
+  )
 
 logLikelihoodPlot <- 
   resampled_res |> 
@@ -132,7 +130,7 @@ updated_param <-
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
-<!-- DK: Earlier in the tutorial, we should run each of the commands like `lloss() |> mutate(model = "logistic")` separately and explain why the resulting tibble has 200 rows, and what the rows mean. Only after that do we combine all those results into one big tibble with bind_rows(). -->
+<!-- DK: Earlier in the tutorial, we should run each of the commands like `lloss() |> mutate(model = "logistic")` separately and explain why the resulting tibble has 200 rows, and what the rows mean. Only after that do we combine all those results into one big tibble with bind_rows(). Done. -->
 
 ## Introduction
 ### 
@@ -946,15 +944,75 @@ The purpose of this function is to return the individual resampled performance e
 
 ### Exercise 29
 
-Now, lets bind some rows. Type in `bind_rows()`. Set the first argument of this function to `lloss()`, which is piped to `mutate(model = "logistic")` (Note: view the hint if you are confused).
+Let's use the `lloss()` function and see its functionality. In the code chunk below, type in `lloss()` and pipe it to `mutate()`. Inside this function, set `model` to `"logistic"`.
 
 ```{r what-do-we-optimize-29, exercise = TRUE}
 
 ```
 
+```{r what-do-we-optimize-29-hint-1, eval = FALSE}
+...() |> mutate(model = "...")
+```
+
+```{r include = FALSE}
+lloss() |> mutate(model = "logistic")
+```
+
+### 
+
+As you can see, this code produces a tibble containing 200 rows of logistic models. Each row represents a Fold that is being conducted. Let's look at `Repeat01` and `Fold01`. First, the `roc_auc` metric is being used on the `Fold01`. Then, the `mn_log_loss` metric is being used on `Fold01`. Finally, the pattern is repeated for 10 folds that have an id of `Repeat01`. After the 10th fold has finished, the code moves on to the next id and the same process is repeated again. This process keeps happening until the last fold of the last repeat has been completed.
+
+### Exercise 30
+
+In the code chunk below, type in `lloss()`. Inside this function, set `family` to `binomial(link = "probit")`. Then, pipe the entire code to `mutate(model = "probit")`.
+
+```{r what-do-we-optimize-30, exercise = TRUE}
+
+```
+
+```{r what-do-we-optimize-30-hint-1, eval = FALSE}
+lloss(... = binomial(link = "...")) |> mutate(model = "...")
+```
+
+```{r include = FALSE}
+lloss(family = binomial(link = "probit")) |> mutate(model = "probit")
+```
+
+### 
+
+Now, the code contains 200 rows of `probit` models. But, the same process follows; for each fold in `Repeat01`, the `roc_auc` and `mn_log_loss` metrics are used, producing an estimated value. Then, the code moves on to `Repeat02`, `Repeat03`, etc.
+
+### Exercise 31
+
+In the code chunk below, type in `lloss()`. Inside this function, set `family` to `binomial(link = "cloglog")`. Then, pipe the entire code to `mutate(model = "c-log-log")`.
+
+```{r what-do-we-optimize-31, exercise = TRUE}
+
+```
+
+```{r what-do-we-optimize-31-hint-1, eval = FALSE}
+lloss(... = binomial(link = "...")) |> mutate(model = "...")
+```
+
+```{r include = FALSE}
+lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+```
+
+### 
+
+As you can see, the models are now `c-log-log` and the same process as described earlier occurs.
+
+### Exercise 32
+
+Now, lets bind some rows. Type in `bind_rows()`. Set the first argument of this function to `lloss()`, which is piped to `mutate(model = "logistic")` (Note: view the hint if you are confused).
+
+```{r what-do-we-optimize-32, exercise = TRUE}
+
+```
+
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r what-do-we-optimize-29-hint-1, eval = FALSE}
+```{r what-do-we-optimize-32-hint-1, eval = FALSE}
 bind_rows(
   lloss() |> mutate(... = "...")
 )
@@ -970,17 +1028,17 @@ bind_rows(
 
 What this line of code is doing is it's calling `lloss()`, which has the individual resampled performance estimate and is creating a new column named `model`, which is set to `logistic`. This creation of the column was done by the `mutate()` function.
 
-### Exercise 30
+### Exercise 33
 
 Copy the previous code. Set the second argument of `bind_rows()` to `lloss(family = binomial(link = "probit"))`, which is piped to `mutate(model = "probit")` (Note: view the hint if you are confused).
 
-```{r what-do-we-optimize-30, exercise = TRUE}
+```{r what-do-we-optimize-33, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r what-do-we-optimize-30-hint-1, eval = FALSE}
+```{r what-do-we-optimize-33-hint-1, eval = FALSE}
 bind_rows(
   lloss() |> mutate(model = "logistic"),
   lloss(... = binomial(link = "...")) |> mutate(model = "...")
@@ -998,17 +1056,17 @@ bind_rows(
 
 This code has now binded the `probit` models to the tibble containing `logistic` models.
 
-### Exercise 31
+### Exercise 34
 
 Copy the previous code. Set the third argument of `bind_rows()` to `lloss(family = binomial(link = "cloglog"))`, which is piped to `mutate(model = "c-log-log")` (Note: view the hint if you are confused).
 
-```{r what-do-we-optimize-31, exercise = TRUE}
+```{r what-do-we-optimize-34, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r what-do-we-optimize-31-hint-1, eval = FALSE}
+```{r what-do-we-optimize-34-hint-1, eval = FALSE}
 bind_rows(
   lloss() |> mutate(model = "logistic"),
   lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
@@ -1018,7 +1076,7 @@ bind_rows(
 
 <!-- DK: Note that a warning appears when you run  -->
 <!-- `lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")` -->
-<!-- both here and in later steps. The cause of this is, presumably, that using a c-log-log link function causes some of the estimated probabilities to be 0 or 1. Not sure what we should do about that, other than add a knowledge drop pointing out the warning so that students are not concerned. -->
+<!-- both here and in later steps. The cause of this is, presumably, that using a c-log-log link function causes some of the estimated probabilities to be 0 or 1. Not sure what we should do about that, other than add a knowledge drop pointing out the warning so that students are not concerned. Done (don't know why, but the code doesn't produce an error anymore). -->
 
 ```{r include = FALSE}
 bind_rows(
@@ -1030,19 +1088,19 @@ bind_rows(
 
 ### 
 
-This code binded the `cloglog` models to the tibble containing `probit` and `logistic` models.
+This code binded the `cloglog` models to the tibble containing `probit` and `logistic` models. Now, there are a total of 600 rows in the tibble (200 for each type of model).
 
-### Exercise 32
+### Exercise 35
 
 Copy the previous code. Pipe the entire `bind_rows()` function to `mutate()`. 
 
-```{r what-do-we-optimize-32, exercise = TRUE}
+```{r what-do-we-optimize-35, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r what-do-we-optimize-32-hint-1, eval = FALSE}
+```{r what-do-we-optimize-35-hint-1, eval = FALSE}
 bind_rows(
   lloss() |> mutate(model = "logistic"),
   lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
@@ -1062,17 +1120,19 @@ bind_rows(
 
 ### 
 
-### Exercise 33
+<!-- AK: Add knowledge drop -->
+
+### Exercise 36
 
 Now, lets start converting `log-loss` to `log-likelihood`. Copy the previous code. Inside `mutate()`, set `.estimate` to `ifelse(.metric == "mn_log_loss", -.estimate, .estimate)`.
 
-```{r what-do-we-optimize-33, exercise = TRUE}
+```{r what-do-we-optimize-36, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r what-do-we-optimize-33-hint-1, eval = FALSE}
+```{r what-do-we-optimize-36-hint-1, eval = FALSE}
 bind_rows(
   lloss() |> mutate(model = "logistic"),
   lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
@@ -1092,142 +1152,13 @@ bind_rows(
 
 ### 
 
-This code modifies the `.estimate` column: If `.metric` is equal to `mn_log_loss`, negate that value in `.estimate`. If not, then keep it unchanged.
+This code modifies the `.estimate` column: If `.metric` is equal to `mn_log_loss`, the value in `.estimate` becomes negative. If not, then the value is kept unchanged.
 
-### Exercise 34
-
-Copy the previous code and pipe it to `group_by()`. Inside this function, type in `model` and `.metric`. 
-
-```{r what-do-we-optimize-34, exercise = TRUE}
-
-```
-
-<button onclick = "transfer_code(this)">Copy previous code</button>
-
-<!-- DK: Don't use group_by(). Use .by within summary. -->
-
-```{r what-do-we-optimize-34-hint-1, eval = FALSE}
-bind_rows(
-  lloss() |> mutate(model = "logistic"),
-  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
-  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
-) |>
-  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
-  group_by(..., ....)
-```
-
-```{r include = FALSE}
-bind_rows(
-  lloss() |> mutate(model = "logistic"),
-  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
-  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
-) |>
-  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
-  group_by(model, .metric)
-```
-
-### 
-
-In this scenario, the `group_by()` function is grouping the data based on the `model` and `.metric`.
-
-### Exercise 35
-
-Copy the previous code and pipe it to `summarize()`. Inside of this function, set `.groups` to `"drop"`. 
-
-```{r what-do-we-optimize-35, exercise = TRUE}
-
-```
-
-<button onclick = "transfer_code(this)">Copy previous code</button>
-
-```{r what-do-we-optimize-35-hint-1, eval = FALSE}
-bind_rows(
-  lloss() |> mutate(model = "logistic"),
-  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
-  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
-) |>
-  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
-  group_by(model, .metric) |>
-  summarize(
-    .groups = "..."
-  )
-```
-
-```{r include = FALSE, warning = FALSE}
-bind_rows(
-  lloss() |> mutate(model = "logistic"),
-  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
-  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
-) |>
-  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
-  group_by(model, .metric) |>
-  summarize(
-    .groups = "drop"
-  )
-```
-
-### 
-
-<!-- AK: Getting a warning here and don't understand what it means: -->
-
-<!-- A | warning: glm.fit: fitted probabilities numerically 0 or 1 occurred -->
-<!-- There were issues with some computations   A: x3 -->
-
-<!-- # A tibble: 6 × 4 -->
-<!--   model     .metric       mean std_err -->
-<!--   <chr>     <chr>        <dbl>   <dbl> -->
-<!-- 1 c-log-log mn_log_loss -0.476 0.0117  -->
-<!-- 2 c-log-log roc_auc      0.883 0.00472 -->
-<!-- 3 logistic  mn_log_loss -0.443 0.00845 -->
-<!-- 4 logistic  roc_auc      0.882 0.00471 -->
-<!-- 5 probit    mn_log_loss -0.450 0.00850 -->
-<!-- 6 probit    roc_auc      0.882 0.00471 -->
-
-### Exercise 36
-
-Copy the previous code. Inside `summarize()`, set `mean` to `mean(.estimate, na.rm = TRUE)`.
-
-```{r what-do-we-optimize-36, exercise = TRUE}
-
-```
-
-<button onclick = "transfer_code(this)">Copy previous code</button>
-
-```{r what-do-we-optimize-36-hint-1, eval = FALSE}
-bind_rows(
-  lloss() |> mutate(model = "logistic"),
-  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
-  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
-) |>
-  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
-  group_by(model, .metric) |>
-  summarize(
-    .groups = "drop",
-    ... = mean(..., na.rm = TRUE)
-  )
-```
-
-```{r include = FALSE}
-bind_rows(
-  lloss() |> mutate(model = "logistic"),
-  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
-  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
-) |>
-  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
-  group_by(model, .metric) |>
-  summarize(
-    .groups = "drop",
-    mean = mean(.estimate, na.rm = TRUE)
-  )
-```
-
-### 
-
-The `na.rm = TRUE` argument is used to ignore any missing values and perform calculations on the non-missing values.
+<!-- DK: Don't use group_by(). Use .by within summary. Done. -->
 
 ### Exercise 37
 
-Copy the previous code. Inside `summarize()`, set `std_err` to `sd(.estimate, na.rm = TRUE) / sqrt(n())`
+Copy the previous code and pipe it to `summarize()`. Inside of this function, set `.by` to `c("model", ".metric")`. 
 
 ```{r what-do-we-optimize-37, exercise = TRUE}
 
@@ -1242,11 +1173,47 @@ bind_rows(
   lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
 ) |>
   mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
-  group_by(model, .metric) |>
   summarize(
-    .groups = "drop",
-    mean = mean(.estimate, na.rm = TRUE),
-    std_err = sd(.estimate, na.rm = TRUE) / sqrt(n())
+    .by = c("...", "...")
+  )
+```
+
+```{r include = FALSE, warning = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+) |>
+  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
+  summarize(
+    .by = c("model", ".metric")
+  )
+```
+
+### 
+
+As you can see, the `summarize()` function printed out a tibble, containing a summary of the binded row tibble. In this scenario, the `.by` argument inside `summarize()` groups the data by the `model` and metric (`roc_auc` & `mn_log_loss`). Because of this, the `model` and `.metric` are in the summarized tibble.
+
+### Exercise 38
+
+Copy the previous code. Inside `summarize()`, set `mean` to `mean(.estimate, na.rm = TRUE)`.
+
+```{r what-do-we-optimize-38, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-38-hint-1, eval = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+) |>
+  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
+  summarize(
+    .by = c("model", ".metric"),
+    mean = ...(.estimate, na.rm = ...)
   )
 ```
 
@@ -1257,9 +1224,53 @@ bind_rows(
   lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
 ) |>
   mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
-  group_by(model, .metric) |>
   summarize(
-    .groups = "drop",
+    .by = c("model", ".metric"),
+    mean = mean(.estimate, na.rm = TRUE)
+  )
+```
+
+### 
+
+As you can see, the code outputs a tibble with a new column called `mean`. This column represents the averages of the `.estimate` column for each metric of each model.
+
+### 
+
+The `na.rm = TRUE` argument is used to ignore any missing values and perform calculations on the non-missing values.
+
+### Exercise 39
+
+Copy the previous code. Inside `summarize()`, set `std_err` to `sd(.estimate, na.rm = TRUE) / sqrt(n())`
+
+```{r what-do-we-optimize-39, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r what-do-we-optimize-39-hint-1, eval = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+) |>
+  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
+  summarize(
+    .by = c("model", ".metric"),
+    mean = mean(.estimate, na.rm = TRUE),
+    std_err = ...(.estimate, na.rm = ...) / sqrt(n())
+  )
+```
+
+```{r include = FALSE}
+bind_rows(
+  lloss() |> mutate(model = "logistic"),
+  lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
+  lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
+) |>
+  mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
+  summarize(
+    .by = c("model", ".metric"),
     mean = mean(.estimate, na.rm = TRUE),
     std_err = sd(.estimate, na.rm = TRUE) / sqrt(n())
   )
@@ -1267,28 +1278,27 @@ bind_rows(
 
 ### 
 
-The `sd()` function is being used here to calculate the standard deviation of the values inside the `.estimate` column. To calculate the standard error, this function is being divided by the square root of `n()`.
+The `sd()` function is being used to calculate the standard deviation of the values inside the `.estimate` column for each metric of each model. To calculate the standard error, this function is being divided by the square root of `n()`.
 
-### Exercise 38
+### Exercise 40
 
 Copy the previous code and assign it to a new variable named `resampled_res`.
 
-```{r what-do-we-optimize-38, exercise = TRUE}
+```{r what-do-we-optimize-40, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r what-do-we-optimize-38-hint-1, eval = FALSE}
+```{r what-do-we-optimize-40-hint-1, eval = FALSE}
 ... <- bind_rows(
   lloss() |> mutate(model = "logistic"),
   lloss(family = binomial(link = "probit")) |> mutate(model = "probit"),
   lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
 ) |>
   mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
-  group_by(model, .metric) |>
   summarize(
-    .groups = "drop",
+    .by = c("model", ".metric"),
     mean = mean(.estimate, na.rm = TRUE),
     std_err = sd(.estimate, na.rm = TRUE) / sqrt(n())
   )
@@ -1301,9 +1311,8 @@ resampled_res <- bind_rows(
   lloss(family = binomial(link = "cloglog")) |> mutate(model = "c-log-log")
 ) |>
   mutate(.estimate = ifelse(.metric == "mn_log_loss", -.estimate, .estimate)) |>
-  group_by(model, .metric) |>
   summarize(
-    .groups = "drop",
+    .by = c("model", ".metric"),
     mean = mean(.estimate, na.rm = TRUE),
     std_err = sd(.estimate, na.rm = TRUE) / sqrt(n())
   )
@@ -1313,17 +1322,17 @@ resampled_res <- bind_rows(
 
 This code has successfully resampled the results of the 10-fold-cross-validation.
 
-### Exercise 39
+### Exercise 41
 
 Now, lets plot this data on a graph. But first, a filtration must occur. In the code chunk below, pipe `resampled_res` to `filter()`. Inside this function, type in the expression `.metric == "mn_log_loss"`.
 
-```{r what-do-we-optimize-39, exercise = TRUE}
+```{r what-do-we-optimize-41, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r what-do-we-optimize-39-hint-1, eval = FALSE}
+```{r what-do-we-optimize-41-hint-1, eval = FALSE}
 resampled_res |>
   ...(.metric == "...")
 ```
@@ -1337,17 +1346,17 @@ resampled_res |>
 
 This code is filtering the data, making sure that the only `mn_log_loss` data is present.
 
-### Exercise 40
+### Exercise 42
 
 Copy the previous code and pipe it to `ggplot()`. Inside this function, using `aes()`, set the argument `x` to `mean` and `y` to `model`.
 
-```{r what-do-we-optimize-40, exercise = TRUE}
+```{r what-do-we-optimize-42, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r what-do-we-optimize-40-hint-1, eval = FALSE}
+```{r what-do-we-optimize-42-hint-1, eval = FALSE}
 resampled_res |> 
   filter(.metric == "mn_log_loss") |>
   ggplot(aes(x = ..., y = ...))
@@ -1363,17 +1372,17 @@ resampled_res |>
 
 If you are unfamiliar with the term "model tuning", model tuning refers to the process of adjusting the hyperparameters of a model in order to optimize its performance.
 
-### Exercise 41
+### Exercise 43
 
 Copy the previous code and add `geom_point()`.
 
-```{r what-do-we-optimize-41, exercise = TRUE}
+```{r what-do-we-optimize-43, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r what-do-we-optimize-41-hint-1, eval = FALSE}
+```{r what-do-we-optimize-43-hint-1, eval = FALSE}
 resampled_res |> 
   filter(.metric == "mn_log_loss") |>
   ggplot(aes(x = mean, y = model)) +
@@ -1389,19 +1398,19 @@ resampled_res |>
 
 ### 
 
-As you can see, this produces three points on the graph. Using these points, the 90& confidence intervals can be created using `geom_errorbar()`.
+As you can see, this produces three points on the graph. Using these points, the 90% confidence intervals can be created using `geom_errorbar()`.
 
-### Exercise 42
+### Exercise 44
 
 Copy the previous code and add `geom_errorbar()`. Inside this function, using `aes()`, set `xmin` to `mean - 1.64 * std_err` (Note: This will throw an error).
 
-```{r what-do-we-optimize-42, exercise = TRUE}
+```{r what-do-we-optimize-44, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r what-do-we-optimize-42-hint-1, eval = FALSE}
+```{r what-do-we-optimize-44-hint-1, eval = FALSE}
 resampled_res |> 
   filter(.metric == "mn_log_loss") |>
   ggplot(aes(x = mean, y = model)) +
@@ -1421,17 +1430,17 @@ resampled_res |>
 
 This code throws an error because the `xmax` hasn't been defined yet.
 
-### Exercise 43
+### Exercise 45
 
 Copy the previous code. Inside the `aes()` function inside of `geom_errorbar()`, set `xmax` to `mean + 1.64 * std_err`. 
 
-```{r what-do-we-optimize-43, exercise = TRUE}
+```{r what-do-we-optimize-45, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r what-do-we-optimize-43-hint-1, eval = FALSE}
+```{r what-do-we-optimize-45-hint-1, eval = FALSE}
 resampled_res |> 
   filter(.metric == "mn_log_loss") |>
   ggplot(aes(x = mean, y = model)) +
@@ -1451,17 +1460,17 @@ resampled_res |>
 
 As you can see, each point now has a line on the right and left side, which represents the confidence intervals. 
 
-### Exercise 44
+### Exercise 46
 
 Copy the previous code. Inside the `aes()` function inside of `geom_errorbar()`, set the `width` to `0.1`.
 
-```{r what-do-we-optimize-44, exercise = TRUE}
+```{r what-do-we-optimize-46, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r what-do-we-optimize-44-hint-1, eval = FALSE}
+```{r what-do-we-optimize-46-hint-1, eval = FALSE}
 resampled_res |> 
   filter(.metric == "mn_log_loss") |>
   ggplot(aes(x = mean, y = model)) +
@@ -1481,7 +1490,7 @@ resampled_res |>
 
 The scale of these values is different than the previous values since they are computed on a smaller data set; the value produced by `broom::glance()` is a sum while `yardstick::mn_log_loss()` is an average.
 
-### Exercise 45
+### Exercise 47
 
 Copy the previous code and add your labs. The final plot should look like this:
 
@@ -1489,13 +1498,13 @@ Copy the previous code and add your labs. The final plot should look like this:
 logLikelihoodPlot
 ```
 
-```{r what-do-we-optimize-45, exercise = TRUE}
+```{r what-do-we-optimize-47, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r what-do-we-optimize-45-hint-1, eval = FALSE}
+```{r what-do-we-optimize-47-hint-1, eval = FALSE}
 resampled_res |> 
   filter(.metric == "mn_log_loss") |>
   ggplot(aes(x = mean, y = model)) +
@@ -1523,7 +1532,7 @@ resampled_res |>
 
 These results exhibit evidence that the choice of the link function matters somewhat. Although there is an overlap in the confidence intervals, the logistic model has the best results.
 
-### Exercise 46
+### Exercise 48
 
 What about a different metric? The area under the ROC curve for each resample was also calculated These results, which reflect the discriminating ability of the models across numerous probability thresholds, show a lack of difference 
 
@@ -1535,7 +1544,7 @@ knitr::include_graphics("images/pic2.png")
 
 Given the overlap of the intervals, as well as the scale of the x-axis, any of these options could be used.
 
-### Exercise 47
+### Exercise 49
 
 When the class boundaries for the three models are overlaid on the test set of 198 data points as shown in the image below, this is seen again:
 
