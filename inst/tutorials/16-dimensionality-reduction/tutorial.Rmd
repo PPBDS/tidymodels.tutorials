@@ -237,31 +237,31 @@ Load the **xgboost**, **klaR**, and **mda** libraries using `library()`.
 
 ```
 
-```{r a-picture-is-worth-a-3-hint, eval = FALSE}
+```{r a-picture-is-worth-a-3-hint-1, eval = FALSE}
 library(...)
 library(...)
 library(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 library(xgboost)
 library(klaR)
 library(mda)
 ```
 
-###
+### 
 
 These libraries will be used later on in this tutorial.
 
-### Exercise 3
+### Exercise 4
 
 The data created by Koklu and ÖZKAN will be used. Load the **beans** package using `library()`. 
 
-```{r a-picture-is-worth-a-3, exercise = TRUE}
+```{r a-picture-is-worth-a-4, exercise = TRUE}
 
 ```
 
-```{r a-picture-is-worth-a-3-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-4-hint-1, eval = FALSE}
 library(...)
 ```
 
@@ -275,15 +275,15 @@ Each image in the data contains multiple beans. The process of determining which
 
 The training data come from a set of manually labeled images, and this data set is used to create a predictive model that can distinguish between seven bean varieties: Cali, Horoz, Dermason, Seker, Bombay, Barbunya, and Sira. Producing an effective model can help manufacturers quantify the homogeneity of a batch of beans.
 
-### Exercise 4
+### Exercise 5
 
 Lets take a look at the `beans` data set. In the code chunk below, type in `beans` and press "Run code".
 
-```{r a-picture-is-worth-a-4, exercise = TRUE}
+```{r a-picture-is-worth-a-5, exercise = TRUE}
 
 ```
 
-```{r a-picture-is-worth-a-4-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-5-hint-1, eval = FALSE}
 beans
 ```
 
@@ -295,15 +295,15 @@ beans
 
 As you can see, this data set of 58 beans contains various details about each bean, including the `area`, `compactness`, and `aspect_ratio`. 
 
-### Exercise 5
+### Exercise 6
 
 Type in `set.seed()` and pass in `1601`.
 
-```{r a-picture-is-worth-a-5, exercise = TRUE}
+```{r a-picture-is-worth-a-6, exercise = TRUE}
 
 ```
 
-```{r a-picture-is-worth-a-5-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-6-hint-1, eval = FALSE}
 set.seed(...)
 ```
 
@@ -315,15 +315,15 @@ set.seed(1601)
 
 There are numerous methods for quantifying shapes of objects. Many are related to the boundaries or regions of the object of interest. One feature is the area: the area (or size) can be estimated using the number of pixels in the object or the size of the convex hull around the object.
 
-### Exercise 6
+### Exercise 7
 
 Now, lets split the data and create a training and testing set. In the code chunk below, type in `initial_split()`. Inside this function, type in `beans` and set `strata` to `class`.
 
-```{r a-picture-is-worth-a-6, exercise = TRUE}
+```{r a-picture-is-worth-a-7, exercise = TRUE}
 
 ```
 
-```{r a-picture-is-worth-a-6-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-7-hint-1, eval = FALSE}
 initial_split(..., strata = ...)
 ```
 
@@ -335,17 +335,17 @@ initial_split(beans, strata = class)
 
 As you can see, this code splits the data into a training and testing set, with 13611 total values. However, the desired split should be 75% training and 25 testing, which is not the case as of right now.
 
-### Exercise 7
+### Exercise 8
 
 Copy the previous code. Inside `initial_split()`, set `prop` to `3/4`.
 
-```{r a-picture-is-worth-a-7, exercise = TRUE}
+```{r a-picture-is-worth-a-8, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r a-picture-is-worth-a-7-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-8-hint-1, eval = FALSE}
 initial_split(beans, strata = class, prop = ... / ...)
 ```
 
@@ -357,17 +357,17 @@ initial_split(beans, strata = class, prop = 3/4)
 
 As you can see, the data has successfully been split with the correct proportion (75% training and 25% testing).
 
-### Exercise 8
+### Exercise 9
 
 Copy the previous code and assign it to a new variable named `bean_split`.
 
-```{r a-picture-is-worth-a-8, exercise = TRUE}
+```{r a-picture-is-worth-a-9, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r a-picture-is-worth-a-8-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-9-hint-1, eval = FALSE}
 ... <- initial_split(beans, strata = class, prop = 3/4)
 ```
 
@@ -379,15 +379,15 @@ bean_split <- initial_split(beans, strata = class, prop = 3/4)
 
 Another methods for quantifying shapes of objects include perimeter: the perimeter can be measured using the number of pixels in the boundary as well as the area of the bounding box (the smallest rectangle enclosing an object).
 
-### Exercise 9
+### Exercise 10
 
 Now, let's extract the training and testing data. In the code chunk below, type in `training()`, passing in `bean_split`.
 
-```{r a-picture-is-worth-a-9, exercise = TRUE}
+```{r a-picture-is-worth-a-10, exercise = TRUE}
 
 ```
 
-```{r a-picture-is-worth-a-9-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-10-hint-1, eval = FALSE}
 training(...)
 ```
 
@@ -399,17 +399,17 @@ training(bean_split)
 
 As a reminder, `training()` is used to extract the training data from the data split. As you can see from the output, the training data contains 10,206 rows.
 
-### Exercise 10
+### Exercise 11
 
 Copy the previous code and assign it to a new variable named `bean_train`.
 
-```{r a-picture-is-worth-a-10, exercise = TRUE}
+```{r a-picture-is-worth-a-11, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r a-picture-is-worth-a-10-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-11-hint-1, eval = FALSE}
 ... <- training(bean_split)
 ```
 
@@ -421,15 +421,15 @@ bean_train <- training(bean_split)
 
 The *major axis* quantifies the longest line connecting the most extreme parts of the object. The *minor axis* is perpendicular to the major axis.
 
-### Exercise 11
+### Exercise 12
 
 Now, let's extract the testing data. In the code chunk below, type in `testing()` and pass in `bean_split`.
 
-```{r a-picture-is-worth-a-11, exercise = TRUE}
+```{r a-picture-is-worth-a-12, exercise = TRUE}
 
 ```
 
-```{r a-picture-is-worth-a-11-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-12-hint-1, eval = FALSE}
 testing(...)
 ```
 
@@ -441,17 +441,17 @@ testing(bean_split)
 
 Just like `training()`, `testing()` is used to extract the testing data from the data split. As you can see from the output, the training data contains 3,404 rows.
 
-### Exercise 12
+### Exercise 13
 
 Copy the previous code and assign it to a new variable named `bean_test`.
 
-```{r a-picture-is-worth-a-12, exercise = TRUE}
+```{r a-picture-is-worth-a-13, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r a-picture-is-worth-a-12-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-13-hint-1, eval = FALSE}
 ... <- testing(bean_split)
 ```
 
@@ -463,15 +463,15 @@ bean_test <- testing(bean_split)
 
 The compactness of an object can be measured using the ratio of the object’s area to the area of a circle with the same perimeter. For example, the symbols “•” and “×” have very different compactness.
 
-### Exercise 13
+### Exercise 14
 
 Type in `set.seed()` and pass in `1602`. 
 
-```{r a-picture-is-worth-a-13, exercise = TRUE}
+```{r a-picture-is-worth-a-14, exercise = TRUE}
 
 ```
 
-```{r a-picture-is-worth-a-13-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-14-hint-1, eval = FALSE}
 set.seed(...)
 ```
 
@@ -483,15 +483,15 @@ set.seed(1602)
 
 There are also different measures of how *elongated* or oblong an object is. For example, the *eccentricity* statistic is the ratio of the major and minor axes. There are also related estimates for roundness and convexity.
 
-### Exercise 14
+### Exercise 15
 
 Now, lets create a validation set of `bean_train`. In the code chunk below, type in `validation_split()` and type in `bean_train`. Also, set `strata` to `class`.
 
-```{r a-picture-is-worth-a-14, exercise = TRUE}
+```{r a-picture-is-worth-a-15, exercise = TRUE}
 
 ```
 
-```{r a-picture-is-worth-a-14-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-15-hint-1, eval = FALSE}
 validation_split(..., strata = ...)
 ```
 
@@ -509,17 +509,17 @@ knitr::include_graphics("images/pic1.png")
 
 Shapes such as circles and squares have low eccentricity while oblong shapes have high values. Also, the metric is unaffected by the rotation of the object.
 
-### Exercise 15
+### Exercise 16
 
 Copy the previous code. Inside `validation_split()`, set `prop` to `4/5`.
 
-```{r a-picture-is-worth-a-15, exercise = TRUE}
+```{r a-picture-is-worth-a-16, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r a-picture-is-worth-a-15-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-16-hint-1, eval = FALSE}
 validation_split(bean_train, strata = class, prop = .../...)
 ```
 
@@ -531,17 +531,17 @@ validation_split(bean_train, strata = class, prop = 3/4)
 
 Looking at the images from the previous exercise, many of them features have high correlations; objects with large areas are more likely to have large perimeters. There are often multiple methods to quantify the same underlying characteristics (e.g., size).
 
-### Exercise 16
+### Exercise 17
 
 Copy the previous code and assign it to a new variable named `bean_val`.
 
-```{r a-picture-is-worth-a-16, exercise = TRUE}
+```{r a-picture-is-worth-a-17, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r a-picture-is-worth-a-16-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-17-hint-1, eval = FALSE}
 ... <- validation_split(bean_train, strata = class, prop = 3/4)
 ```
 
@@ -553,17 +553,17 @@ bean_val <- validation_split(bean_train, strata = class, prop = 3/4)
 
 As a reminder, a validation split takes a single random sample (without replacement) of the original data set to be used for analysis. This sample is then used to evaluate a model's performance and can also be used to tune hyperparameters.
 
-### Exercise 17
+### Exercise 18
 
 Looking at the output of `bean_val`, you can see that there is 1 row, which contains a list. Lets use sub-setting to see the contents of the list.
 
 In the code chunk below, type in `bean_val$splits[[]]`. Inside the double brackets, type in `1`.
 
-```{r a-picture-is-worth-a-17, exercise = TRUE}
+```{r a-picture-is-worth-a-18, exercise = TRUE}
 
 ```
 
-```{r a-picture-is-worth-a-17-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-18-hint-1, eval = FALSE}
 bean_val$splits[[...]]
 ```
 
@@ -577,17 +577,17 @@ The double bracket operator, `[[`, and dollar sign, `$`, can be used to extract 
 
 To visually assess how well different methods perform, the methods on the training set (n = 8163 beans) can be estimated and the results using the validation set (n = 2043) can be displayed.
 
-### Exercise 18
+### Exercise 19
 
 Before beginning any dimensionality reduction, let's spend some time investigating the data. Since it's now known that many of these shape features are probably measuring similar concepts, let’s take a look at the correlation structure of the data.
 
 Load the **corrplot** library using `library()`.
 
-```{r a-picture-is-worth-a-18, exercise = TRUE}
+```{r a-picture-is-worth-a-19, exercise = TRUE}
 
 ```
 
-```{r a-picture-is-worth-a-18-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-19-hint-1, eval = FALSE}
 library(...)
 ```
 
@@ -599,15 +599,15 @@ library(corrplot)
 
 **corrplot** is a graphical display of a correlation matrix and confidence intervals.
 
-### Exercise 19
+### Exercise 20
 
 In the code chunk below, type in `colorRampPalette()`. Inside this function, type in `c("#91CBD765", "#CA225E")`.
 
-```{r a-picture-is-worth-a-19, exercise = TRUE}
+```{r a-picture-is-worth-a-20, exercise = TRUE}
 
 ```
 
-```{r a-picture-is-worth-a-19-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-20-hint-1, eval = FALSE}
 colorRampPalette(c("...", "..."))
 ```
 
@@ -619,17 +619,17 @@ colorRampPalette(c("#91CBD765", "#CA225E"))
 
 `colorRampPalette()` is a function that interpolates a set of given colors to create new color palettes and color ramps. The strings that were passed in are color codes represented as hexadecimal values.
 
-### Exercise 20
+### Exercise 21
 
 Copy the previous code and assign it to a new variable named `tmwr_cols`.
 
-```{r a-picture-is-worth-a-20, exercise = TRUE}
+```{r a-picture-is-worth-a-21, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r a-picture-is-worth-a-20-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-21-hint-1, eval = FALSE}
 ... <- colorRampPalette(c("#91CBD765", "#CA225E"))
 ```
 
@@ -641,15 +641,15 @@ tmwr_cols <- colorRampPalette(c("#91CBD765", "#CA225E"))
 
 In the bean data, 16 morphology features were computed: area, perimeter, major axis length, minor axis length, aspect ratio, eccentricity, convex area, equiv diameter, extent, solidity, roundness, compactness, shape factor 1, shape factor 2, shape factor 3, and shape factor 4.
 
-### Exercise 21
+### Exercise 22
 
 Now, lets create a visual of the correlation matrix of the predictors. Start by piping `bean_train` to `select()`. Inside this function, type in `-class`.
 
-```{r a-picture-is-worth-a-21, exercise = TRUE}
+```{r a-picture-is-worth-a-22, exercise = TRUE}
 
 ```
 
-```{r a-picture-is-worth-a-21-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-22-hint-1, eval = FALSE}
 bean_train |>
   select(...)
 ```
@@ -663,17 +663,17 @@ bean_train |>
 
 It is important to maintain good data discipline when evaluating dimensionality reduction techniques, especially if you will use them within a model.
 
-### Exercise 22
+### Exercise 23
 
 Copy the previous code and pipe it to `cor()`. 
 
-```{r a-picture-is-worth-a-22, exercise = TRUE}
+```{r a-picture-is-worth-a-23, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r a-picture-is-worth-a-22-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-23-hint-1, eval = FALSE}
 bean_train |>
   select(-class) |>
   ...()
@@ -689,17 +689,17 @@ bean_train |>
 
 `cor()` is a function that computes the correlation coefficient between numeric variables in a data set. 
 
-### Exercise 23
+### Exercise 24
 
 Copy the previous code and pipe it to `corrplot()`. Inside this function, set `col` to `tmwr_cols(200)` and `tl.col` to `"black"`.
 
-```{r a-picture-is-worth-a-23, exercise = TRUE}
+```{r a-picture-is-worth-a-24, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r a-picture-is-worth-a-23-hint-1, eval = FALSE}
+```{r a-picture-is-worth-a-24-hint-1, eval = FALSE}
 bean_train |>
   select(-class) |>
   cor() |>
