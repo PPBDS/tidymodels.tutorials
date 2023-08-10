@@ -2797,7 +2797,7 @@ Often a data practitioner needs to consider a large number of possible modeling 
 
 ### Exercise 27
 
-Copy the previous code and pipe the entire `workflow_set()` function to `workflow_map()`. Inside `workflow_map()`, set `verbose` to `TRUE`, `seed` to `1603`, and `resamples` to `bean_val`.
+Copy the previous code and pipe the entire `workflow_set()` function to `workflow_map()`. Inside `workflow_map()`, set `verbose` to `TRUE`, `seed` to `1603`, and `resamples` to `bean_val`. (Note: This will produce a series of warnings).
 
 ```{r modeling-27, exercise = TRUE}
 
@@ -2835,11 +2835,14 @@ workflow_set(
 
 ### 
 
+As you can see, this code produces a series of warnings. This is because for a series of observations, a probability of 0 is occurring, which can be due to errors in model creation and fitting. For now, let's ignore this error and move on.
+
+
 The `workflow_map()` function applies grid search to optimize the model/preprocessing parameters (if any) across 10 parameter combinations.
 
 ### Exercise 28
 
-Copy the previous code. Inside `workflow_map()`, set `grid` to `10`, `metrics` to `metric_set(roc_auc)`, and `control` to `ctrl`.
+Copy the previous code. Inside `workflow_map()`, set `grid` to `10`, `metrics` to `metric_set(roc_auc)`, and `control` to `ctrl`. (Note: This will produce the same series of warnings).
 
 ```{r modeling-28, exercise = TRUE}
 
@@ -2887,7 +2890,7 @@ The multiclass area under the ROC curve is estimated on the validation set.
 
 ### Exercise 29
 
-Copy the previous code and assign the entire code to a new variable named `bean_res`.
+Copy the previous code and assign the entire code to a new variable named `bean_res` (Ignore the warnings).
 
 ```{r modeling-29, exercise = TRUE}
 
