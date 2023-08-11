@@ -45,6 +45,7 @@ Suggests:
     rsconnect,
     rstanarm,
     rules,
+    stacks,
     stringr,
     testthat (>= 3.0.0),
     tidymodels,
