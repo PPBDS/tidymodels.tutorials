@@ -169,6 +169,8 @@ rda_res <-
   ) |>
   last_fit(split = bean_split, metrics = metric_set(roc_auc))
 
+rda_wflow_fit <- extract_workflow(rda_res)
+
 ```
 
 ```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
