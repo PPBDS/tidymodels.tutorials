@@ -244,7 +244,7 @@ boosting_test_results <-
 ## Introduction
 ### 
 
-This tutorial covers [Chapter 15: Grid Search](https://www.tmwr.org/workflow-sets) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This chapter will illustrate how to use workflow sets to investigate multiple models or feature engineering strategies in such a situation. Racing methods can more efficiently rank models than fitting every candidate model being considered.
+This tutorial covers [Chapter 15: Grid Search](https://www.tmwr.org/workflow-sets) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This tutorial will illustrate how to use workflow sets to investigate multiple models or feature engineering strategies in such a situation. Racing methods can more efficiently rank models than fitting every candidate model being considered.
 
 ## Modeling Concrete Mixture Strength
 ### 

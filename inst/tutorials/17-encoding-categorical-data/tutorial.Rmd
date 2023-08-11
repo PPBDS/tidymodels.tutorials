@@ -1,0 +1,995 @@
+---
+title: Encoding Categorical Data
+author: Pratham Kancherla
+tutorial:
+  id: encoding-categorical-data
+output:
+  learnr::tutorial:
+    progressive: yes
+    allow_skip: yes
+runtime: shiny_prerendered
+description: 'Tutorial for Chapter 17: Encoding Categorical Data'
+---
+
+```{r setup, include = FALSE}
+library(learnr)
+library(tutorial.helpers)
+library(finetune)
+library(baguette)
+library(tidyverse)
+library(tidymodels)
+library(rlang)
+library(embed)
+library(tune)
+library(ggrepel)
+library(ggforce)
+library(rstanarm)
+library(rules)
+library(textrecipes)
+library(tidyposterior)
+library(lme4)
+library(multilevelmod)
+library(nlme)
+library(usemodels)
+library(workflowsets)
+
+knitr::opts_chunk$set(echo = FALSE)
+options(tutorial.exercise.timelimit = 60, 
+        tutorial.storage = "local") 
+
+ames <- mutate(ames, Sale_Price = log10(Sale_Price))
+
+ames_split <- initial_split(ames, prop = 0.80, strata = Sale_Price)
+ames_train <- training(ames_split)
+ames_test  <-  testing(ames_split)
+
+ames_glm <-
+  recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + 
+         Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_lencode_glm(Neighborhood, outcome = vars(Sale_Price)) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+  step_ns(Latitude, Longitude, deg_free = 20)
+
+glm_estimates <-
+  prep(ames_glm) |>
+  tidy(number = 2)
+
+ames_mixed <-
+  recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + 
+         Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_lencode_mixed(Neighborhood, outcome = vars(Sale_Price)) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+  step_ns(Latitude, Longitude, deg_free = 20)
+
+mixed_estimates <-
+  prep(ames_mixed) |>
+  tidy(number = 2)
+
+ames_hashed <-
+  ames_train |>
+  mutate(Hash = map_chr(Neighborhood, hash))
+
+ames_hash <-
+  recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + 
+         Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_dummy_hash(Neighborhood, signed = FALSE, num_terms = 16L) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+  step_ns(Latitude, Longitude, deg_free = 20)
+```
+
+```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
+```
+
+```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
+```
+
+## Introduction
+### 
+
+This tutorial covers [Chapter 15: Grid Search](https://www.tmwr.org/workflow-sets) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. In this tutorial, you will learn about using preprocessing recipes for encoding categorical predictors. We will discuss more sophisticated options for encoding categorical predictors that address these issues. These options are available as tidymodels recipe steps in the **embed** and **textrecipes** packages.
+
+## Using the Outcome for Encoding Predictors
+### 
+
+There are multiple options for encodings more complex than dummy or indicator variables. One method called effect or likelihood encodings replaces the original categorical variables with a single numeric column that measures the effect of those data.
+
+### Exercise 1
+
+Load the library **tidymodels** using `library()`.
+
+```{r using-the-outcome-fo-1, exercise = TRUE}
+
+```
+
+```{r using-the-outcome-fo-1-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(tidymodels)
+```
+
+### Exercise 2
+
+Next, load the library **rsample** using `library()`.
+
+```{r using-the-outcome-fo-2, exercise = TRUE}
+
+```
+
+```{r using-the-outcome-fo-2-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(rsample)
+```
+
+### 
+
+For statistical modeling in R, the preferred representation for categorical or nominal data is a factor, which is a variable that can take on a limited number of different values; internally, factors are stored as a vector of integer values together with a set of text labels.
+
+### Exercise 3
+
+Type `ames_train` and pipe it to `group_by()`, adding the parameter `Neighborhood`.
+
+```{r using-the-outcome-fo-3, exercise = TRUE}
+
+```
+
+```{r using-the-outcome-fo-3-hint-1, eval = FALSE}
+ames_train |>
+  group_by(...)
+```
+
+```{r include = FALSE}
+ames_train |>
+  group_by(Neighborhood)
+```
+
+### 
+
+For some realistic data sets, straightforward dummy variables are not a good fit. This often happens because there are too many categories or there are new categories at prediction time.
+
+### Exercise 4
+
+Copy the previous code and pipe it to `summarize()`. Add the parameters `mean`, setting it equal to `mean(Sale_Price)`, and `std_err`, setting it equal to `sd(Sale_Price) / sqrt(length(Sale_Price))`.
+
+```{r using-the-outcome-fo-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-the-outcome-fo-4-hint-1, eval = FALSE}
+... |>
+  summarize(mean = mean(...),
+            std_err = sd(...) / sqrt(length(...)))
+```
+
+```{r include = FALSE}
+ames_train |>
+  group_by(Neighborhood) |>
+  summarize(mean = mean(Sale_Price),
+            std_err = sd(Sale_Price) / sqrt(length(Sale_Price)))
+```
+
+### 
+
+A minority of models, such as those based on trees or rules, can handle categorical data natively and do not require encoding or transformation of these kinds of features. 
+
+### Exercise 5
+
+Copy the previous code and pipe it to `ggplot()`. Within `aes()` of `ggplot()`, set `y` equal to `reorder(Neighborhood, mean)`, and `x` equal to `mean`.
+
+```{r using-the-outcome-fo-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-the-outcome-fo-5-hint-1, eval = FALSE}
+... |>
+  ggplot(aes(y = ..., x = ...))
+```
+
+```{r include = FALSE}
+ames_train |>
+  group_by(Neighborhood) |>
+  summarize(mean = mean(Sale_Price),
+            std_err = sd(Sale_Price) / sqrt(length(Sale_Price))) |>
+  ggplot(aes(y = reorder(Neighborhood, mean), x = mean))
+```
+
+### 
+
+A tree-based model can natively partition a variable like Bldg_Type into groups of factor levels when looking at the encodings for the building type predictor in the Ames training set.
+
+### Exercise 6
+
+Copy the previous code and add it to `geom_point()`. Then, add the code to `geom_errorbar()`. Then, within `aes()`, add the parameters `xmin`, setting it equal to `mean - 1.64 * std_err`, and `xmax`, setting it equal to `mean + 1.64 * std_err`.
+
+```{r using-the-outcome-fo-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-the-outcome-fo-6-hint-1, eval = FALSE}
+... +
+  geom_point() +
+  geom_errorbar(aes(xmin = ..., xmax = ...))
+```
+
+```{r include = FALSE}
+ames_train |>
+  group_by(Neighborhood) |>
+  summarize(mean = mean(Sale_Price),
+            std_err = sd(Sale_Price) / sqrt(length(Sale_Price))) |>
+  ggplot(aes(y = reorder(Neighborhood, mean), x = mean)) +
+    geom_point() +
+    geom_errorbar(aes(xmin = mean - 1.64 * std_err, xmax = mean + 1.64 * std_err))
+```
+
+### 
+
+`geom_bar()` includes various ways of representing a vertical interval defined by x, ymin and ymax. Each case draws a single graphical object.
+
+### Exercise 7
+
+Copy the previous code and add `labs()`. Add the parameters `y`, setting it to `NULL`, and `x`, setting it to `"Price (mean, log scale)"`.
+
+```{r using-the-outcome-fo-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-the-outcome-fo-7-hint-1, eval = FALSE}
+
+```
+
+```{r include = FALSE}
+ames_train |>
+  group_by(Neighborhood) |>
+  summarize(mean = mean(Sale_Price),
+            std_err = sd(Sale_Price) / sqrt(length(Sale_Price))) |>
+  ggplot(aes(y = reorder(Neighborhood, mean), x = mean)) +
+    geom_point() +
+    geom_errorbar(aes(xmin = mean - 1.64 * std_err, xmax = mean + 1.64 * std_err)) +
+  labs(y = NULL, x = "Price (mean, log_scale)" )
+```
+
+### 
+
+In tidymodels, the **embed** package includes several recipe step functions for different kinds of effect encodings, such as `step_lencode_glm()`, `step_lencode_mixed()`, and `step_lencode_bayes()`. These steps use a generalized linear model to estimate the effect of each level in a categorical predictor on the outcome. 
+
+### Exercise 8
+
+Load the library **embed** using `library()`.
+
+```{r using-the-outcome-fo-8, exercise = TRUE}
+
+```
+
+```{r using-the-outcome-fo-8-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(embed)
+```
+
+### 
+
+Predictors can be converted to one or more numeric representations using a variety of methods. Effect encodings using simple generalized linear models or nonlinear models can be used.
+
+### Exercise 9
+
+Load the recipe that we have created earlier. We will created an ames `glm` model.
+
+```{r using-the-outcome-fo-9, exercise = TRUE}
+recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + 
+         Latitude + Longitude, data = ames_train)
+```
+
+### 
+
+`step_lencode_glm()` creates a specification of a recipe step that will convert a nominal (i.e. factor) predictor into a single set of scores derived from a generalized linear model.
+
+### Exercise 10
+
+Copy the previous code and pipe it to `step_log()`. Add the parameters `Gr_Liv_Area` and `base`, setting it equal to `10`.
+
+```{r using-the-outcome-fo-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-the-outcome-fo-10-hint-1, eval = FALSE}
+... |>
+  step_log(..., base = ...)
+```
+
+```{r include = FALSE}
+recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10)
+```
+
+### 
+
+`step_log()` creates a specification of a recipe step that will log transform data.
+
+### Exercise 11
+
+Copy the previous code and pipe it to `step_lencode_glm()`. Add the parameters `Neighborhood`, and `outcome`, setting it equal to `vars(Sale_Price)`.
+
+```{r using-the-outcome-fo-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-the-outcome-fo-11-hint-1, eval = FALSE}
+... |>
+  step_lencode_glm(..., outcome = vars(...))
+```
+
+```{r include = FALSE}
+recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_lencode_glm(Neighborhood, outcome = vars(Sale_Price))
+```
+
+### 
+
+`step_lencode_glm()` creates a specification of a recipe step that will convert a nominal (i.e. factor) predictor into a single set of scores derived from a generalized linear model.
+
+### Exercise 12
+
+Copy the previous code and pipe it to `step_dummy()`. Add the parameter `all_nominal_predictors()`.
+
+```{r using-the-outcome-fo-12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-the-outcome-fo-12-hint-1, eval = FALSE}
+... |>
+  step_dummy(...())
+```
+
+```{r include = FALSE}
+recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_lencode_glm(Neighborhood, outcome = vars(Sale_Price)) |>
+  step_dummy(all_nominal_predictors())
+```
+
+### 
+
+`step_dummy()` creates a specification of a recipe step that will convert nominal data (e.g. character or factors) into one or more numeric binary model terms for the levels of the original data.
+
+### Exercise 13
+
+Copy the previous code and pipe it to `step_interact()`. Add the parameter ` ~ Gr_Live_Area:starts_with("Bldg_Type_")`.
+
+```{r using-the-outcome-fo-13, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-the-outcome-fo-13-hint-1, eval = FALSE}
+... |>
+  step_interact(~ ...)
+```
+
+```{r include = FALSE}
+recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_lencode_glm(Neighborhood, outcome = vars(Sale_Price)) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_"))
+```
+
+### 
+
+`step_interact()` creates a specification of a recipe step that will create new columns that are interaction terms between two or more variables.
+
+### Exercise 14
+
+Copy the previous code and pipe it to `step_ns()`. Add the parameters `Latitude`, `Longitude` and `deg_free`, setting it equal to `20`. Then, set the entire expression to `ames_glm`. Type `ames_glm()` on the next line to see the output.
+
+```{r using-the-outcome-fo-14, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-the-outcome-fo-14-hint-1, eval = FALSE}
+ames_glm <-
+  ... |>
+  step_ns(..., ..., deg_free = ...)
+```
+
+```{r include = FALSE}
+ames_glm <-
+  recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_lencode_glm(Neighborhood, outcome = vars(Sale_Price)) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+  step_ns(Latitude, Longitude, deg_free = 20)
+
+ames_glm
+```
+
+### 
+
+`step_ns()` can create new features from a single variable that enable fitting routines to model this variable in a nonlinear manner. The original variables are removed from the data and new columns are added.
+
+### Exercise 15
+
+Type in `prep()` and add the parameter `ames_glm`.
+
+```{r using-the-outcome-fo-15, exercise = TRUE}
+
+```
+
+```{r using-the-outcome-fo-15-hint-1, eval = FALSE}
+prep(...)
+```
+
+```{r include = FALSE}
+prep(ames_glm)
+```
+
+### 
+
+For a recipe with at least one preprocessing operation, estimate the required parameters from a training set that can be later applied to other data sets.
+
+### Exercise 16
+
+Copy the previous code and pipe it to `tidy()`. Add the parameter `number = 2`. Then, set the entire expression to `glm_estimates` and run it on the next line.
+
+```{r using-the-outcome-fo-16, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-the-outcome-fo-16-hint-1, eval = FALSE}
+glm_estimates <-
+  ... |>
+  tidy(number = ...)
+```
+
+```{r include = FALSE}
+glm_estimates <-
+  prep(ames_glm) |>
+  tidy(number = 2)
+```
+
+### 
+
+When we use the newly encoded `Neighborhood` numeric variable created via this method, we substitute the original level (such as `"North_Ames"`) with the estimate for `Sale_Price` from the GLM.
+
+### Exercise 17
+
+Type `glm_estimates` and pipe it to `filter()`. Add the parameter `level == "..new"`.
+
+```{r using-the-outcome-fo-17, exercise = TRUE}
+
+```
+
+```{r using-the-outcome-fo-17-hint-1, eval = FALSE}
+glm_estimates |>
+  filter(... == "...")
+```
+
+```{r include = FALSE}
+glm_estimates |>
+  filter(level == "..new")
+```
+
+### 
+
+Effect encodings can be powerful but should be used with care. The effects should be computed from the training set, after data splitting.
+
+### Exercise 18
+
+We can use partial pooling to adjust these estimates so that levels with small sample sizes are shrunken toward the overall mean. The effects for each level are modeled all at once using a mixed or hierarchical generalized linear model:
+
+Copy the code from exercise 12. Switch `step_lencode_glm` to `step_lencode_mixed`. Set the entire expression to `ames_mixed` and run it on the next line.
+
+```{r using-the-outcome-fo-18, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-the-outcome-fo-18-hint-1, eval = FALSE}
+ames_mixed <-
+  ... |>
+  step_lencode_mixed(...) |>
+  ...
+```
+
+```{r include = FALSE}
+ames_mixed <-
+  recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + Latitude + Longitude, data = ames_train) |>
+  step_log(Gr_Liv_Area, base = 10) |>
+  step_lencode_mixed(Neighborhood, outcome = vars(Sale_Price)) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+  step_ns(Latitude, Longitude, deg_free = 20)
+
+ames_mixed
+```
+
+### 
+
+Creating an effect encoding with step_lencode_glm() estimates the effect separately for each factor level (in this example, neighborhood). 
+
+### Exercise 19
+
+Type `prep()` and add the parameter `ames_mixed`. Then, pipe the code to `tidy()`, adding the parameter `number = 2`. Then, set the entire expression to `mixed_estimates` and run it on the next line.
+
+```{r using-the-outcome-fo-19, exercise = TRUE}
+
+```
+
+```{r using-the-outcome-fo-19-hint-1, eval = FALSE}
+mixed_estimates <-
+  prep(...) |>
+  tidy(number = ...)
+```
+
+```{r include = FALSE}
+mixed_estimates <-
+  prep(ames_mixed) |>
+  tidy(number = 2)
+
+mixed_estimates
+```
+
+### 
+
+Naive Bayes models are another example where the structure of the model can deal with categorical variables natively; distributions are computed within each level, for example, for all the different kinds of `Bldg_Type` in the data set.
+
+### Exercise 20
+
+Pipe `mixed_estimates` to `filter()`. Add the parameter `level = "..new"` and hit "Run Code".
+
+```{r using-the-outcome-fo-20, exercise = TRUE}
+
+```
+
+```{r using-the-outcome-fo-20-hint-1, eval = FALSE}
+mixed_estimates |>
+  filter(...)
+```
+
+```{r include = FALSE}
+mixed_estimates |>
+  filter(level == "..new")
+```
+
+### 
+
+These models we have talked about previously in the tutorial that can handle categorical features natively can also deal with numeric, continuous features, making the transformation or encoding of such variables optional. 
+
+### Exercise 21
+
+Let’s visually compare the effects using partial pooling vs. no pooling. Pipe `glm_estimates` to `rename()`, adding the parameter ``no pooling``, setting it equal to value.
+
+```{r using-the-outcome-fo-21, exercise = TRUE}
+
+```
+
+```{r using-the-outcome-fo-21-hint-1, eval = FALSE}
+glm_estimates |>
+  rename(`...` = ...)
+```
+
+```{r include = FALSE}
+glm_estimates |>
+  rename(`no pooling` = value)
+```
+
+### 
+
+In short, using dummy encodings did not typically result in better model performance but often required more time to train the models.
+
+### Exercise 22
+
+Copy the previous code and pipe it to `left_join()`. Within the function, pipe `mixed_estimates` to `rename()`, adding the parameters ``partial pooling``, setting it equal to `value`, and `by`, setting it equal to `"level"`. 
+
+```{r using-the-outcome-fo-22, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-the-outcome-fo-22-hint-1, eval = FALSE}
+... |>
+  left_join(
+    mixed_estimates |>
+      rename(`...` = ..., by = "...")
+  )
+```
+
+```{r include = FALSE}
+glm_estimates |>
+  rename(`no pooling` = value) |>
+  left_join(
+    mixed_estimates |>
+    rename(`partial pooling` = value), by = "level"
+  )
+```
+
+### 
+
+It is advised to start with un-transformed categorical variables when a model allows it; note that more complex encodings often do not result in better performance for such models.
+
+### Exercise 23
+
+Copy the previous code and pipe it to `left_join()` again. Within the function, pipe `ames_train` to `count()`, adding the parameter `Neighborhood`. Then, pipe `count()` to `mutate()`, adding the parameter `level = as.character(Neighborhood)`.
+
+```{r using-the-outcome-fo-23, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-the-outcome-fo-23-hint-1, eval = FALSE}
+... |>
+  left_join(
+    ames_train |>
+      count(...) |>
+      mutate(level = as.character(...))
+  )
+```
+
+```{r include = FALSE}
+glm_estimates |>
+  rename(`no pooling` = value) |>
+  left_join(
+    mixed_estimates |>
+    rename(`partial pooling` = value), by = "level"
+  ) |>
+  left_join(
+    ames_train |>
+      count(Neighborhood) |>
+      mutate(level = as.character(Neighborhood))
+  )
+```
+
+### 
+
+Sometimes qualitative columns can be ordered, such as “low,” “medium,” and “high”. In base R, the default encoding strategy is to make new numeric columns that are polynomial expansions of the data.
+
+### Exercise 24
+
+Copy the previous code and pipe it to `ggplot()`. Within `aes()` of `ggplot()`, add the parameters ``no pooling``, ``partial pooling``, and `size`, setting `size` equal to `sqrt(n)`.
+
+```{r using-the-outcome-fo-24, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-the-outcome-fo-24-hint-1, eval = FALSE}
+... |>
+  ggplot(aes(`...`, `...`, size = sqrt(...)))
+```
+
+```{r include = FALSE}
+glm_estimates |>
+  rename(`no pooling` = value) |>
+  left_join(
+    mixed_estimates |>
+    rename(`partial pooling` = value), by = "level"
+  ) |>
+  left_join(
+    ames_train |>
+      count(Neighborhood) |>
+      mutate(level = as.character(Neighborhood))
+  ) |>
+  ggplot(aes(`no pooling`, `partial pooling`, size = sqrt(n)))
+```
+
+### 
+
+An 11-degree polynomial is probably not the most effective way of encoding an ordinal factor for the months of the year. Instead, consider trying recipe steps related to ordered factors, such as `step_unorder()`, to convert to regular factors, and `step_ordinalscore()`, which maps specific numeric values to each factor level.
+
+
+### Exercise 25
+
+Copy the previous code and add `geom_abline()`. Add the parameters `color`, setting it equal to `"gray50"`, and `lty`, setting it equal to `2`.
+
+```{r using-the-outcome-fo-25, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-the-outcome-fo-25-hint-1, eval = FALSE}
+... +
+  geom_abline(color = "...", lty = ...)
+```
+
+```{r include = FALSE}
+glm_estimates |>
+  rename(`no pooling` = value) |>
+  left_join(
+    mixed_estimates |>
+    rename(`partial pooling` = value), by = "level"
+  ) |>
+  left_join(
+    ames_train |>
+      count(Neighborhood) |>
+      mutate(level = as.character(Neighborhood))
+  ) |>
+  ggplot(aes(`no pooling`, `partial pooling`, size = sqrt(n))) +
+    geom_abline(color = "gray50", lty = 2)
+```
+
+### 
+
+These geoms add reference lines (sometimes called rules) to a plot, either horizontal, vertical, or diagonal (specified by slope and intercept). These are useful for annotating plots.
+
+### Exercise 26
+
+Copy the previous code and add `geom_point()`. Add the parameter `alpha`, setting it equal to `0.7`. Then, add `coord_fixed()`.
+
+```{r using-the-outcome-fo-26, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r using-the-outcome-fo-26-hint-1, eval = FALSE}
+... +
+  geom_point(alpha = ...) +
+  ...()
+```
+
+```{r include = FALSE}
+glm_estimates |>
+  rename(`no pooling` = value) |>
+  left_join(
+    mixed_estimates |>
+    rename(`partial pooling` = value), by = "level"
+  ) |>
+  left_join(
+    ames_train |>
+      count(Neighborhood) |>
+      mutate(level = as.character(Neighborhood))
+  ) |>
+  ggplot(aes(`no pooling`, `partial pooling`, size = sqrt(n))) +
+    geom_abline(color = "gray50", lty = 2) +
+    geom_point(alpha = 0.7) +
+    coord_fixed()
+```
+
+### 
+
+Excellent Work! You now know how to use the outcome of predictors for encoding predictors by using partial pooling, mixed estimates, and various Bayesian models.
+
+## Feature Hashing
+### 
+
+Feature hashing methods also create dummy variables, but only consider the value of the category to assign it to a predefined pool of dummy variables. Let’s look at the `Neighborhood` values in Ames again and use the `rlang::hash()` function to understand more.
+
+### Exercise 1
+
+Load the library **rlang** using `library()`.
+
+```{r feature-hashing-1, exercise = TRUE}
+
+```
+
+```{r feature-hashing-1-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(rlang)
+```
+
+### 
+
+The **rlang** package in R facilitates non-standard evaluation, aiding in the creation of functions that programmatically generate, modify, or interact with expressions and symbols. It's particularly useful for constructing dynamic code and working seamlessly with packages like **dplyr** and **tidyr**.
+
+### Exercise 2
+
+Pipe `ames_train` to `mutate()`. Add the parameter `Hash`, setting it equal to `map_chr()`. Add the parameter `Neighborhood` and `hood` in `map_chr()`. Set the entire expression to `ames_hashed`.
+
+```{r feature-hashing-2, exercise = TRUE}
+
+```
+
+```{r feature-hashing-2-hint-1, eval = FALSE}
+ames_hashed <-
+  ames_train |>
+  mutate(Hash = ...)
+```
+
+```{r include = FALSE}
+ames_hashed <-
+  ames_train |>
+  mutate(Hash = map_chr(Neighborhood, hash))
+```
+
+### 
+
+Effect encoding methods like this one can also seamlessly handle situations where a novel factor level is encountered in the data. 
+
+### Exercise 3
+
+Pipe `ames_hashed` to `select()`. Add the parameters `Neighborhood` and `Hash`.
+
+```{r feature-hashing-3, exercise = TRUE}
+
+```
+
+```{r feature-hashing-3-hint-1, eval = FALSE}
+ames_hashed |>
+  select(..., ...)
+```
+
+```{r include = FALSE}
+ames_hashed |>
+  select(Neighborhood, Hash)
+```
+
+### 
+
+If we input `Briardale` to this hashing function, we will always get the same output. The neighborhoods in this case are called the “keys,” while the outputs are the “hashes.”
+
+### Exercise 4
+
+We can get sixteen possible hash values by using `Hash %% 16`.
+
+Pipe `ames_hased` to `mutate()`. Add the parameters `Hash`, setting it equal to `strtoi()`. Inside `strtoi()`, add the parameter `substr(Hash, 26, 32)` and `base = 16L`.
+
+```{r feature-hashing-4, exercise = TRUE}
+
+```
+
+```{r feature-hashing-4-hint-1, eval = FALSE}
+ames_hashed |>
+  mutate(Hash = ..., base = ...)
+```
+
+```{r include = FALSE}
+ames_hashed |>
+  mutate(Hash = strtoi(substr(Hash, 26, 32), base = 16L))
+```
+
+### 
+
+**strtoi()** is a function in the R programming language that is used to convert a character vector representing integers (in base 10) into an integer vector. It stands for "string to integer" and is commonly used for data transformation tasks involving character data that needs to be treated as numeric values.
+
+### Exercise 5
+
+Copy the previous code and add the parameter `Hash`, setting it equal to `Hash %% 16`.
+
+```{r feature-hashing-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r feature-hashing-5-hint-1, eval = FALSE}
+... |>
+  mutate(...,
+         Hash = ... %% ...)
+```
+
+```{r include = FALSE}
+ames_hashed |>
+  mutate(Hash = strtoi(substr(Hash, 26, 32), base = 16L),
+         Hash = Hash %% 16)
+```
+
+### 
+
+When we use pooling, we shrink the effect estimates toward the mean because we don’t have as much evidence about the price in those neighborhoods.
+
+### Exercise 6
+
+Copy the previous code and pipe it to `select()`. Add the parameters `Neighborhood` and `Hash`.
+
+```{r feature-hashing-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r feature-hashing-6-hint-1, eval = FALSE}
+... |>
+  select(..., Hash)
+```
+
+```{r include = FALSE}
+ames_hashed |>
+  mutate(Hash = strtoi(substr(Hash, 26, 32), base = 16L),
+         Hash = Hash %% 16) |>
+  select(Neighborhood, Hash)
+```
+
+### 
+
+Now instead of the 28 neighborhoods in our original data or an incredibly huge number of the original hashes, we have sixteen hash values. This method is very fast and memory efficient, and it can be a good strategy when there are a large number of possible categories.
+
+### Exercise 7
+
+Load the library `textrecipes` using `library()`.
+
+```{r feature-hashing-7, exercise = TRUE}
+
+```
+
+```{r feature-hashing-7-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+#library(textrecipes)
+```
+
+### 
+
+**textrecipes** is a package in R that is part of the broader **recipes** ecosystem. It provides tools for preprocessing and feature engineering specifically tailored for text data, helping to prepare text data for machine learning tasks. With functions like `step_tokenize()`, `step_tf()`, and `step_tfidf()`, **textrecipes** assists in converting raw text into structured and numeric features that can be used as input for various machine learning algorithms.
+
+### Exercise 8
+
+Copy the code from exercise 12. Change the function `step_lencode_glm()` to `step_dummy_hash()`. Delete the parameters and then add `Neighborhood`, `signed = FALSE`, and `num_terms = 16L`. Set this expression to `ames_hash`.
+
+```{r feature-hashing-8, exercise = TRUE}
+
+```
+
+```{r feature-hashing-8-hint-1, eval = FALSE}
+ames_hash <-
+  ... |>
+  step_dummy_hash(Neighborhood, signed = ..., num_terms = ...)
+```
+
+```{r include = FALSE}
+# ames_hash <-
+#   recipe(Sale_Price ~ Neighborhood + Gr_Liv_Area + Year_Built + Bldg_Type + 
+#          Latitude + Longitude, data = ames_train) |>
+#   step_log(Gr_Liv_Area, base = 10) |>
+#   step_dummy_hash(Neighborhood, signed = FALSE, num_terms = 16L) |>
+#   step_dummy(all_nominal_predictors()) |>
+#   step_interact( ~ Gr_Liv_Area:starts_with("Bldg_Type_")) |>
+#   step_ns(Latitude, Longitude, deg_free = 20)
+```
+
+### 
+
+The number of hash values is a tuning parameter of this preprocessing technique, and you should try several values to determine what is best for your particular modeling approach. A lower number of hash values results in more collisions, but a high number may not be an improvement over your original high cardinality variable.
+
+### 
+
+Great Job! You learned how to feature hash to create dummy variables that optimizes data retrievel.
+
+## Summary
+### 
+
+This tutorial covered [Chapter 15: Grid Search](https://www.tmwr.org/workflow-sets) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. In this tutorial, you learned about using preprocessing recipes for encoding categorical predictors. The most straightforward option for transforming a categorical variable to a numeric representation is to create dummy variables from the levels, but this option does not work well when you have a variable with high cardinality (too many levels) or when you may see novel values at prediction time (new levels). One option in such a situation is to create effect encodings, a supervised encoding method that uses the outcome. 
+
+```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
+```
