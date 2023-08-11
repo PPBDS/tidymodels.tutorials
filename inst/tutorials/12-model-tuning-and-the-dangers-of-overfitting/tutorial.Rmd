@@ -1120,7 +1120,7 @@ bind_rows(
 
 ### 
 
-<!-- AK: Add knowledge drop -->
+The **dplyr** package also contains a `bind_cols()` function, which does the same thing as `bind_rows()` but for columns.
 
 ### Exercise 36
 

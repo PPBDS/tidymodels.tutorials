@@ -3253,7 +3253,7 @@ rda_res <-
 
 ### 
 
-<!-- AK: Add knowledge drop -->
+High-dimensional datasets consume more memory, which can be a concern when working with large datasets. Reducing dimensionality can help manage memory usage.
 
 ### Exercise 41
 
