@@ -923,7 +923,7 @@ parametric_fit <- fit(parametric_workflow, data = ovarian)
 
 ### 
 
-<!-- PK: Not sure if I should just give this code since it is kind of repetitive from the last 13 exercises of just split it up. Split it up! Repetition in the pursuit of understanding is no vice! Done.-->
+<!-- PK: DONE. Not sure if I should just give this code since it is kind of repetitive from the last 13 exercises of just split it up. Split it up! Repetition in the pursuit of understanding is no vice!-->
 
 Great Job! You now know how a workflow uses different sorts of formulas from a data set.
 
