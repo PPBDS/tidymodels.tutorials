@@ -1,6 +1,6 @@
 ---
 title: Comparing Models with Resampling
-author: Pratham Kancherla and David Kane
+author: Pratham Kancherla
 tutorial:
   id: comparing-models-with-resampling
 output:

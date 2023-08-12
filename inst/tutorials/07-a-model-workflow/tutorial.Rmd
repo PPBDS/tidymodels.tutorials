@@ -1,6 +1,6 @@
 ---
 title: A Model Workflow
-author: Pratham Kancherla and David Kane
+author: Pratham Kancherla
 tutorial:
   id: a-model-workflow
 output:

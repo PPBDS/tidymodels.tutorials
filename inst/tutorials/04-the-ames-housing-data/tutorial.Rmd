@@ -1,6 +1,6 @@
 ---
 title: The Ames Housing Data
-author: Pratham Kancherla and David Kane
+author: Pratham Kancherla
 tutorial:
   id: the-ames-housing-data
 output:
