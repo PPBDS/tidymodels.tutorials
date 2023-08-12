@@ -1,12 +1,22 @@
 Package: tidymodels.tutorials
 Title: Tutorials for Tidy Modeling with R
 Version: 0.0.0.9002
-Authors@R: 
+Authors@R: c(
     person(given = "David",
            family = "Kane",
            role = c("aut", "cre", "cph"),
            email = "dave.kane@gmail.com",
-           comment = c(ORCID = "0000-0002-6660-3934"))
+           comment = c(ORCID = "0000-0002-6660-3934")),
+    person(given = "Aryan",
+           family = "Kancherla",
+           role = "aut",
+           email = "aryankancherla21@gmail.com",
+           comment = c(ORCID = "0009-0006-0272-7635")),
+    person(given = "Pratham",
+           family = "Kancherla",
+           role = "aut",
+           email = "pratham.kancherla@gmail.com",
+           comment = c(ORCID = "0009-0002-6510-0136")))
 Description: Tutorials for Tidy Modeling with R by Max Kuhn and Julia Silge.
   In an ideal world, students would read the book and type in all the
   associated R commands themselves. Sadly, that often does not happen.
