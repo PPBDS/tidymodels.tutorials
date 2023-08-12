@@ -92,7 +92,7 @@ ames_hash <-
 ## Introduction
 ### 
 
-This tutorial covers [Chapter 15: Grid Search](https://www.tmwr.org/workflow-sets) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. In this tutorial, you will learn about using preprocessing recipes for encoding categorical predictors. We will discuss more sophisticated options for encoding categorical predictors that address these issues. These options are available as tidymodels recipe steps in the **embed** and **textrecipes** packages.
+This tutorial covers [Chapter 17: Encoding Categorical Data](https://www.tmwr.org/categorical) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. In this tutorial, you will learn about using preprocessing recipes for encoding categorical predictors. We will discuss more sophisticated options for encoding categorical predictors that address these issues. These options are available as tidymodels recipe steps in the **embed** and **textrecipes** packages.
 
 ## Using the Outcome for Encoding Predictors
 ### 
@@ -989,7 +989,7 @@ Great Job! You learned how to feature hash to create dummy variables that optimi
 ## Summary
 ### 
 
-This tutorial covered [Chapter 15: Grid Search](https://www.tmwr.org/workflow-sets) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. In this tutorial, you learned about using preprocessing recipes for encoding categorical predictors. The most straightforward option for transforming a categorical variable to a numeric representation is to create dummy variables from the levels, but this option does not work well when you have a variable with high cardinality (too many levels) or when you may see novel values at prediction time (new levels). One option in such a situation is to create effect encodings, a supervised encoding method that uses the outcome. 
+This tutorial covered [Chapter 17: Encoding Categorical Data](https://www.tmwr.org/categorical) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. In this tutorial, you learned about using preprocessing recipes for encoding categorical predictors. The most straightforward option for transforming a categorical variable to a numeric representation is to create dummy variables from the levels, but this option does not work well when you have a variable with high cardinality (too many levels) or when you may see novel values at prediction time (new levels). One option in such a situation is to create effect encodings, a supervised encoding method that uses the outcome. 
 
 ```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
 ```

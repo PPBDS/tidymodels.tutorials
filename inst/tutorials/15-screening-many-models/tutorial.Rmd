@@ -238,7 +238,6 @@ boosting_test_results <-
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
-
 <!-- DK: Takes way too long to render the tutorials. So, don't test the code (at the 98% mark) which takes so long. Discuss cache = TRUE option. -->
 
 ## Introduction
@@ -506,7 +505,7 @@ normalized_rec <-
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+The `all_predictors()` function is used to select all predictor (feature) variables from a data frame or tibble. It's often used within the context of defining a data preprocessing recipe, where you specify the operations you want to perform on your data.
 
 ### Exercise 12
 
@@ -613,7 +612,7 @@ linear_reg(penalty = tune(), mixture = tune())
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+Techniques like Recursive Feature Elimination (RFE) help iteratively eliminate less important features from the model based on their impact on performance.
 
 ### Exercise 17
 
@@ -639,7 +638,7 @@ linear_reg_spec <-
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+**glmnet** is an R package used for fitting and analyzing regularized linear regression models, including the popular LASSO (Least Absolute Shrinkage and Selection Operator) and elastic net regularization methods. 
 
 ### Exercise 18
 
@@ -659,7 +658,7 @@ mlp(hidden_units = tune(), penalty = tune(), epochs = tune())
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+`mlp()`, for multilayer perceptron, is a way to generate a specification of a model before fitting and allows the model to be created using different packages in R or via keras.
 
 ### Exercise 19
 
@@ -710,7 +709,7 @@ nnet_spec <-
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+The **randomForest** package provides a way to assess variable importance using the Gini index or Mean Decrease in Accuracy in a random forest model.
 
 ### Exercise 21
 
@@ -760,7 +759,7 @@ mars_spec <-
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+`earth` engine: Google Earth Engine (GEE) is a cloud-based platform that provides access to a massive amount of geospatial and satellite imagery data, along with computational resources to perform analysis on this data.
 
 ### Exercise 23
 
@@ -808,7 +807,7 @@ svm_r_spec <-
 
 ### 
 
-<!-- PK: Knoweldge Drop -->
+**kernlab** is an R package that provides tools for kernel-based machine learning, including support vector machines (SVMs) and kernel methods. 
 
 ### Exercise 25
 
@@ -856,7 +855,7 @@ svm_p_spec <-
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+Kernel methods are powerful techniques used for non-linear classification, regression, and other types of machine learning tasks.
 
 ### Exercise 27
 
@@ -1170,8 +1169,8 @@ nnet_spec |>
 
 ### 
 
-<!-- PK: Knowledge Drop -->
-
+Support Vector Machines (SVM) use kernel functions to map data into higher-dimensional spaces, allowing them to capture complex relationships.
+ 
 ### Exercise 40
 
 Copy the previous code and pipe it to `update()`, setting the parameter `hidden_units` to `hidden_units(c(1, 27))`. Then, set the entire expression to `nnet_param` using `<-`.
@@ -1235,7 +1234,7 @@ workflow_set(
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+**kernlab** also provides support for other machine learning algorithms, including Least Squares Support Vector Machines (LSSVM) and Kernel Ridge Regression (KRR).
 
 ### Exercise 2
 
@@ -1318,7 +1317,7 @@ normalized1 <-
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+Techniques like Recursive Feature Elimination (RFE) help iteratively eliminate less important features from the model based on their impact on performance.
 
 ### Exercise 5
 
@@ -1337,12 +1336,12 @@ model_vars <-
 ```{r include = FALSE}
 model_vars <-
   workflow_variables(outcomes = compressive_length,
-                   predictors = everything())
+                     predictors = everything())
 ```
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+LASSO (Least Absolute Shrinkage and Selection Operator) is a regularization technique often used for feature selection by shrinking less important features to zero.
 
 ### Exercise 6
 
@@ -1364,7 +1363,7 @@ workflow_set(preproc = list(...))
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+Screening models are often categorized into filter methods (based on statistical metrics) and wrapper methods (based on model performance).
 
 ### Exercise 7
 
@@ -1405,7 +1404,7 @@ no_pre_proc <-
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+Forward selection starts with an empty set of features and adds one feature at a time based on its impact on model performance.
 
 ### Exercise 8
 
@@ -1433,7 +1432,7 @@ workflow_set(
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+Information criteria like AIC (Akaike Information Criterion) and BIC (Bayesian Information Criterion) can be used for model selection and feature inclusion.
 
 ### Exercise 9
 
@@ -1484,8 +1483,7 @@ bind_rows(no_pre_proc, normalized, with_features)
 
 ### 
 
-<!-- PK: Knowledge Drop -->
-
+Some machine learning algorithms, like LASSO and Elastic Net, have built-in feature selection mechanisms that perform selection during the model fitting process.
 
 ### Exercise 11
 
@@ -1568,7 +1566,7 @@ all_workflows |>
 
 ### 
 
-<!-- PK: Knowledge Drop -->
+Some screening models provide a "regularization path" showing how the importance of features changes as the strength of regularization varies.
 
 ### Exercise 3
 
@@ -1614,19 +1612,19 @@ Pipe `grid_results` into `rank_results()`. Then, pipe `rank_results()` to `filte
 
 ```
 
-```{r tuning-and-evaluatin-4-hint, eval = FALSE}
+```{r tuning-and-evaluatin-4-hint-1, eval = FALSE}
 grid_results |>
   ...() |>
   filter(.metric = "...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 grid_results |>
   rank_results() |>
   filter(.metric = "rmse")
 ```
 
-###
+### 
 
 There are a few convenience functions for examining results such as `grid_results`. The `rank_results()` function will order the models by some performance metric. 
 
@@ -1640,19 +1638,19 @@ Copy the previous code and filter it to `select()`. Add the parameter `model`, `
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r tuning-and-evaluatin-5-hint, eval = FALSE}
+```{r tuning-and-evaluatin-5-hint-1, eval = FALSE}
 ... |>
   select(..., .config, ... = mean, rank)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 grid_results |>
    rank_results() |>
    filter(.metric == "rmse") |>
    select(model, .config, rmse = mean, rank)
 ```
 
-###
+### 
 
 Also by default, the function ranks all of the candidate sets; that’s why the same model can show up multiple times in the output. An option, called `select_best`, can be used to rank the models using their best tuning parameter combination.
 
@@ -1665,7 +1663,7 @@ Type `autoplot()`. Add the parameters `grid_results`, `rank_metric = "rmse"`, `m
 
 ```
 
-```{r tuning-and-evaluatin-6-hint, eval = FALSE}
+```{r tuning-and-evaluatin-6-hint-1, eval = FALSE}
 autoplot(
   grid_results,
   rank_metric = "...",
@@ -1673,7 +1671,7 @@ autoplot(
   ... = TRUE)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 autoplot(
   grid_results,
   rank_metric = "rmse",
@@ -1681,9 +1679,9 @@ autoplot(
   select_best = TRUE)
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
+Screening models often incorporate dimension reduction techniques like Principal Component Analysis (PCA) or Partial Least Squares (PLS) to reduce the number of features while retaining essential information.
 
 ### Exercise 7
 
@@ -1695,12 +1693,12 @@ Copy the previous code and add `geom_text()`. Within `aes()` of `geom_text()`, a
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r tuning-and-evaluatin-7-hint, eval = FALSE}
+```{r tuning-and-evaluatin-7-hint-1, eval = FALSE}
 ... +
   geom_text(aes(y = ..., label = ...))
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 autoplot(
   grid_results,
   rank_metric = "rmse",
@@ -1710,9 +1708,9 @@ autoplot(
   geom_text(aes(y = mean - 1/2, label = wflow_id))
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
+Model screening aims to strike a balance between reducing model complexity (variance reduction) and maintaining useful information (avoiding bias).
 
 ### Exercise 8
 
@@ -1724,12 +1722,12 @@ Copy the previous code and add the parametes `angle = 90` and `hjust = 1` outsid
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r tuning-and-evaluatin-8-hint, eval = FALSE}
+```{r tuning-and-evaluatin-8-hint-1, eval = FALSE}
 ... +
   geom_text(aes(y = mean - 1/2, lable = wflow_id), angle = ..., hjust = ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 autoplot(
   grid_results,
   rank_metric = "rmse",
@@ -1739,9 +1737,9 @@ autoplot(
   geom_text(aes(y = mean - 1/2, label = wflow_id), angle = 90, hjust = 1)
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
+Some screening techniques assess the stability of feature selection by comparing results across different subsets of data or resampling iterations.
 
 ### Exercise 9
 
@@ -1753,12 +1751,12 @@ Copy the previous code and add `lims()`. Add the parameter `y` and set it equal 
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r tuning-and-evaluatin-9-hint, eval = FALSE}
+```{r tuning-and-evaluatin-9-hint-1, eval = FALSE}
 ... +
   lims(y = c(..., ...))
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 autoplot(
   grid_results,
   rank_metric = "rmse",
@@ -1769,9 +1767,9 @@ autoplot(
   lims(y = c(3.5, 9.5))
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
+Univariate screening methods evaluate features one at a time, while multivariate methods consider interactions between features during selection.
 
 ### Exercise 10
 
@@ -1783,12 +1781,12 @@ Copy the previous code and add `theme()`. Add the parameter `legend.position` an
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r tuning-and-evaluatin-10-hint, eval = FALSE}
+```{r tuning-and-evaluatin-10-hint-1, eval = FALSE}
 ... +
   theme(legend.position = "...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 autoplot(
   grid_results,
   rank_metric = "rmse",
@@ -1800,7 +1798,7 @@ autoplot(
   theme(legend.position = "none")
 ```
 
-###
+### 
 
 In case you want to see the tuning parameter results for a specific model, the `id` argument can take a single value from the `wflow_id` column for which model to plot.
 
@@ -1812,22 +1810,22 @@ Type `autoplot()` and add the parametes `grid_results`, `id`, setting it equal t
 
 ```
 
-```{r tuning-and-evaluatin-11-hint, eval = FALSE}
+```{r tuning-and-evaluatin-11-hint-1, eval = FALSE}
 autoplot(grid_results, id = "...", metric = "...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 autoplot(grid_results, id = "Cubist", metric = "rmse")
 ```
 
-###
+### 
 
 There are also methods for `collect_predictions()` and `collect_metrics()`. The example model screening with our concrete mixture data fits a total of 12,600 models. Using 2 workers in parallel, the estimation process took 2 hours to complete.
 
 Great Job! You have learned to tune and evaluate the models that we have created in the previous section successfully.
 
 ## Efficiently Screening Models
-###
+### 
 
 With a workflow set, we can use the `workflow_map()` function for this racing approach. Recall that after we pipe in our workflow set, the argument we use is the function to apply to the workflows; in this case, we can use a value of `"tune_race_anova"`.
 
@@ -1839,7 +1837,7 @@ Type `control_race()`. Add the parameters `save_pred`, setting it equal to `TRUE
 
 ```
 
-```{r efficiently-screenin-1-hint, eval = FALSE}
+```{r efficiently-screenin-1-hint-1, eval = FALSE}
 race_ctrl <-
   control_race(
     save_pred = ...,
@@ -1848,7 +1846,7 @@ race_ctrl <-
   )
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 race_ctrl <-
    control_race(
       save_pred = TRUE,
@@ -1857,7 +1855,7 @@ race_ctrl <-
    )
 ```
 
-###
+### 
 
 `control_race()` control aspects of the grid search racing process.
 
@@ -1869,23 +1867,23 @@ Type `all_workflows` and pipe it to `workflow_map()`. Add the parameter `"tune_r
 
 ```
 
-```{r efficiently-screenin-2-hint, eval = FALSE}
+```{r efficiently-screenin-2-hint-1, eval = FALSE}
 all_workflows |>
   workflow_map(
     "..."
   )
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 all_workflows |>
   workflow_map(
     "tune_race_anova"
   )
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
+Apart from selecting features, model screening might also involve creating new features through transformations, interactions, and other engineering techniques.
 
 ### Exercise 3
 
@@ -1897,7 +1895,7 @@ Copy the previous code and add the parameters `seed = 1503`, `resamples = concre
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r efficiently-screenin-3-hint, eval = FALSE}
+```{r efficiently-screenin-3-hint-1, eval = FALSE}
 race_results <-
   ... |>
   workflow_map(
@@ -1909,7 +1907,7 @@ race_results <-
   )
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 race_results <-
   all_workflows |>
   workflow_map(
@@ -1921,7 +1919,7 @@ race_results <-
    )
 ```
 
-###
+### 
 
 The new object looks very similar, although the elements of the result column show a value of "race[+]", indicating a different type of object.
 
@@ -1933,7 +1931,7 @@ Type `autoplot()` and add the parameters `race_results`, `rank_metrics`, setting
 
 ```
 
-```{r efficiently-screenin-4-hint, eval = FALSE}
+```{r efficiently-screenin-4-hint-1, eval = FALSE}
 autoplot(
   race_results,
   rank_metric = "...",  
@@ -1942,7 +1940,7 @@ autoplot(
 ) 
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 autoplot(
   race_results,
   rank_metric = "rmse",  
@@ -1951,10 +1949,9 @@ autoplot(
 ) 
 ```
 
-###
+### 
 
-
-<!-- PK: Knowledge Drop-->
+Effective model screening often involves thorough data preprocessing steps, including handling missing values, encoding categorical variables, and scaling features.
 
 ### Exercise 5
 
@@ -1966,12 +1963,12 @@ Copy the previous code and add `geom_text()`. Within `aes()` of `geom_text()`, a
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r efficiently-screenin-5-hint, eval = FALSE}
+```{r efficiently-screenin-5-hint-1, eval = FALSE}
 ... +
   geom_text(aes(y = ..., label = ...))
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 autoplot(
   race_results,
   rank_metric = "rmse",  
@@ -1981,9 +1978,9 @@ autoplot(
   geom_text(aes(y = mean - 1/2, label = wflow_id))
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
+Visualization tools like heatmaps, correlation plots, and scatter plots can help identify patterns and relationships among features before and after screening.
 
 ### Exercise 6
 
@@ -1995,12 +1992,12 @@ Copy the previous code and add `lims()`. Add the parameter `y` and set it equal 
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r efficiently-screenin-6-hint, eval = FALSE}
+```{r efficiently-screenin-6-hint-1, eval = FALSE}
 ... +
   lims(y = c(..., ...))
 ```
 
-```{r tuning-and-evaluatin-4-hint-1, eval = FALSE}
+```{r efficiently-screenin-6-hint-2, eval = FALSE}
 
 ```
 
@@ -2015,9 +2012,9 @@ autoplot(
   lims(y = c(3.0, 9.5))
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
+Choose appropriate evaluation metrics that align with your problem and goals. For classification, accuracy, precision, recall, and F1-score can be informative; for regression, RMSE or MAE might be suitable.
 
 ### Exercise 7
 
@@ -2029,12 +2026,12 @@ Copy the previous code and add `theme()`. Add the parameter `legned.position` an
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r efficiently-screenin-7-hint, eval = FALSE}
+```{r efficiently-screenin-7-hint-1, eval = FALSE}
 ... +
   theme(... = "none")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 autoplot(
   race_results,
   rank_metric = "rmse",  
@@ -2046,7 +2043,7 @@ autoplot(
   theme(legend.position = "none")
 ```
 
-###
+### 
 
 Overall, the racing approach estimated a total of 1,050 models, 8.33% of the full set of 12,600 models in the full grid. As a result, the racing approach was 4.7-fold faster.
 
@@ -2062,17 +2059,17 @@ Type `rank_results()` and add the parameters `race_results` and `select_best`, s
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r efficiently-screenin-8-hint, eval = FALSE}
+```{r efficiently-screenin-8-hint-1, eval = FALSE}
 rank_results(..., select_best = ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rank_results(race_results, select_best = TRUE)
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drops -->
+Choose algorithms that are computationally efficient for screening, especially when dealing with large datasets. Linear models or tree-based methods are often faster than complex models like deep neural networks.
 
 ### Exercise 9
 
@@ -2084,20 +2081,20 @@ Copy the previous code and pipe it to `select()`. Add the parameters `wflow_id`,
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r efficiently-screenin-9-hint, eval = FALSE}
+```{r efficiently-screenin-9-hint-1, eval = FALSE}
 ... |>
   select(wflow_id, .metric, race = mean, config_race = .config)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rank_results(race_results, select_best = TRUE) |>
    select(wflow_id, .metric, race = mean, config_race = .config)
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
-
+If the dataset contains distinct subgroups, consider conducting separate screening processes for each subgroup to capture subgroup-specific features.
+ 
 ### Exercise 10
 
 Copy the previous code and pipe it to `inner_join()`. Add the parameter `rank_results()`, add the parameters `grid_results` and `select_best = TRUE`.
@@ -2108,14 +2105,14 @@ Copy the previous code and pipe it to `inner_join()`. Add the parameter `rank_re
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r efficiently-screenin-10-hint, eval = FALSE}
+```{r efficiently-screenin-10-hint-1, eval = FALSE}
 ... |>
   inner_join(
     rank_results(..., select_best = ...)
   )
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rank_results(race_results, select_best = TRUE) |>
    select(wflow_id, .metric, race = mean, config_race = .config) |>
   inner_join(
@@ -2123,9 +2120,9 @@ rank_results(race_results, select_best = TRUE) |>
   )
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drops -->
+Create automated pipelines that integrate data preprocessing, feature selection, and model training to streamline the screening process.
 
 ### Exercise 11
 
@@ -2137,7 +2134,7 @@ Copy the previous code and pipe `race_results()` inside `inner_join()` to `selec
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r efficiently-screenin-11-hint, eval = FALSE}
+```{r efficiently-screenin-11-hint-1, eval = FALSE}
 ... |>
   inner_join(
     ... |>
@@ -2145,7 +2142,7 @@ Copy the previous code and pipe `race_results()` inside `inner_join()` to `selec
   )
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rank_results(race_results, select_best = TRUE) |>
    select(wflow_id, .metric, race = mean, config_race = .config) |>
   inner_join(
@@ -2154,10 +2151,10 @@ rank_results(race_results, select_best = TRUE) |>
   )
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop-->
-
+Before screening, handle outliers using methods like winsorization or transformation to ensure they don't disproportionately influence feature selection.
+ 
 ### Exercise 12
 
 Copy the previous code and add the parameter`by` inside `inner_join()`, setting it equal to a vector consistent `"wflow_id"` and `".metric"`.
@@ -2168,7 +2165,7 @@ Copy the previous code and add the parameter`by` inside `inner_join()`, setting 
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r efficiently-screenin-12-hint, eval = FALSE}
+```{r efficiently-screenin-12-hint-1, eval = FALSE}
 ... |>
   inner_join(
     ...,
@@ -2176,7 +2173,7 @@ Copy the previous code and add the parameter`by` inside `inner_join()`, setting 
   )
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 rank_results(race_results, select_best = TRUE) |>
    select(wflow_id, .metric, race = mean, config_race = .config) |>
   inner_join(
@@ -2186,9 +2183,9 @@ rank_results(race_results, select_best = TRUE) |>
   )
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
+When working with imbalanced datasets, employ techniques like oversampling, undersampling, or Synthetic Minority Over-sampling Technique (SMOTE) to balance class distributions during screening.
 
 ### Exercise 13
 
@@ -2200,13 +2197,13 @@ Copy the previous code and, outside of `inner_join()`, pipe it to `filter()`. Ad
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r efficiently-screenin-13-hint, eval = FALSE}
+```{r efficiently-screenin-13-hint-1, eval = FALSE}
 matched_results <-
   ... |>
   filter(.metric == "...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 matched_results <-
   rank_results(race_results, select_best = TRUE) |>
   select(wflow_id, .metric, race = mean, config_race = .config) |>
@@ -2219,9 +2216,9 @@ matched_results <-
   filter(.metric == "rmse")
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop-->
+When training complex models, like neural networks, implement early stopping criteria to halt the training process if the model's performance stops improving, saving time and resources.
 
 ### Exercise 14
 
@@ -2231,19 +2228,19 @@ Type `matched_results` and pipe it to `ggplot()`. Within `aes()` of `ggplot()`, 
 
 ```
 
-```{r efficiently-screenin-14-hint, eval = FALSE}
+```{r efficiently-screenin-14-hint-1, eval = FALSE}
 matched_results |>
   ggplot(aes(x = ..., y = ...))
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 matched_results |>
   ggplot(aes(x = complete, y = race))
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop-->
+Utilize dimensionality reduction techniques like Principal Component Analysis (PCA) or t-SNE to transform high-dimensional data into a lower-dimensional space while preserving essential information.
 
 ### Exercise 15
 
@@ -2255,20 +2252,20 @@ Copy the previous code and add it to `geom_abline()`. Add the parameter `lty`, s
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r efficiently-screenin-15-hint, eval = FALSE}
+```{r efficiently-screenin-15-hint-1, eval = FALSE}
 ... |>
   geom_abline(lty = ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 matched_results |>
   ggplot(aes(x = complete, y = race)) +
     geom_abline(lty = 3)
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
+Implement model agnostic methods like Recursive Feature Elimination (RFE) that can be used with various algorithms without requiring modifications.
 
 ### Exercise 16
 
@@ -2280,13 +2277,13 @@ Copy the previous code and add `geom_point()`. Then, add `geom_text_repel()`. Wi
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r efficiently-screenin-16-hint, eval = FALSE}
+```{r efficiently-screenin-16-hint-1, eval = FALSE}
 ... +
   ...() +
   geom_text_repel(aes(label = ...))
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 matched_results |>
   ggplot(aes(x = complete, y = race)) +
     geom_abline(lty = 3) +
@@ -2294,9 +2291,9 @@ matched_results |>
     geom_text_repel(aes(label = model))
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
+Consider creating meta-features that aggregate or transform multiple original features before screening. These can capture higher-level patterns or relationships.
 
 ### Exercise 17
 
@@ -2308,13 +2305,13 @@ Copy the previous code and add `coord_obs_pred()`. Then, add `labs()`. Add the p
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r efficiently-screenin-17-hint, eval = FALSE}
+```{r efficiently-screenin-17-hint-1, eval = FALSE}
 ... +
   coord_obs_pred() +
   labs(x = "...", y = "...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 matched_results |>
   ggplot(aes(x = complete, y = race)) +
     geom_abline(lty = 3) +
@@ -2324,12 +2321,12 @@ matched_results |>
     labs(x = "Complete Grid RMSE", y = "Racing RMSE")
 ```
 
-###
+### 
 
 Great Job! You now know how to efficiently screen models by using methods such as `control_race()`, `workflow_map()`, `rank_results()`, etc.
 
 ## Finalizing a Model
-###
+### 
 
 Similar to what we have shown in previous chapters, the process of choosing the final model and fitting it on the training set is straightforward. The first step is to pick a workflow to finalize. Since the boosted tree model worked well, we’ll extract that from the set, update the parameters with the numerically best settings, and fit to the training set.
 
@@ -2341,19 +2338,19 @@ Type in `race_results` and pipe it to `extract_workflow_set_result()`. Add the p
 
 ```
 
-```{r finalizing-a-model-1-hint, eval = FALSE}
+```{r finalizing-a-model-1-hint-1, eval = FALSE}
 race_results |>
   extract_workflow_set_result("...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 race_results |>
   extract_workflow_set_result("boosting")
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
+Perform sensitivity analysis by re-evaluating model performance with slight variations in the selected features to ensure their stability.
 
 ### Exercise 2
 
@@ -2365,22 +2362,22 @@ Copy the previous code and pipe it to `select_best()`. Add the parameter `metric
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r finalizing-a-model-2-hint, eval = FALSE}
+```{r finalizing-a-model-2-hint-1, eval = FALSE}
 best_results <-
   ... |>
   select_best(metric = "rmse")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 best_results <-
   race_results |>
   extract_workflow_set_result("boosting") |>
   select_best(metric = "rmse")
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
+Experiment with multiple screening algorithms and compare their results to choose the one that aligns best with your data and objectives.
 
 ### Exercise 3
 
@@ -2390,22 +2387,22 @@ Type `race_results` and pipe it to `extract_workflow("boosting")`. Then pipe it 
 
 ```
 
-```{r finalizing-a-model-3-hint, eval = FALSE}
+```{r finalizing-a-model-3-hint-1, eval = FALSE}
 race_results |>
   extract_workflow("...") |>
   finalize_workflow(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 race_results |>
   extract_workflow("boosting") |>
   finalize_workflow(best_results)
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
-
+Choose algorithms that are specifically designed for speed and efficiency in high-dimensional data, such as Fast Correlation-Based Filter (FCBF).
+ 
 ### Exercise 4
 
 Copy the previous code and pipe it to `last_fit()`. Add the parameter `split`, setting it equal to `concrete_split`. Then, set the entire expression to `boosting_test_results` using `<-`.
@@ -2416,13 +2413,13 @@ Copy the previous code and pipe it to `last_fit()`. Add the parameter `split`, s
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r finalizing-a-model-4-hint, eval = FALSE}
+```{r finalizing-a-model-4-hint-1, eval = FALSE}
 boosting_test_results <-
   ... |>
   last_fit(split = ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 boosting_test_results <-
   race_results |>
   extract_workflow("boosting") |>
@@ -2430,7 +2427,7 @@ boosting_test_results <-
   last_fit(split = concrete_split)
 ```
 
-###
+### 
 
 We can see the test set metrics results, and visualize the predictions in the next exercise.
 
@@ -2442,17 +2439,17 @@ Type `collect_metrics()` and add the parameter `boosting_test_results`.
 
 ```
 
-```{r finalizing-a-model-5-hint, eval = FALSE}
+```{r finalizing-a-model-5-hint-1, eval = FALSE}
 collect_metrics(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 collect_metrics(boosting_test_results)
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
+In scenarios with continuous data influx, implement online feature screening techniques to adaptively select features over time.
 
 ### Exercise 6
 
@@ -2462,21 +2459,21 @@ Pipe `boosting_test_results` to `collect_predictions()`. Then, pipe it to `ggplo
 
 ```
 
-```{r finalizing-a-model-6-hint, eval = FALSE}
+```{r finalizing-a-model-6-hint-1, eval = FALSE}
 boosting_test_results |>
   ...() |>
   ggplot(aes(x = ..., y = .pred))
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 boosting_test_results |>
   collect_predictions() |>
   ggplot(aes(x = compressive_strength, y = .pred))
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
+When dealing with complex models like deep learning, use regularization techniques like dropout or L1 regularization to implicitly perform feature screening.
 
 ### Exercise 7
 
@@ -2488,21 +2485,21 @@ Copy the previous code and add `geom_abline()`, setting the parameter `color` eq
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r finalizing-a-model-7-hint, eval = FALSE}
+```{r finalizing-a-model-7-hint-1, eval = FALSE}
 ... +
   geom_abline(color = "...", lty = ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 boosting_test_results |>
   collect_predictions() |>
   ggplot(aes(x = compressive_strength, y = .pred)) +
     geom_abline(color = "gray50", lty = 2)
 ```
 
-###
+### 
 
-<!-- PK: Knowledge Drop -->
+Utilize Automated Machine Learning (AutoML) tools that incorporate efficient screening as part of their feature engineering process.
 
 ### Exercise 8
 
@@ -2514,14 +2511,14 @@ Copy the previous code and add `geom_point()`. Add the parameter `alpha = 0.5`. 
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r finalizing-a-model-8-hint, eval = FALSE}
+```{r finalizing-a-model-8-hint-1, eval = FALSE}
 ... +
   geom_point(alpha = ...) +
   coord_orbs_pred() +
   labs(x = "...", y = "...")
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 boosting_test_results |>
   collect_predictions() |>
   ggplot(aes(x = compressive_strength, y = .pred)) +
@@ -2531,7 +2528,7 @@ boosting_test_results |>
     labs(x = "observed", y = "predicted")
 ```
 
-###
+### 
 
 Great Job! You have now learned how to finalize a model and finalize the model that we have been working on this tutorial.
 

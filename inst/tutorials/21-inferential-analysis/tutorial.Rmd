@@ -1,0 +1,1237 @@
+---
+title: Inferential Analysis
+author: Pratham Kancherla
+tutorial:
+  id: inferential-analysis
+output:
+  learnr::tutorial:
+    progressive: yes
+    allow_skip: yes
+runtime: shiny_prerendered
+description: 'Tutorial for Chapter 21: Inferential Analysis'
+---
+
+```{r setup, include = FALSE}
+library(learnr)
+library(tutorial.helpers)
+library(finetune)
+library(baguette)
+library(tidyverse)
+library(tidymodels)
+library(rlang)
+library(embed)
+library(tune)
+library(ggrepel)
+library(ggforce)
+library(rstanarm)
+library(rules)
+library(tidyposterior)
+library(lme4)
+library(multilevelmod)
+library(nlme)
+library(probably)
+library(usemodels)
+library(workflowsets)
+
+knitr::opts_chunk$set(echo = FALSE)
+options(tutorial.exercise.timelimit = 60, 
+        tutorial.storage = "local") 
+
+observed <-
+  bioChemists |>
+  specfiy(art ~ fem) |>
+  calculate(stat = "diff in means", order = c("Men", "Women"))
+
+bootstrapped <- 
+  bioChemists |>
+  specify(art ~ fem)  |>
+  generate(reps = 2000, type = "bootstrap") |>
+  calculate(stat = "diff in means", order = c("Men", "Women"))
+
+percentile_ci <- get_ci(bootstrapped)
+
+permuted <-
+  bioChemists |>
+  specify(art ~ fem) |>
+  hypothesise(null = "independence") |>
+  generate(reps = 2000, type = "permute") |>
+  calculate(stat = "diff in means", order = c("Men", "Women"))
+
+log_lin_spec <- poisson_reg()
+
+log_lin_fit <- 
+  log_lin_spec |>
+  fit(art ~ ., data = bioChemists)
+
+glm_boot <- 
+  reg_intervals(art ~ ., data = bioChemists, model_fn = "glm", family = poisson)
+
+log_lin_reduced <-
+  log_lin_spec |>
+  fit(art ~ ment + kid5 + fem + mar, data = bioChemists)
+
+zero_inflated_spec <- poisson_reg() |> set_engine("zeroinfl")
+
+zero_inflated_fit <- 
+  zero_inflated_spec |> 
+  fit(art ~ fem + mar + kid5 + ment | fem + mar + kid5 + phd + ment,
+      data = bioChemists)
+
+bootstrap_models <-
+  bootstraps(bioChemists, times = 2000, apparent = TRUE) |>
+  mutate(
+    glm = map(splits, ~ fit(log_lin_spec, glm_form, data = analysis(.x))),
+    zip = map(splits, ~ fit(zero_inflated_spec, zip_form, data = analysis(.x)))
+  )
+
+bootstrap_models <-
+  bootstrap_models |>
+  mutate(
+    glm_aic = map_dbl(glm, ~ extract_fit_engine(.x) |> AIC()),
+    zip_aic = map_dbl(zip, ~ extract_fit_engine(.x) |> AIC())
+  )
+
+bootstrap_models <-
+  bootstrap_models |>
+  mutate(zero_coefs  = map(zip, ~ tidy(.x, type = "zero")))
+
+```
+
+```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
+```
+
+```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
+```
+
+## Introduction
+### 
+
+This tutorial covers [Chapter 21: Inferential Analysis](https://www.tmwr.org/inferential) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. In this tutorial, we describe how to use tidymodels for fitting and assessing inferential models. In some cases, the tidymodels framework can help users work with the objects produced by their models. In others, it can help assess the quality of a given model.
+
+## Inference for Count Data
+### 
+
+To understand how tidymodels packages can be used for inferential modeling, let’s focus on an example with count data. We’ll use biochemistry publication data from the **pscl** package. These data consist of information on 915 Ph.D. biochemistry graduates and tries to explain factors that impact their academic productivity (measured via number or count of articles published within three years). The predictors include the gender of the graduate, their marital status, the number of children of the graduate that are at least five years old, the prestige of their department, and the number of articles produced by their mentor in the same time period. The data reflect biochemistry doctorates who finished their education between 1956 and 1963. The data are a somewhat biased sample of all of the biochemistry doctorates given during this period (based on completeness of information).
+
+### Exercise 1
+
+Load the library **tidymodels** using `library()`.
+
+```{r inference-for-count--1, exercise = TRUE}
+
+```
+
+```{r inference-for-count--1-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(tidymodels)
+```
+
+### 
+
+The common assumption is that the residual values are independent and follow a Gaussian distribution with a constant variance. The methods for determining if the model’s assumptions have been met are not as simple as looking at holdout predictions, although that can be very useful as well.
+
+### Exercise 2
+
+Load the data `bioChemists` from the **"pscl"** package. Type `data()` and add the parameters `"bioChemists"` and `package`, setting it equal to `"pscl"`.
+
+```{r inference-for-count--2, exercise = TRUE}
+
+```
+
+```{r inference-for-count--2-hint-1, eval = FALSE}
+data("...", package = "...")
+```
+
+```{r include = FALSE}
+data("bioChemists", package = "pscl")
+```
+
+### 
+
+The **pscl** (Political Science Computational Laboratory) package is an R package specifically designed for political science research and other social science applications. It provides a range of tools and functions for analyzing data commonly encountered in political science and related fields. 
+
+### Exercise 3
+
+Pipe `bioChmeists` to `ggplot()`. Within `aes()` of `ggplot()`, set `x` equal to `art`.
+
+```{r inference-for-count--3, exercise = TRUE}
+
+```
+
+```{r inference-for-count--3-hint-1, eval = FALSE}
+bioChemists |>
+  ggplot(aes(x = ...))
+```
+
+```{r include = FALSE}
+bioChemists |>
+  ggplot(aes(x = art))
+```
+
+### 
+
+Inferential models are usually created not only for their predictions, but also to make inferences or judgments about some component of the model, such as a coefficient value or other parameter. These results are often used to answer some (hopefully) pre-defined questions or hypotheses.
+
+### Exercise 4
+
+Copy the previous code and add `geom_histogram()`. Add the parameters `binwidth`, setting that equal to `1`, and `color`, setting that equal to `"white"`.
+
+```{r inference-for-count--4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r inference-for-count--4-hint-1, eval = FALSE}
+... +
+  geom_histogram(binwidth = ..., color = "...")
+```
+
+```{r include = FALSE}
+bioChemists |>
+  ggplot(aes(x = art)) +
+    geom_histogram(bindwidth = 1, color = "white")
+```
+
+### 
+
+In predictive models, predictions on hold-out data are used to validate or characterize the quality of the model. Inferential methods focus on validating the probabilistic or structural assumptions that are made prior to fitting the model.
+
+### Exercise 5
+
+Copy the previous code and add `labs()`. Add the parameter `x`, setting it equal to the title `"Number of articles within 3y of graduation"`.
+
+```{r inference-for-count--5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r inference-for-count--5-hint-1, eval = FALSE}
+... +
+  labs(x = "...")
+```
+
+```{r include = FALSE}
+bioChemists |>
+  ggplot(aes(x = art)) +
+    geom_histogram(bindwidth = 1, color = "white") +
+    labs(x = "Number of articles within 3y of graduation")
+```
+
+### 
+
+Since the outcome data are counts, the most common distribution assumption to make is that the outcome has a Poisson distribution. This tutorial will use these data for several types of analyses.
+
+## Comparision with Two-Sample Tests
+### 
+
+We can start with hypothesis testing. The original author’s goal with this data set on biochemistry publication data was to determine if there is a difference in publications between men and women [Long 1992](https://www.tmwr.org/inferential#ref-Long1992). 
+
+### Exercise 1
+
+Pipe `bioChemists` to `group_by()`. Add the parameter `fem`. Then, pipe the code to `summarize()`. Add the parameters `counts`, setting it equal to `sum(art)`, and `n`, setting it equal to `length(art)`.
+
+```{r comparision-with-two-1, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r comparision-with-two-1-hint-1, eval = FALSE}
+bioChemists |>
+  group_by(...) |>
+  summarize(counts = sum(...), n = length(...))
+```
+
+```{r include = FALSE}
+bioChemists |>
+  group_by(fem,) |>
+  summarize(counts = sum(art), n = length(art))
+```
+
+### 
+
+There were many more publications by men, although there were also more men in the data. The simplest approach to analyzing these data would be to do a two-sample comparison using the `poisson.test()` function in the **stats** package.
+
+### Exercise 2
+
+Let's create basic application of a poisson test. Type `poisson.test()`. Add the vector parameter `c(930, 619)` and add `T`, setting it equal to 3.
+
+```{r comparision-with-two-2, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r comparision-with-two-2-hint-1, eval = FALSE}
+poisson.test(c(..., 619), T = ...))
+```
+
+```{r include = FALSE}
+poisson.test(c(930, 619), T = 3)
+```
+
+### 
+
+The function reports a p-value as well as a confidence interval for the ratio of the publication rates. The results indicate that the observed difference is greater than the experiential noise and favors $H_a$. 
+
+### Exercise 3
+
+Copy the previous code. Delete the parameter `T = 3` and pipe the entire expression to `tidy()`.
+
+```{r comparision-with-two-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r comparision-with-two-3-hint-1, eval = FALSE}
+poisson.test(c(930, 619)) |>
+  ...()
+```
+
+```{r include = FALSE}
+poisson.test(c(930, 619)) |>
+  tidy()
+```
+
+### 
+
+While the Poisson distribution is reasonable, we might also want to assess using fewer distributional assumptions. Two methods that might be helpful are the bootstrap and permutation tests [Davison and Hinkley 1997](https://www.tmwr.org/inferential#ref-davison1997bootstrap).
+
+### Exercise 4
+
+Load the library **infer** using `library()`.
+
+```{r comparision-with-two-4, exercise = TRUE}
+
+```
+
+```{r comparision-with-two-4-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(infer)
+```
+
+### 
+
+The **infer** package is part of the tidyverse and is designed to help with statistical inference, hypothesis testing, and confidence interval estimation in R.
+
+### Exercise 5
+
+Pipe `bioChemists` to `specify()`. Add the parameter `art ~ fem`.
+
+```{r comparision-with-two-5, exercise = TRUE}
+
+```
+
+```{r comparision-with-two-5-hint-1, eval = FALSE}
+bioChemists |>
+  specfiy(art ~ ...)
+```
+
+```{r include = FALSE}
+bioChemists |>
+  specfiy(art ~ fem)
+```
+
+### 
+
+The **infer** package, part of the tidymodels framework, is a powerful and intuitive tool for hypothesis testing [(Ismay and Kim 2021)](https://www.tmwr.org/inferential#ref-ModernDive). Its syntax is concise and designed for nonstatisticians.
+
+### Exercise 6
+
+Copy the previous code and pipe it to `calculate()`. Add the parameters `stat`, setting it equal to `"diff in means"`, and `order`, setting it equal to a vector (`c()`) consistent of `"Men"` and `"Women"`.
+
+```{r comparision-with-two-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r comparision-with-two-6-hint-1, eval = FALSE}
+... |>
+  calculate(stat = "...", order = c("...", "..."))
+```
+
+```{r include = FALSE}
+bioChemists |>
+  specfiy(art ~ fem) |>
+  calculate(stat = "diff in means", order = c("Men", "Women"))
+```
+
+### 
+
+Recall that the maximum likelihood estimator for the Poisson mean is the sample mean. The hypotheses tested here are the same as the previous test (but are conducted using a different testing procedure).
+ 
+### Exercise 7
+
+Finally, copy the previous code and set it to `observed` using `<-`. 
+
+```{r comparision-with-two-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r comparision-with-two-7-hint-1, eval = FALSE}
+observed <- 
+  ...
+```
+
+```{r include = FALSE}
+observed <-
+  bioChemists |>
+  specfiy(art ~ fem) |>
+  calculate(stat = "diff in means", order = c("Men", "Women"))
+```
+
+### 
+
+The `specify()` function is part of the **infer** package in R, which is designed for statistical inference and hypothesis testing. . It specifies that you're interested in comparing the `value` variable based on the `group` variable.
+
+### Exercise 8
+
+Pipe `bioChemists` to `specify(art ~ fem)`. Then, pipe the code to `generate()`. Add the parameters `reps`, setting it equal to `2000`, and `type`, setting that equal to `"bootstrap"`.
+
+```{r comparision-with-two-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r comparision-with-two-8-hint-1, eval = FALSE}
+bioChemists |>
+  specify(...) |>
+  generate(reps = ..., type = "...")
+```
+
+```{r include = FALSE}
+
+```
+
+### 
+
+The `calculate()` function is particularly useful when you want to compute statistics on resampled data to estimate sampling variability and construct confidence intervals. It works in combination with other functions in the **infer** package to create a comprehensive framework for statistical analysis and hypothesis testing.
+
+### Exercise 9
+
+Copy the previous code and pipe it to `calculate()`. Add thep parameter `stat`, setting it equal to `"diff in mean"`, and `order`, setting it equal to `c("Men", "Women")`. Then, set the entire expression to `bootstrapped` and run it on the next line.
+
+```{r comparision-with-two-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r comparision-with-two-9-hint-1, eval = FALSE}
+... |>
+  calculate(stat = "...", order = c("...", "..."))
+```
+
+```{r include = FALSE}
+bootstrapped <- 
+  bioChemists |>
+  specify(art ~ fem)  |>
+  generate(reps = 2000, type = "bootstrap") |>
+  calculate(stat = "diff in means", order = c("Men", "Women"))
+
+bootstrapped
+```
+
+### 
+
+The **tidymodels** framework tends to promote confidence intervals over p-values as a method for quantifying the evidence for an alternative hypothesis.
+
+### Exercise 10
+
+Type `get_ci()` and add the parameter `bootstrapped`. Set the expression to `percentile_ci` and run it on the next line.
+
+```{r comparision-with-two-10, exercise = TRUE}
+
+```
+
+```{r comparision-with-two-10-hint-1, eval = FALSE}
+... <- get_ci(...)
+```
+
+```{r include = FALSE}
+percentile_ci <- get_ci(bootstrapped)
+
+percentile_ci
+```
+
+### 
+
+`get_ci()` function takes a matrix containing the bootstrapped coefficients from a parametric ADRF estimator and returns upper and lower 95 percent confidence lines.
+
+### Exercise 11
+
+Type `visualize()` and add the parameter `bootstrapped`. Then, add `shade_confidence_interval()` and add the parameter `endpoints`, setting it equal to `percentile_ci`.
+
+```{r comparision-with-two-11, exercise = TRUE}
+
+```
+
+```{r comparision-with-two-11-hint-1, eval = FALSE}
+visualize(...) +
+  shade_confidence_interval(endpoints = ...)
+```
+
+```{r include = FALSE}
+visualize(bootstrapped) +
+  shade_confidence_interval(endpoints = percentile_ci)
+```
+
+### 
+
+The `visualize()` function is used to create visualizations of the results obtained from an analysis performed using the **infer** package. It's commonly used to visualize the sampling distribution of a statistic, confidence intervals, and other aspects of the inferential process.
+
+### Exercise 12
+
+Copy the code from exercise 9. After `specfiy()`, pipe it to `hypothesize()`, adding the parameter `null = "independence"`. Then, change the `type` parameter in `generate` to `permute`. Finally, set the expression to `permuted` using `<-` and run it on the next line.
+
+```{r comparision-with-two-12, exercise = TRUE}
+
+```
+
+```{r comparision-with-two-12-hint-1, eval = FALSE}
+permuted <-
+  ... |>
+  hypothesize(null = "...") |>
+  ...
+```
+
+```{r include = FALSE}
+permuted <-
+  bioChemists |>
+  specify(art ~ fem) |>
+  hypothesise(null = "independence") |>
+  generate(reps = 2000, type = "permute") |>
+  calculate(stat = "diff in means", order = c("Men", "Women"))
+
+permuted
+```
+
+### 
+
+`shade_confidence_interval()` plots a confidence interval region on top of `visualize()` output. The output is a **ggplot2** layer that can be added with `+`. The function has a shorter alias, `shade_ci()`.
+
+### Exercise 13
+
+Type `visualize()` and add the parameter `permuted`. Then, add `shade_p_value()`, adding the parameters `obs_stat`, setting it equal to `observed`, and `direction`, setting it equal to `"two-sided"`.
+
+```{r comparision-with-two-13, exercise = TRUE}
+
+```
+
+```{r comparision-with-two-13-hint-1, eval = FALSE}
+visualize(...) +
+  shade_p_value(obs_stat = ..., direction = "...")
+```
+
+```{r include = FALSE}
+visualize(permuted) +
+    shade_p_value(obs_stat = observed, direction = "two-sided")
+```
+
+### 
+
+The vertical line representing the null hypothesis in the graph is far away from the permutation distribution. This means, if in fact the null hypothesis were true, the likelihood is exceedingly small of observing data at least as extreme as what is at hand.
+
+### Exercise 14
+
+Pipe `permuted` to `get_p_value()`. Add the parameter `obs_stat`, setting it equal to `observed`, and `direction`, setting it equal to `"two-sided"`.
+
+```{r comparision-with-two-14, exercise = TRUE}
+
+```
+
+```{r comparision-with-two-14-hint-1, eval = FALSE}
+permuted |>
+  get_p_value(obs_stat = ..., direction = "...")
+```
+
+```{r include = FALSE}
+permuted |>
+  get_p_value(obs_stat = observed, direction = "two-sided")
+```
+
+### 
+
+The two-sample tests shown in this section are probably suboptimal because they do not account for other factors that might explain the observed relationship between publication rate and sex. Let’s move to a more complex model that can consider additional covariates.
+
+## Log-Linear Models
+### 
+
+The focus of the rest of this chapter will be on a generalized linear model [(Dobson 1999)](https://www.tmwr.org/inferential#ref-Dobson99) where we assume the counts follow a Poisson distribution. For this model, the covariates/predictors enter the model in a log-linear fashion.
+
+### Exercise 1
+
+Load the library **poissonreg** using `library()`.
+
+```{r loglinear-models-1, exercise = TRUE}
+
+```
+
+```{r loglinear-models-1-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+#library(poissonreg)
+```
+
+### 
+
+poissonreg : bindings for Poisson regression models for use with the 'parsnip' package. Models include simple generalized linear models, Bayesian models, and zero-inflated Poisson models.
+
+### Exercise 2
+
+Type in `poissonreg()` and set the expression to `log_lin_spec` using `<-`.
+
+```{r loglinear-models-2, exercise = TRUE}
+
+```
+
+```{r loglinear-models-2-hint-1, eval = FALSE}
+log_lin_spec <- ...()
+```
+
+```{r include = FALSE}
+log_lin_spec <- poisson_reg()
+```
+
+### 
+
+Let’s fit a simple model that contains all of the predictor columns. The **poissonreg** package, a **parsnip** extension package in **tidymodels**, will fit this model specification
+
+### Exercise 3
+
+Pipe `log_lin_spec` to `fit()`. Add the parameters `art ~ .` and `data`, setting that equal to `bioChemists`. Set this entire expression to `log_lin_fit` and run it on the next line.
+
+```{r loglinear-models-3, exercise = TRUE}
+
+```
+
+```{r loglinear-models-3-hint-1, eval = FALSE}
+log_lin_spec |>
+  fit(..., data = ...)
+```
+
+```{r include = FALSE}
+log_lin_fit <- 
+  log_lin_spec |>
+  fit(art ~ ., data = bioChemists)
+
+log_lin_fit
+```
+
+### 
+
+The `tidy()` method succinctly summarizes the coefficients for the model (along with 90% confidence intervals).
+
+### Exercise 4
+
+Type `tidy()` and add the parameters `log_lin_fit`, `conf.fit`, setting it equal to `TRUE`, and `conf.level`, setting it equal to `0.90`.
+
+```{r loglinear-models-4, exercise = TRUE}
+
+```
+
+```{r loglinear-models-4-hint-1, eval = FALSE}
+tidy(..., conf.fit = ..., conf.level = ...)
+```
+
+```{r include = FALSE}
+tidy(log_lin_fit, conf.int = TRUE, conf.level = 0.90)
+```
+
+### 
+
+Looking at these results, `phd` (the prestige of their department) may not have any relationship with the outcome.
+
+### Exercise 5
+
+Type in `reg_intervals()`. Add the parameters `art ~ .`, `data`, setting it equal to `bioChemists`, `model_fn`, setting it equal to `"glm"`, and `family`, setting it equal to `poisson`. Set this entire expression to `glm_boost` using `<-` and run it on the next line.
+
+```{r loglinear-models-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r loglinear-models-5-hint-1, eval = FALSE}
+glm_boot <- 
+  reg_intervals(..., data = ..., model_fn = "...", family = ...)
+```
+
+```{r include = FALSE}
+glm_boot <- 
+  reg_intervals(art ~ ., data = bioChemists, model_fn = "glm", family = poisson)
+
+glm_boot
+```
+
+### 
+
+`reg_intervals()`: A convenience function for confidence intervals with linear-ish parametric models.
+
+### Exercise 6
+
+Pipe `log_lin_spec` to `fit()`. Add the parameters `art ~ ment + kid5 + fem + mar` and `data`, setting it equal to `bioChemists`. Set this entire expression to `log_lin_reduced` using `<-`.
+
+```{r loglinear-models-6, exercise = TRUE}
+
+```
+
+```{r loglinear-models-6-hint-1, eval = FALSE}
+log_lin_reduced <-
+  log_lin_spec |>
+  fit(art ~ ..., data = ...)
+```
+
+```{r include = FALSE}
+log_lin_reduced <-
+  log_lin_spec |>
+  fit(art ~ ment + kid5 + fem + mar, data = bioChemists)
+```
+
+### 
+
+This hypothesis was previously tested when we showed the tidied results for `log_lin_fit`. That particular approach used results from a single model fit via a Wald statistic (i.e., the parameter divided by its standard error). For that approach, the p-value was 0.63.
+
+### Exercise 7
+
+Type `anova()`. Add the parameters `extract_fit_engine()`, adding the parameter `log_lin_reduced`, `extract_fit_engine()`, add the parameter `log_lin_fit`, and `test`, setting it equal to `"LRT"`.
+
+```{r loglinear-models-7, exercise = TRUE}
+
+```
+
+```{r loglinear-models-7-hint-1, eval = FALSE}
+anova(
+  extract_fit_engine(...),
+  extract_fit_engine(...),
+  test = "..."
+)
+```
+
+```{r include = FALSE}
+anova(
+  extract_fit_engine(log_lin_reduced),
+  extract_fit_engine(log_lin_fit),
+  test = "LRT"
+)
+```
+
+### 
+
+The most impactful tool that tidymodels offers for inferential models is the `tidy()` functions in the **broom** package. As previously seen, this function makes a well-formed, predictably named tibble from the object.
+
+### Exercise 8
+
+Copy the previous code and pipe it to `tidy()`.
+
+```{r loglinear-models-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r loglinear-models-8-hint-1, eval = FALSE}
+... |>
+  ...()
+```
+
+```{r include = FALSE}
+anova(
+  extract_fit_engine(log_lin_reduced),
+  extract_fit_engine(log_lin_fit),
+  test = "LRT"
+) |>
+  tidy()
+```
+
+### 
+
+The results are the same and, based on these and the confidence interval for this parameter, we’ll exclude `phd` from further analyses since it does not appear to be associated with the outcome.
+
+## A More Complex Model
+### 
+
+We can move into even more complex models within our tidymodels approach. For count data, there are occasions where the number of zero counts is larger than what a simple Poisson distribution would prescribe. A more complex model appropriate for this situation is the zero-inflated Poisson (ZIP) model; see Mullahy (1986), Lambert (1992), and Zeileis, Kleiber, and Jackman (2008). Here, there are two sets of covariates: one for the count data and others that affect the probability (denoted as π) of zeros.
+
+### Exercise 1
+
+Type `poisson_reg()` and pipe it to `set_engine()`. Add the parameter `"zeroinfl"`. Then, set the entire expression to `zero_inflated_spec` using `<-`.
+
+```{r a-more-complex-model-1, exercise = TRUE}
+
+```
+
+```{r a-more-complex-model-1-hint-1, eval = FALSE}
+zero_inflated_spec <- poisson_reg() |> set_engine("...")
+```
+
+```{r include = FALSE}
+zero_inflated_spec <- poisson_reg() |> set_engine("zeroinfl")
+```
+
+### 
+
+**zeroinfl** is part of the **pscl package** in R. It's used to fit zero-inflated models, which are a type of statistical model used to analyze data with an excess of zeros compared to what would be expected in a standard distribution.
+
+### Exercise 2
+
+Pipe `zero_inflated_spec` to `fit()`. Add the parameter `art ~ fem + mar + kid5 + ment | fem + mar + kid5 + phd + ment` and `data`, setting it equal to `bioChemists`. Set the entire expression to `zero_inflated_fit` using `<-` and run it on the next line.
+
+```{r a-more-complex-model-2, exercise = TRUE}
+
+```
+
+```{r a-more-complex-model-2-hint-1, eval = FALSE}
+zero_inflated_fit <-
+  zero_inflated_spec |>
+  fit(art ~ ... | ..., data = ...)
+```
+
+```{r include = FALSE}
+zero_inflated_fit <- 
+  zero_inflated_spec |> 
+  fit(art ~ fem + mar + kid5 + ment | fem + mar + kid5 + phd + ment,
+      data = bioChemists)
+
+zero_inflated_fit
+```
+
+### 
+
+Since the coefficients for this model are also estimated using maximum likelihood, let’s try to use another likelihood ratio test to understand if the new model terms are helpful. We will *simultaneously* test that.
+
+### Exercise 3
+
+Type in `anova()`. Add the parameter `extract_fit_engine(zero_inflated_fit)`,`extract_fit_engine(log_lin_reduced)`, and `test = "LRT"`. Then, pipe it to `tidy()`. An error might occur.
+
+```{r a-more-complex-model-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-more-complex-model-3-hint-1, eval = FALSE}
+anova(
+  extract_fit_engine(zero_inflated_fit),
+  extract_fit_engine(...),
+  test = "..."
+) |>
+  ...()
+```
+
+```{r include = FALSE}
+# anova(
+#   extract_fit_engine(zero_inflated_fit),
+#   extract_fit_engine(log_lin_reduced),
+#   test = "LRT"
+# ) |>
+#   tidy()
+```
+
+### 
+
+An anova() method isn’t implemented for **zeroinfl** objects! An alternative is to use an information criterion statistic, such as the Akaike information criterion (AIC) [(Claeskens 2016)](https://www.tmwr.org/inferential#ref-claeskens2016statistical). 
+
+### Exercise 4
+
+Pipe `zero_inflated_fit` to `extract_fit_engine()`. Then, pipe the code to `AIC()`.
+
+```{r a-more-complex-model-4, exercise = TRUE}
+
+```
+
+```{r a-more-complex-model-4-hint-1, eval = FALSE}
+zero_inflated_fit |> ...() |> AIC()
+```
+
+```{r include = FALSE}
+zero_inflated_fit |> extracted_fit_engine() |> AIC()
+```
+
+### 
+
+In R’s parameterization, smaller AIC values are better. In this case, we are not conducting a formal statistical test but *estimating* the ability of the data to fit the data.
+
+### Exercise 5
+
+Copy the previous code and change `zero_inflated_fit` to `log_lin_reduced`.
+
+```{r a-more-complex-model-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-more-complex-model-5-hint-1, eval = FALSE}
+log_lin_reduced |> ...
+```
+
+```{r include = FALSE}
+log_lin_reduced |> extracted_fit_engine() |> AIC()
+```
+
+### 
+
+We will be characterizing the uncertainty of the AIC statistics to gauge their difference relative to the noise in the data. We’ll also compute more bootstrap confidence intervals for the parameters in a bit so we specify the `apparent = TRUE` option when creating the bootstrap samples.
+
+### Exercise 6
+
+Set `zip_form` to `art ~ fem + mar + kid5 + ment | fem + mar + kid5 + phd + ment` using `<-`. Then, set `glm_form` to `art ~ fem + mar + kid5 + ment`.
+
+```{r a-more-complex-model-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-more-complex-model-6-hint-1, eval = FALSE}
+zip_form <- ...
+glm_form <- ...
+```
+
+```{r include = FALSE}
+zip_form <- art ~ fem + mar + kid5 + ment | fem + mar + kid5 + phd + ment
+glm_form <- art ~ fem + mar + kid5 + ment
+```
+
+### 
+
+However, it’s hard to contextualize the AIC pair of single values and assess how different they actually are. To solve this problem, we’ll resample a large number of each of these two models. 
+
+### Exercise 7
+
+Type `bootstraps()` and add the parameters `bioChemists`, `times`, setting it equal to `2000`, and `apparent`, setting it equal to `TRUE`.
+
+```{r a-more-complex-model-7, exercise = TRUE}
+
+```
+
+```{r a-more-complex-model-7-hint-1, eval = FALSE}
+bootstraps(bioChemists, times = ..., apparent = ...)
+```
+
+```{r include = FALSE}
+bootstraps(bioChemists, times = 2000, apparent = TRUE)
+```
+
+### 
+
+Basically, we will be characterizing the uncertainty of the AIC statistics to gauge their difference relative to the noise in the data.
+
+### Exercise 8
+
+Copy the previous code and pipe it to `mutate()`. Add the parameters `glm`, setting it equal to `map(splits, ~ fit(log_lin_spec, glm_form, data = analysis(.x)))` and `zip`, setting it equal to `map(splits, ~ fit(zero_inflated_spec, zip_form, data = analysis(.x)))`. Then, set the entire expression to `bootstrap_models` using `<-`.
+
+```{r a-more-complex-model-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-more-complex-model-8-hint-1, eval = FALSE}
+bootstraps_models <-
+  ... |>
+  mutate(
+  glm = ...,
+  zip = ...,
+)
+```
+
+```{r include = FALSE}
+bootstrap_models <-
+  bootstraps(bioChemists, times = 2000, apparent = TRUE) |>
+  mutate(
+    glm = map(splits, ~ fit(log_lin_spec, glm_form, data = analysis(.x))),
+    zip = map(splits, ~ fit(zero_inflated_spec, zip_form, data = analysis(.x)))
+  )
+```
+
+### 
+
+Now we can extract the model fits and their corresponding AIC values.
+
+### Exercise 9
+
+Pipe `bootstrap_models` to `mutate()`. Add the parametes `glm_aic`, setting it equal to `map_dbl(glm, ~ extract_fit_engine(.x) %>% AIC())`, and `zip_aic`, setting it equal to `map_dbl(zip, ~ extract_fit_engine(.x) %>% AIC())`. Finally, set this expression to `bootstrap_models`.
+
+```{r a-more-complex-model-9, exercise = TRUE}
+
+```
+
+```{r a-more-complex-model-9-hint-1, eval = FALSE}
+boostrap_models <-
+  bootstrap_models |>
+  mutate(
+    glm_aic = ...,
+    zip_aic = ...
+  )
+```
+
+```{r include = FALSE}
+bootstrap_models <-
+  bootstrap_models |>
+  mutate(
+    glm_aic = map_dbl(glm, ~ extract_fit_engine(.x) %>% AIC()),
+    zip_aic = map_dbl(zip, ~ extract_fit_engine(.x) %>% AIC())
+  )
+```
+
+### 
+
+We could have used `fit_resamples()` or a workflow set to conduct these computations. In this section, we used `mutate()` and `map()` to compute the models to demonstrate how one might use tidymodels tools for models that are not supported by one of the **parsnip** packages.
+
+### Exercise 10
+
+Type `mean()` and add the parameter `bootstrap_models$zip_aic < bootstrap_models$glm_aic`.
+
+```{r a-more-complex-model-10, exercise = TRUE}
+
+```
+
+```{r a-more-complex-model-10-hint-1, eval = FALSE}
+mean(... < ...)
+```
+
+```{r include = FALSE}
+mean(bootstrap_models$zip_aic < bootstrap_models$glm_aic)
+```
+
+### 
+
+Since we have computed the resampled model fits, let’s create bootstrap intervals for the zero probability model coefficients (i.e., the γj).
+
+### Exercise 11
+
+Pipe `bootstrap_models` to `mutate()`. Add the parameter `zero_coefs`, setting it equal to `map(zip, ~ tidy(.x, type = "zero"))`.
+
+```{r a-more-complex-model-11, exercise = TRUE}
+
+```
+
+```{r a-more-complex-model-11-hint-1, eval = FALSE}
+bootstrap_models <-
+  bootstrap_models |>
+  mutate(zero_coefs = ...)
+```
+
+```{r include = FALSE}
+bootstrap_models <-
+  bootstrap_models |>
+  mutate(zero_coefs  = map(zip, ~ tidy(.x, type = "zero")))
+```
+
+### 
+
+Lets see and example of the one of the bootstrap models.
+
+### Exercise 12
+
+Type `bootstrap_models` and extract `zero_coefs[[1]]` using `$`.
+
+```{r a-more-complex-model-12, exercise = TRUE}
+
+```
+
+```{r a-more-complex-model-12-hint-1, eval = FALSE}
+bootstrap_models$...
+```
+
+```{r include = FALSE}
+bootstrap_models$zero_coefs[[1]]
+```
+
+### 
+
+It’s a good idea to visualize the bootstrap distributions of the coefficients, as it will be done using `ggplot()`.
+
+### Exercise 13
+
+Pipe `bootstrap_models` to `unnest()`. Add the parameter `zero_coefs`.
+
+```{r a-more-complex-model-13, exercise = TRUE}
+
+```
+
+```{r a-more-complex-model-13-hint-1, eval = FALSE}
+bootstrap_models |>
+  unnest(...)
+```
+
+```{r include = FALSE}
+bootstrap_models |>
+  unnest(zero_coefs)
+```
+
+### 
+
+The `unnest()` function is part of the **tidyr** package in R. It's used to "unnest" or expand nested data structures in a column of a data frame or tibble, effectively breaking down a column containing lists or vectors into separate rows.
+
+### Exercise 14
+
+Copy the previous code and pipe it to `ggplot()`. Within `aes()` of `ggplot()`, set `x` to `estimate`.
+
+```{r a-more-complex-model-14, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-more-complex-model-14-hint-1, eval = FALSE}
+... |>
+  ggplot(aes(x = ...))
+```
+
+```{r include = FALSE}
+bootstrap_models |>
+  unnest(zero_coefs) |>
+  ggplot(aes(x = estimate))
+```
+
+### 
+
+Arguably, Bayesian analysis is a very effective and often superior approach for inference. A variety of Bayesian models are available via **parsnip**.
+
+### Exercise 15
+
+Copy the previous code and add `geom_histogram()`. Add the parameters `bins`, setting it equal to `25`, and `color`, setting it equal to `"white"`.
+
+```{r a-more-complex-model-15, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-more-complex-model-15-hint-1, eval = FALSE}
+
+```
+
+```{r include = FALSE}
+bootstrap_models |>
+  unnest(zero_coefs) |>
+  ggplot(aes(x = estimate)) +
+  geom_histogram(bins = 25, color = "white")
+```
+
+### 
+
+The `facet_wrap()` function is part of the **ggplot2** package in R, which is used for creating data visualizations. It's specifically used to create a grid of smaller plots (facets) based on one or more categorical variables, allowing you to compare multiple subsets of your data in a single plot.
+
+### Exercise 16
+
+Copy the previous code and add the function `facet_wrap()`. Add the parametes `~ term` and `scales`, setting it equal to `"free_x"`.
+
+```{r a-more-complex-model-16, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-more-complex-model-16-hint-1, eval = FALSE}
+... +
+  facet_wrap(~ terms, scales = "...")
+```
+
+```{r include = FALSE}
+bootstrap_models |>
+  unnest(zero_coefs) |>
+  ggplot(aes(x = estimate)) +
+    geom_histogram(bins = 25, color = "white") +
+    facet_wrap(~ term, scales = "free_x")
+```
+
+### 
+
+The `geom_vline()` function is part of the **ggplot2** package in R, which is used for creating data visualizations. It's used to add vertical lines to a plot, helping to highlight specific values or regions on the x-axis.
+
+### Exercise 17
+
+Copy the previous code and add `geom_vline()`. Add the parameters `xintercept`, setting it equal to `0`, `lty`, setting it equal to `2`, and `color`, setting it equal to `"gray70"`.
+
+```{r a-more-complex-model-17, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-more-complex-model-17-hint-1, eval = FALSE}
+... +
+  geom_vline(xintercept = ..., lty = ..., color = "...")
+```
+
+```{r include = FALSE}
+bootstrap_models |>
+  unnest(zero_coefs) |>
+  ggplot(aes(x = estimate)) +
+  geom_histogram(bins = 25, color = "white") + 
+  facet_wrap(~ term, scales = "free_x") + 
+  geom_vline(xintercept = 0, lty = 2, color = "gray70")
+```
+
+### 
+
+One of the covariates (`ment`) that appears to be important has a very skewed distribution. This might occur when models did not converge; those results probably should be excluded from the resamples.
+
+### Exercise 18
+
+Pipe `bootstrap_models` to `int_pctl()`. Add the parameter `zero_coefs` and hit "Run Code".
+
+```{r a-more-complex-model-18, exercise = TRUE}
+
+```
+
+```{r a-more-complex-model-18-hint-1, eval = FALSE}
+bootstrap_models |> int_pctl(...)
+```
+
+```{r include = FALSE}
+bootstrap_models |> int_pctl(zero_coefs)
+```
+
+### 
+
+Percentile intervals are the standard method of obtaining confidence intervals but require thousands of resamples to be accurate. T-intervals may need fewer resamples but require a corresponding variance estimate.
+
+### Exercise 19
+
+Copy the previous code and switch the method from `int_pctl()` to `int_t()`.
+
+```{r a-more-complex-model-19, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r a-more-complex-model-19-hint-1, eval = FALSE}
+bootstrap_models |> int_t(...)
+```
+
+```{r include = FALSE}
+bootstrap_models |> int_t(zero_coefs)
+```
+
+### 
+
+From these results, we can get a good idea of which predictor(s) to include in the zero count probability model. It may be sensible to refit a smaller model to assess if the bootstrap distribution for `ment` is still skewed.
+
+## Summary
+### 
+
+This tutorial covered [Chapter 21: Inferential Analysis](https://www.tmwr.org/inferential) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This chapter demonstrated just a small subset of what is available for inferential analysis in tidymodels and has focused on resampling and frequentist methods. 
+
+```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
+```
