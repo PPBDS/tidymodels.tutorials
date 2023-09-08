@@ -7,12 +7,13 @@ Authors@R:
            role = c("aut", "cre", "cph"),
            email = "dave.kane@gmail.com",
            comment = c(ORCID = "0000-0002-6660-3934"))
-Description: Tutorials for Tidy Modeling with R by Max Kuhn and Julia Silge.
-  In an ideal world, students would read the book and type in all the
-  associated R commands themselves. Sadly, that often does not happen.
-  These tutorials allow students to demonstrate (and their instructors to be
-  sure) that all work has been completed. See the tutorial.helpers package
-  for a background discussion of the tool and approach.
+Description: When assigned "Tidy Modeling with R: A Framework for Modeling in
+  the Tidyverse" (Kuhn and Silge (2023, ISBN: 1492096482)), students should
+  read the book and type in all the associated R commands themselves. Sadly,
+  that never happens. These tutorials allow students to demonstrate (and their
+  instructors to be sure) that all work has been completed. See Kane (2023)
+  <https://ppbds.github.io/tutorial.helpers/articles/instructions.html> from
+  the 'tutorial.helpers' package for a background discussion.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
