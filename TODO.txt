@@ -4,22 +4,9 @@ Read Modelling Basics chapters.
 
 # Anish
 
-
-# Pratham
-
-
-Week 2:  13, 15
-
-Week 3: 17, 19, 21
-
-# Aryan
-
-Week 3: Chapters 16 (currently working on), 18, 20
+Read chapter 2. Complete tutorial 2, and send me your answers as html. Determine which material from chapter 1 is most important, and can fit, and then include it as knowledge drops. Add test chunks.
 
 
-By July 28, done through chapter 9
-By August 4, done through chapter 15
-By August 11, done through chapter 21
 
 
 Deal with censored issue.

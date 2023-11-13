@@ -45,6 +45,8 @@ result <- compute_log_ratio(mtcars$mpg, mtcars$wt)
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
+<!-- DK: We will take all the useful discussion from Chapter 1, and include it as knowledge drops in this tutorial. This also will include some of the images. -->
+
 ## Introduction
 ### 
 
@@ -67,19 +69,24 @@ Load the **tidyverse** library.
 library(...)
 ```
 
+```{r tidyverse-principles-1-test, include = FALSE}
+library(tidyverse)
+```
+
 ### 
 
 At first we will not be using the **tidyverse** functions, as we are trying to understand the core language of R.
 
-### Exercise 2
+
+### Exercise 3
 
 Type `mtcars` and hit "Run Code."
 
-```{r tidyverse-principles-2, exercise = TRUE}
+```{r tidyverse-principles-3, exercise = TRUE}
 
 ```
 
-```{r tidyverse-principles-2-hint-1, eval = FALSE}
+```{r tidyverse-principles-3-hint-1, eval = FALSE}
 mtcars
 ```
 
@@ -87,27 +94,9 @@ mtcars
 
 `mtcars` is an R data frame with information about `r dim(mtcars)[1]` cars.
 
-### Exercise 3
-
-Next, we will extract the information regarding the first row of `mtcars`. In square brackets, next to `mtcars`, put `1,` and hit "Run Code."
-
-```{r tidyverse-principles-3, exercise = TRUE}
-
-```
-
-<button onclick="transfer_code(this)">Copy previous code</button>
-
-```{r tidyverse-principles-3-hint-1, eval = FALSE}
-mtcars[..., ]
-```
-
-### 
-
-We can now see that every column of the first row in `mtcars` is printed.
-
 ### Exercise 4
 
-Next, we will try extracting the second and fourth row. Copy the previous code from before and inside the brackets, remove `1,` and select the rows `2,4` using `c()`. Remember to use a `,` after you put the vector in the bracket.
+Next, we will extract the information regarding the first row of `mtcars`. In square brackets, next to `mtcars`, put `1,` and hit "Run Code."
 
 ```{r tidyverse-principles-4, exercise = TRUE}
 
@@ -116,6 +105,24 @@ Next, we will try extracting the second and fourth row. Copy the previous code f
 <button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-principles-4-hint-1, eval = FALSE}
+mtcars[..., ]
+```
+
+### 
+
+We can now see that every column of the first row in `mtcars` is printed.
+
+### Exercise 5
+
+Next, we will try extracting the second and fourth row. Copy the previous code from before and inside the brackets, remove `1,` and select the rows `2,4` using `c()`. Remember to use a `,` after you put the vector in the bracket.
+
+```{r tidyverse-principles-5, exercise = TRUE}
+
+```
+
+<button onclick="transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-principles-5-hint-1, eval = FALSE}
 mtcars[...(2, 4), ]
 ```
 
@@ -127,15 +134,15 @@ mtcars[c(2, 4), ]
 
 Now you can see every column printed for the second and fourth row of `mtcars`.
 
-### Exercise 5
+### Exercise 6
 
 Now we will look at the `gear` column in `mtcars`. Extract `gear` from `mtcars` using `$`.
 
-```{r tidyverse-principles-5, exercise = TRUE}
+```{r tidyverse-principles-6, exercise = TRUE}
 
 ```
 
-```{r tidyverse-principles-5-hint-1, eval = FALSE}
+```{r tidyverse-principles-6-hint-1, eval = FALSE}
 ...$gear
 ```
 
@@ -147,15 +154,15 @@ mtcars$gear
 
 Each car in `mtcars` has a listed amount of gears ranging from 3 to 5. This can be ordered, however.
 
-### Exercise 6
+### Exercise 7
 
 To understand the functionality of `order()`, pass in a vector argument of `6, 9, 8` using `c()`.
 
-```{r tidyverse-principles-6, exercise = TRUE}
+```{r tidyverse-principles-7, exercise = TRUE}
 
 ```
 
-```{r tidyverse-principles-6-hint-1, eval = FALSE}
+```{r tidyverse-principles-7-hint-1, eval = FALSE}
 order(...(6, 9, 8))
 ```
 
@@ -167,17 +174,17 @@ order(c(6, 9, 8))
 
 The `order()` does not order the elements as entered in the arguments, but rather sorts them and returns the index of each value.
 
-### Exercise 7
+### Exercise 8
 
 Copy the previous code. Now, instead, pass `mtcars$gear` as the argument.
 
-```{r tidyverse-principles-7, exercise = TRUE}
+```{r tidyverse-principles-8, exercise = TRUE}
 
 ```
 
 <button onclick="transfer_code(this)">Copy previous code</button>
 
-```{r tidyverse-principles-7-hint-1, eval = FALSE}
+```{r tidyverse-principles-8-hint-1, eval = FALSE}
 order(mtcars$...)
 ```
 
@@ -189,17 +196,17 @@ order(mtcars$gear)
 
 The `order()` sorts a string vector by looking at the first letter of each string and sorting it in alphabetical order, returning the indexes of the words in the vector.
 
-### Exercise 8
+### Exercise 9
 
 Copy the previous code. In `mtcars[]`, pass in the previous code in the brackets. Don't forget the `,` after the `order()` expression within the brackets!
 
-```{r tidyverse-principles-8, exercise = TRUE}
+```{r tidyverse-principles-9, exercise = TRUE}
 
 ```
 
 <button onclick="transfer_code(this)">Copy previous code</button>
 
-```{r tidyverse-principles-8-hint-1, eval = FALSE}
+```{r tidyverse-principles-9-hint-1, eval = FALSE}
 mtcars[order(...$gear), ]
 ```
 
@@ -211,17 +218,17 @@ mtcars[order(mtcars$gear), ]
 
 As you can see, the mtcars data frame column `gear` is ordered from *descending* order using the `order()` function.
 
-### Exercise 9
+### Exercise 10
 
 Copy the previous code. Add `mtcars$mpg` into the `order()` function. Don't forget the `,` after the `order()` expression within the brackets!
 
-```{r tidyverse-principles-9, exercise = TRUE}
+```{r tidyverse-principles-10, exercise = TRUE}
 
 ```
 
 <button onclick="transfer_code(this)">Copy previous code</button>
 
-```{r tidyverse-principles-9-hint-1, eval = FALSE}
+```{r tidyverse-principles-10-hint-1, eval = FALSE}
 mtcars[order(mtcars$..., mtcars$...), ]
 ```
 
@@ -233,11 +240,11 @@ mtcars[order(mtcars$gear, mtcars$mpg), ]
 
 We have now successfully order the data frame `mtcars` by `mpg` and `gears`. You can see that for each `gear` value, the `mpg` is in descending order.
 
-### Exercise 10
+### Exercise 11
 
 Run the code below.
 
-```{r tidyverse-principles-10, exercise = TRUE}
+```{r tidyverse-principles-11, exercise = TRUE}
 arrange(.data = mtcars, gear, mpg)
 
 ```
@@ -265,11 +272,11 @@ We will be using the **rsample** package to give an example of using existing da
 
 Load the `rsample` library.
 
-```{r reuse-existing-data--1, exercise = TRUE}
+```{r reuse-existing-data-structures-1, exercise = TRUE}
 
 ```
 
-```{r reuse-existing-data--1-hint-1, eval = FALSE}
+```{r reuse-existing-data-structures-1-hint-1, eval = FALSE}
 library(...)
 ```
 
@@ -281,7 +288,7 @@ library(rsample)
 
 Get a better understanding of the **rsample** library by typing in `?rsample` into the console. Look at the description in the help tab. CP/CR.
 
-```{r reuse-existing-data--2}
+```{r reuse-existing-data-structures-2}
 question_text(NULL,
 	answer(NULL, correct = TRUE),
 	allow_retry = TRUE,
@@ -302,7 +309,7 @@ One resampling method is called bootstrap, which is resampling a single data set
 
 Find out more about `bootstraps` by typing `?bootstraps`in the console. Look at the description. CP/CR
 
-```{r reuse-existing-data--3}
+```{r reuse-existing-data-structures-3}
 question_text(NULL,
 	answer(NULL, correct = TRUE),
 	allow_retry = TRUE,
@@ -311,16 +318,15 @@ question_text(NULL,
 	rows = 3)
 ```
 
-
 ### Exercise 4
 
 We will explore **rsample** using the bootstrap method. Access `bootstraps()` from the **rsample** library using `::`.
 
-```{r reuse-existing-data--4, exercise = TRUE}
+```{r reuse-existing-data-structures-4, exercise = TRUE}
 
 ```
 
-```{r reuse-existing-data--4-hint-1, eval = FALSE}
+```{r reuse-existing-data-structures-4-hint-1, eval = FALSE}
 ...::bootstraps()
 ```
 
@@ -337,13 +343,13 @@ This will throw an error, because a data frame was not specified. Our data frame
 
 Using the previous code, enter `mtcars` in `bootstraps()`.
 
-```{r reuse-existing-data--5, exercise = TRUE}
+```{r reuse-existing-data-structures-5, exercise = TRUE}
 
 ```
 
 <button onclick="transfer_code(this)">Copy previous code</button>
 
-```{r reuse-existing-data--5-hint-1, eval = FALSE}
+```{r reuse-existing-data-structures-5-hint-1, eval = FALSE}
 rsample::bootstraps(...)
 ```
 
@@ -359,13 +365,13 @@ As you can see, this outputs 25 rows of bootstraps. But we only want 3 bootstrap
 
 Using the previous code, only produce 3 splits using the `times` parameter in `bootstraps()`.
 
-```{r reuse-existing-data--6, exercise = TRUE}
+```{r reuse-existing-data-structures-6, exercise = TRUE}
 
 ```
 
 <button onclick="transfer_code(this)">Copy previous code</button>
 
-```{r reuse-existing-data--6-hint-1, eval = FALSE}
+```{r reuse-existing-data-structures-6-hint-1, eval = FALSE}
 rsample::bootstraps(mtcars, ... = 3)
 ```
 
@@ -392,7 +398,7 @@ We will be revisiting the `|>` pipe operator using `mtcars`. We will be looking 
 
 First, as seen in the previous section, run the code below.
 
-```{r design-for-the-pipe--1, exercise = TRUE}
+```{r design-for-the-pipe-and-functi-1, exercise = TRUE}
 arrange(mtcars, gear)
 ```
 
@@ -404,13 +410,13 @@ arrange(mtcars, gear)
 
 Copy the previous code and add it as a parameter in `slice()`.
 
-```{r design-for-the-pipe--2, exercise = TRUE}
+```{r design-for-the-pipe-and-functi-2, exercise = TRUE}
 
 ```
 
 <button onclick="transfer_code(this)">Copy previous code</button>
 
-```{r design-for-the-pipe--2-hint-1, eval = FALSE}
+```{r design-for-the-pipe-and-functi-2-hint-1, eval = FALSE}
 slice(...(mtcars, gear))
 ```
 
@@ -426,13 +432,13 @@ As you can see, an empty tibble was printed out. This is because the number of r
 
 Copy the previous code. Add the parameter `5` in `slice()`.
 
-```{r design-for-the-pipe--3, exercise = TRUE}
+```{r design-for-the-pipe-and-functi-3, exercise = TRUE}
 
 ```
 
 <button onclick="transfer_code(this)">Copy previous code</button>
 
-```{r design-for-the-pipe--3-hint-1, eval = FALSE}
+```{r design-for-the-pipe-and-functi-3-hint-1, eval = FALSE}
 slice(...(mtcars, gear), 5)
 ```
 
@@ -448,13 +454,13 @@ Notice how that the output is the 5th row in `mtcars`, which is sorted by number
 
 Copy the previous code and replace the parameter `5` with `1:10`.
 
-```{r design-for-the-pipe--4, exercise = TRUE}
+```{r design-for-the-pipe-and-functi-4, exercise = TRUE}
 
 ```
 
 <button onclick="transfer_code(this)">Copy previous code</button>
 
-```{r design-for-the-pipe--4-hint-1, eval = FALSE}
+```{r design-for-the-pipe-and-functi-4-hint-1, eval = FALSE}
 slice(arrange(mtcars, gear), ...)
 ```
 
@@ -470,11 +476,11 @@ This way of slicing a data set can be hard to read and might confuse the audienc
 
 We will continue to use the `mtcars` data set, as we are quite comfortable with it up to this point. Pipe `arrange(gear)` after typing `mtcars` on the first line with the use of the `|>` operator.
 
-```{r design-for-the-pipe--5, exercise = TRUE}
+```{r design-for-the-pipe-and-functi-5, exercise = TRUE}
 
 ```
 
-```{r design-for-the-pipe--5-hint-1, eval = FALSE}
+```{r design-for-the-pipe-and-functi-5-hint-1, eval = FALSE}
 mtcars |>
   arrange(...)
 ```
@@ -488,13 +494,13 @@ mtcars |>
 
 Copy the previous. Extract the first 10 rows using `:` of the ordered data set by adding `slice()` to the pipe.
 
-```{r design-for-the-pipe--6, exercise = TRUE}
+```{r design-for-the-pipe-and-functi-6, exercise = TRUE}
 
 ```
 
 <button onclick="transfer_code(this)">Copy previous code</button>
 
-```{r design-for-the-pipe--6-hint-1, eval = FALSE}
+```{r design-for-the-pipe-and-functi-6-hint-1, eval = FALSE}
 mtcars |>
   arrange(...) |>
   slice(...)
@@ -514,7 +520,7 @@ User readability is crucial to making coding a more friendly environment for col
 
 When plotting using **ggplot**, the pipe operator becomes invalid. To `"pipe"` in when plotting, use the `+` symbol. Run the code below to observe plotting.
 
-```{r design-for-the-pipe--7, exercise = TRUE}
+```{r design-for-the-pipe-and-functi-7, exercise = TRUE}
 ggplot(mtcars, aes(x = wt, y = mpg)) +
   geom_point() + 
   geom_smooth(method = lm)
@@ -545,11 +551,11 @@ print(result)
 
 We will be computing the log ratio of  the mpg vs weight from the cars in them `mtcars` data set. Make the function for the `compute_log_ratio` and set it equal to a function with arguments `mpg` and `wt`. Remember to follow this expression with `{}`.
 
-```{r design-for-the-pipe--8, exercise = TRUE}
+```{r design-for-the-pipe-and-functi-8, exercise = TRUE}
 
 ```
 
-```{r design-for-the-pipe--8-hint-1, eval = FALSE}
+```{r design-for-the-pipe-and-functi-8-hint-1, eval = FALSE}
 compute_log_ratio <- ...(mpg, wt){
   
 }
@@ -569,13 +575,13 @@ We can also have parameters of functions that are set to certain values within i
 
 Since we are computing the log ratio, we need to set the base of the log to 1. Copy the previous code and add the parameter `log_base = exp(1)`.
 
-```{r design-for-the-pipe--9, exercise = TRUE}
+```{r design-for-the-pipe-and-functi-9, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r design-for-the-pipe--9-hint-1, eval = FALSE}
+```{r design-for-the-pipe-and-functi-9-hint-1, eval = FALSE}
 ...<- function(..., ..., log_base = exp(...)){
   
 }
@@ -595,13 +601,13 @@ There are certain functions were you do not have to necessarily have a return() 
 
 It is crucial to have the return statement in the function. Copy the previous code and add the `return()` statement within the `{}` brackets.
 
-```{r design-for-the-pipe--10, exercise = TRUE}
+```{r design-for-the-pipe-and-functi-10, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r design-for-the-pipe--10-hint-1, eval = FALSE}
+```{r design-for-the-pipe-and-functi-10-hint-1, eval = FALSE}
 ...{
   ...()
 }
@@ -621,13 +627,13 @@ The return() statement exits the function and returns the value you desire. It c
 
 The log() function, in this case, will take the ratio between `mpg/wt` and take a log base, which was set to exp(1). First, copy the previous code and within the return statement, return log() with the first argument being `mpg/wt`.
 
-```{r design-for-the-pipe--11, exercise = TRUE}
+```{r design-for-the-pipe-and-functi-11, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r design-for-the-pipe--11-hint-1, eval = FALSE}
+```{r design-for-the-pipe-and-functi-11-hint-1, eval = FALSE}
 ...{
   return(...(mpg/wt))
 }
@@ -643,13 +649,13 @@ compute_log_ratio <- function(mpg, wt, log_base = exp(1)){
 
 Copy the previous code and add `base` as a parameter for `log()`, which is equal to the log_base argument set in the function parameters for `compute_log_ratio`.
 
-```{r design-for-the-pipe--12, exercise = TRUE}
+```{r design-for-the-pipe-and-functi-12, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r design-for-the-pipe--12-hint-1, eval = FALSE}
+```{r design-for-the-pipe-and-functi-12-hint-1, eval = FALSE}
 ...{
   return(log(mpg/wt, base = ...))
 }
@@ -669,11 +675,11 @@ To access any function that we have created, we must call this function in order
 
 We must call the function outside of the function. Set `result` to `compute_log_ratio()`. This might throw an error, but that will be fixed later.
 
-```{r design-for-the-pipe--13, exercise = TRUE}
+```{r design-for-the-pipe-and-functi-13, exercise = TRUE}
 
 ```
 
-```{r design-for-the-pipe--13-hint-1, eval = FALSE}
+```{r design-for-the-pipe-and-functi-13-hint-1, eval = FALSE}
 result <- ...()
 ```
 
@@ -685,13 +691,13 @@ result <- ...()
 
 Set the arguments of the function to the columns `mpg` and `wt` from `mtcars` using the `$` symbol.
 
-```{r design-for-the-pipe--14, exercise = TRUE}
+```{r design-for-the-pipe-and-functi-14, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r design-for-the-pipe--14-hint-1, eval = FALSE}
+```{r design-for-the-pipe-and-functi-14-hint-1, eval = FALSE}
 result <- compute_log_ratio(mtcars$..., mtcars$...)
 ```
 
@@ -703,13 +709,13 @@ result <- compute_log_ratio(mtcars$..., mtcars$...)
 
 Finally, copy the previous code and print this value on the next line using `print()`. You should get a series of values with the compute log ratios between `mpg` and `wt`.
 
-```{r design-for-the-pipe--15, exercise = TRUE}
+```{r design-for-the-pipe-and-functi-15, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r design-for-the-pipe--15-hint-1, eval = FALSE}
+```{r design-for-the-pipe-and-functi-15-hint-1, eval = FALSE}
 print(...)
 ```
 
@@ -727,11 +733,11 @@ We will be using the **Tidyverse** package **purr** to further examine the uses 
 
 First, within the function head(), add the parameter `mtcars$mpg` and `3`, since we want to look at the first 3 rows of the `mpg` column.
 
-```{r design-for-the-pipe--16, exercise = TRUE}
+```{r design-for-the-pipe-and-functi-16, exercise = TRUE}
 
 ```
 
-```{r design-for-the-pipe--16-hint-1, eval = FALSE}
+```{r design-for-the-pipe-and-functi-16-hint-1, eval = FALSE}
 head(mtcars$mpg, ...)
 ```
 
@@ -747,13 +753,13 @@ There are many types of map function in the **purr** package, such as `map_dbl()
 
 Copy the previous code. Pipe the code to `map()` and add the parameter `sqrt`, as we want to take the square root of the `mpg` column.
 
-```{r design-for-the-pipe--17, exercise = TRUE}
+```{r design-for-the-pipe-and-functi-17, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r design-for-the-pipe--17-hint-1, eval = FALSE}
+```{r design-for-the-pipe-and-functi-17-hint-1, eval = FALSE}
 ...|>
   map(sqrt)
 ```
@@ -771,13 +777,13 @@ As you can see, `map()` returned the list of the `mpg`  of the first 3 rows of `
 
 `map_dbl()` returns the a vector compared to a list returned when `map()` is called. Copy the previous code and change map() to `map_dbl()`.
 
-```{r design-for-the-pipe--18, exercise = TRUE}
+```{r design-for-the-pipe-and-functi-18, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r design-for-the-pipe--18-hint-1, eval = FALSE}
+```{r design-for-the-pipe-and-functi-18-hint-1, eval = FALSE}
 head(mtcars$mpg, 3) |>
   map_dbl(...)
 ```
