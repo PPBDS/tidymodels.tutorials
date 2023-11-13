@@ -1,6 +1,6 @@
 ---
 title: Judging Model Effectiveness
-author: Pratham Kancherla and David Kane
+author: Pratham Kancherla
 tutorial:
   id: judging-model-effectiveness
 output:

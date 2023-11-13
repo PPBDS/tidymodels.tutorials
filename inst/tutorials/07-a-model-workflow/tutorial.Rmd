@@ -1,12 +1,12 @@
 ---
 title: A Model Workflow
-author: Pratham Kancherla and David Kane
+author: Pratham Kancherla
 tutorial:
   id: a-model-workflow
 output:
   learnr::tutorial:
-    progressive: true
-    allow_skip: true
+    progressive: yes
+    allow_skip: yes
 runtime: shiny_prerendered
 description: 'Tutorial for Chapter 7: A Model Workflow'
 ---
@@ -73,6 +73,16 @@ multilevel_workflow <-
 
 multilevel_fit <- fit(multilevel_workflow, data = Orthodont)
 
+parametric_spec <- survival_reg()
+
+parametric_workflow <- 
+  workflow() |>
+  add_variables(outcome = c(fustat, futime), predictors = c(age, rx)) |>
+  add_model(parametric_spec, 
+            formula = Surv(futime, fustat) ~ age + strata(rx))
+
+parametric_fit <- fit(parametric_workflow, data = ovarian)
+
 location <- list(
   longitude = Sale_Price ~ Longitude,
   latitude = Sale_Price ~ Latitude,
@@ -83,7 +93,7 @@ location <- list(
 location_models <- workflow_set(preproc = location, models = list(lm = lm_model))
 
 location_models <-
-   location_models %>%
+   location_models |>
    mutate(fit = map(info, ~ fit(.x$workflow[[1]], ames_train)))
 
 final_lm_res <- last_fit(lm_wflow, ames_split)
@@ -840,26 +850,80 @@ fit(multilevel_workflow, data = Orthodont)
 
 ### Exercise 15
 
-<!-- PK: Not sure if I should just give this code since it is kind of repetitive from the last 13 exercises of just split it up. Split it up! Repetition in the pursuit of understanding is no vice! -->
-
-We can even use the previously mentioned `strata()` function from the survival package for survival analysis. Run the following code.
+Type `survival_reg()` and set it to `parametric_sepc()`. Then, pipe `workflow()` to `add_variables`. Add the parameter `outcome`, setting it equal to `c(fustat, futime)`, and `predictors`, setting it equal to `c(age, rx)`.
 
 ```{r how-does-a-workflow--15, exercise = TRUE}
-library(censored)
 
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r how-does-a-workflow--15-hint-1, eval = FALSE}
 parametric_spec <- survival_reg()
 
-parametric_workflow <- 
-  workflow() %>% 
-  add_variables(outcome = c(fustat, futime), predictors = c(age, rx)) %>% 
-  add_model(parametric_spec, 
-            formula = Surv(futime, fustat) ~ age + strata(rx))
+workflow() |>
+  add_variables(outcome = ..., predictors = ...)
+```
 
-parametric_fit <- fit(parametric_workflow, data = ovarian)
-parametric_fit
+```{r include = FALSE}
+parametric_spec <- survival_reg()
+
+workflow() |>
+  add_variables(outcome = c(fustat, futime), predictors = c(age, rx))
 ```
 
 ### 
+
+Outliers can significantly impact analysis; preprocessing involves identifying and handling outliers using techniques like Z-score, IQR, or clustering-based methods.
+
+### Exercise 16
+
+Copy the previous code (delete the parametric_spec line) and pipe it to `add_model()`. Add the parameters `parametric_spec` and `forumla`, setting that equal to `Surv(futime, fustat) ~ age + strata(rx)`. Then, set the entire expression to `parametric_workflow` using `<-`.
+
+```{r how-does-a-workflow--16, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r how-does-a-workflow--16-hint-1, eval = FALSE}
+parametric_workflow <-
+  ... |>
+  add_model(parametric_spec,
+            formula = ...)
+```
+
+```{r include = FALSE}
+parametric_workflow <- 
+  workflow() |> 
+  add_variables(outcome = c(fustat, futime), predictors = c(age, rx)) |> 
+  add_model(parametric_spec, 
+            formula = Surv(futime, fustat) ~ age + strata(rx))
+```
+
+### 
+
+Transformation techniques like log-transformations, scaling, and standardization are used to adjust the data distribution or make it suitable for certain algorithms.
+
+### Exercise 17
+
+Type `fit()`. Add the parameters `parametric_workflow()` and `data`, setting it equal to `ovarian`. Then, set the entire expression to `parametric_fit` using `<-` and run it on the next line.
+
+```{r how-does-a-workflow--17, exercise = TRUE}
+
+```
+
+```{r how-does-a-workflow--17-hint-1, eval = FALSE}
+parametric_fit <- fit(..., data = ..)
+```
+
+```{r include = FALSE}
+parametric_fit <- fit(parametric_workflow, data = ovarian)
+```
+
+### 
+
+<!-- PK: DONE. Not sure if I should just give this code since it is kind of repetitive from the last 13 exercises of just split it up. Split it up! Repetition in the pursuit of understanding is no vice!-->
 
 Great Job! You now know how a workflow uses different sorts of formulas from a data set.
 
@@ -1024,12 +1088,12 @@ location_models$fit[[1]]
 
 We use a **purrr** function here to map through our models, but there is an easier, better approach to fit workflow sets that will be introduced in later tutorials.
 
-###
+### 
 
 Great Job! You now know how to create multiple workflows and put them in a workflow set. You also know how to extract these sets and analyze them based on the model of the chosen workflow set.
 
 ## Evaluatin the Test Set
-###
+### 
 
 Let’s say that we’ve concluded our model development and have settled on a final model. There is a convenience function called `last_fit()` that will fit the model to the entire training set and evaluate it with the testing set.
 
@@ -1041,15 +1105,15 @@ Enter `last_fit()` and add the parameter `lm_wflow`. Hit "Run Code." (Note: This
 
 ```
 
-```{r evaluatin-the-test-s-1-hint, eval = FALSE}
+```{r evaluatin-the-test-s-1-hint-1, eval = FALSE}
 last_fit(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 #last_fit(lm_wflow)
 ```
 
-###
+### 
 
 The `last_fit()` function is used to fit a model on the last split of a resampled data set, typically obtained through cross-validation or bootstrapping. It is useful when you want to use the final model trained on the entire training dataset for making predictions on new, unseen data.
 
@@ -1063,15 +1127,15 @@ We always need to a have split for `last_fit()`. Add the parameter `ames_split` 
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r evaluatin-the-test-s-2-hint, eval = FALSE}
+```{r evaluatin-the-test-s-2-hint-1, eval = FALSE}
 final_lm_res <- last_fit(lm_wflow, ...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 final_lm_res <- last_fit(lm_wflow, ames_split)
 ```
 
-###
+### 
 
 The .workflow column contains the fitted workflow and can be pulled out of the results using `extract_workflow()`. 
 
@@ -1083,15 +1147,15 @@ Use `extract_workflow()` and add the parameter `final_lm_res`. Hit "Run Code".
 
 ```
 
-```{r evaluatin-the-test-s-3-hint, eval = FALSE}
+```{r evaluatin-the-test-s-3-hint-1, eval = FALSE}
 extract_workflow(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 extract_workflow(final_lm_res)
 ```
 
-###
+### 
 
 `collect_metrics()` and `collect_predictions()` provide access to the performance metrics and predictions, respectively. The `collect_metrics()` function is a lovely way to extract model performance metrics with resampling. `collect_predictions()` can summarize the various results over replicate out-of-sample predictions.
 
@@ -1105,17 +1169,17 @@ Run `collect_metrics()` and `collect_predictions()`, on separate lines, with the
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r evaluatin-the-test-s-4-hint, eval = FALSE}
+```{r evaluatin-the-test-s-4-hint-1, eval = FALSE}
 c_mtrcs <- collect_metrics(...)
 c_predic <- collect_predictions(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 c_mtrcs <- collect_metrics(final_lm_res)
 c_predic <- collect_predictions(final_lm_res)
 ```
 
-###
+### 
 
 Statistical metrics are used to describe the distribution of data, compare groups, assess relationships between variables, and draw conclusions from data.The model takes the predictor variables from the test data and generates predictions for the outcome variable. For example, in linear regression, the model estimates the response variable based on the values of the predictor variables.
 
@@ -1129,19 +1193,19 @@ Finally, lets `slice()` the predictions output, as it is too many unnecessary ro
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r evaluatin-the-test-s-5-hint, eval = FALSE}
+```{r evaluatin-the-test-s-5-hint-1, eval = FALSE}
 c_predic <- 
   collect_predictions(final_lm_res) |>
   slice(...)
 ```
 
-```{r, include = FALSE}
+```{r include = FALSE}
 c_predic <- 
   collect_predictions(final_lm_res) |>
   slice(1:5)
 ```
 
-###
+### 
 
 Great Job! You now know how to evaluate a testing set by using `last_fit()` and statistical metrics and predictions using the `collect_metrics()` and `collect_predictions()`.
 

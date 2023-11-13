@@ -19,6 +19,7 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Suggests:
+    applicable,
     baguette,
     beans,
     bestNormalize,
@@ -41,6 +42,7 @@ Suggests:
     mixOmics,
     multilevelmod,
     nlme,
+    probably,
     ranger,
     roxygen2,
     rsconnect,
@@ -48,6 +50,7 @@ Suggests:
     rules,
     stringr,
     testthat (>= 3.0.0),
+    textrecipes,
     tidymodels,
     tidyposterior,
     tidyverse,

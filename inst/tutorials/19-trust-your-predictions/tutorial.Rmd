@@ -1,0 +1,1727 @@
+---
+title: When Should you Trust Your Predictions?
+author: Pratham Kancherla
+tutorial:
+  id: when-should-you-trust-your-predictions-?
+output:
+  learnr::tutorial:
+    progressive: yes
+    allow_skip: yes
+runtime: shiny_prerendered
+description: 'Tutorial for Chapter 19: When Should you Trust Your Predictions?'
+---
+
+```{r setup, include = FALSE}
+library(learnr)
+library(tutorial.helpers)
+library(applicable)
+library(finetune)
+library(baguette)
+library(tidyverse)
+library(tidymodels)
+library(rlang)
+library(embed)
+library(tune)
+library(ggrepel)
+library(ggforce)
+library(rstanarm)
+library(rules)
+library(tidyposterior)
+library(lme4)
+library(multilevelmod)
+library(nlme)
+library(probably)
+library(usemodels)
+library(workflowsets)
+knitr::opts_chunk$set(echo = FALSE)
+options(tutorial.exercise.timelimit = 60, 
+        tutorial.storage = "local") 
+
+simulate_two_classes <- 
+  function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2))  {
+    sigma <- matrix(c(1, 0.7, 0.7, 1), nrow = 2, ncol = 2)
+    dat <- MASS::mvrnorm(n = n, mu = c(0, 0), Sigma = sigma)
+    colnames(dat) <- c("x", "y")
+    cls <- paste0("class_", 1:2)
+    dat <- 
+      as_tibble(dat) %>% 
+      mutate(
+        linear_pred = !!eqn,
+        linear_pred = linear_pred + rnorm(n, sd = error),
+        prob = binomial()$linkinv(linear_pred),
+        class = ifelse(prob > runif(n), cls[1], cls[2]),
+        class = factor(class, levels = cls)
+      )
+    dplyr::select(dat, x, y, class)
+  }
+
+training_set <- simulate_two_classes(200)
+testing_set <- simulate_two_classes(50)
+
+two_class_mod <-
+  logistic_reg() |>
+  set_engine("stan") |>
+  fit(class ~ . + I(x^2)+ I(y^2), data = training_set)
+
+test_pred <- augment(two_class_mod, testing_set)
+
+lvls <- levels(training_set$class)
+
+test_pred1 <-
+  test_pred |>
+  mutate(.pred_with_eqz = make_two_class_pred(.pred_class_1, lvls, buffer = 0.15))
+
+eq_zone_results <-
+  function(buffer){
+  test_pred <-
+    test_pred |>
+    mutate(.pred_with_eqz = make_two_class_pred(.pred_class_1, lvls, buffer = buffer))
+  acc <- test_pred |> accuracy(class, .pred_with_eqz)
+  rep_rate <- reportable_rate(test_pred$.pred_with_eqz)
+  tibble(accuracy = acc$.estimate, reportable = rep_rate, buffer = buffer)
+  }
+
+test_pred <-
+  test_pred |>
+  bind_cols(
+    predict(two_class_mod, testing_set, type = "pred_int", std_error = TRUE)
+  )
+Chicago <- Chicago |> select(ridership, date, one_of(stations))
+
+n <- nrow(Chicago)
+
+Chicago_train <- Chicago |> slice(1:(n - 14))
+
+Chicago_test  <- Chicago |> slice((n - 13):n)
+
+base_recipe <-
+  recipe(ridership ~ ., data = Chicago_train) |>
+  step_date(date) |>
+  step_holiday(date, keep_original_cols = FALSE) |>
+  step_dummy(all_nominal()) |>
+  step_zv(all_predictors()) |>
+  step_normalize(!!!stations) |>
+  step_pls(!!!stations, num_comp = 10, outcome = vars(ridership))
+
+lm_spec <-
+  linear_reg() |>
+  set_engine("lm")
+
+lm_wflow <-
+  workflow() |>
+  add_recipe(base_recipe) |>
+  add_model(lm_spec)
+
+lm_fit <- fit(lm_wflow, data = Chicago_train)
+
+res_test <-
+  predict(lm_fit, Chicago_test) |>
+  bind_cols(
+    predict(lm_fit, Chicago_test, type = "pred_int"),
+    Chicago_test
+  )
+
+res_2020 <-
+  predict(lm_fit, Chicago_2020) |>
+  bind_cols(
+    predict(lm_fit, Chicago_2020, type = "pred_int"),
+    Chicago_2020
+  ) 
+
+pca_stat <-
+  apd_pca(~ ., data = Chicago_train |> select(one_of(stations)), threshold = 0.99)
+```
+
+```{r copy-code-chunk, child = system.file("child_documents/copy_button.Rmd", package = "tutorial.helpers")}
+```
+
+```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
+```
+
+## Introduction
+### 
+
+This tutorial covered [Chapter 19: When Should you Trust Your Predictions?](https://www.tmwr.org/trust) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This tutorial discusses two methods for quantifying the potential quality of a prediction: equivocal zones use the predicted values to alert the user that results may be suspect and applicability uses the predictors to measure the amount of extrapolation (if any) for new samples.
+
+## Equicoval Results
+### 
+
+In some cases, the amount of uncertainty associated with a prediction is too high to be trusted.
+
+### Exercise 1
+
+Load the library **tidymodels** using `library()`.
+
+```{r equicoval-results-1, exercise = TRUE}
+
+```
+
+```{r equicoval-results-1-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(tidymodels)
+```
+
+### 
+
+When a new data point is well outside of the range of data used to create the model, making a prediction may be an inappropriate *extrapolation*.
+
+### Exercise 2
+
+Now we will create a function of a training set of 200 samples and a test set of 50. Type `function()` and add the parameters `n`, `error`, setting it equal to `0.1`, and `eqn`, setting it equal to `quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2)`.
+
+```{r equicoval-results-2, exercise = TRUE}
+
+```
+
+```{r equicoval-results-2-hint-1, eval = FALSE}
+function (..., error = ..., eqn = quote(...))
+```
+
+```{r include = FALSE}
+function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2))
+```
+
+### 
+
+In some cases, the amount of uncertainty associated with a prediction is too high to be trusted.
+
+### Exercise 3
+
+Copy the previous code and add two `{}` brackets. Within the brackets, type `matrix()` and add the parameters `c(1, 0.7, 0.7, 1)`, `nrow`, setting it equal to `2`, and `ncol`, setting it equal to `2`. Then, set the `matrix()` expression to `sigma`. (Check Hint for Formatting).
+
+```{r equicoval-results-3, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r equicoval-results-3-hint-1, eval = FALSE}
+function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2)) {
+  sigma <- matrix(c(...), nrow = ..., ncol = ...)
+}
+```
+
+```{r include = FALSE}
+function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2))  {
+  sigma <- matrix(c(1, 0.7, 0.7, 1), nrow = 2, ncol = 2)
+}
+```
+
+### 
+
+An equivocal zone is a range of results in which the prediction should not be reported to patients, for example, some range of COVID-19 test results that are too uncertain to be reported to a patient. 
+
+### Exercise 4
+
+Copy the previous code. On the next line, type `MASS::mvrnorm()`. Add the parameters `n`, setting it equal to `n`, `mu`, setting it equal to `c(0, 0)`, and `Sigma`, setting it equal to `sigma`. Set the `mvrnorm()` expression to `dat` using `<-`.
+
+```{r equicoval-results-4, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r equicoval-results-4-hint-1, eval = FALSE}
+function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2))  {
+  sigma <- matrix(c(1, 0.7, 0.7, 1), nrow = 2, ncol = 2)
+  dat <- MASS::mvrnorm(n = ..., mu = c(..., 0), Sigma = ...)
+}
+```
+
+```{r include = FALSE}
+function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2))  {
+  sigma <- matrix(c(1, 0.7, 0.7, 1), nrow = 2, ncol = 2)
+  dat <- MASS::mvrnorm(n = n, mu = c(0, 0), Sigma = sigma)
+}
+```
+
+### 
+
+An example of an inappropriate prediction when a model is used in a completely different context, such as applying a cell segmentation model regarding breast cancer cells to stomach cells and making a prediction.
+
+### Exercise 5
+
+Copy the previous code and type `c()`. Add the parameters `"x"` and `"y"`. Set the `c()` expression to `colnames(dat)`.
+
+```{r equicoval-results-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r equicoval-results-5-hint-1, eval = FALSE}
+function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2))  {
+  ...
+  colnames(dat) <- c("...", "...")
+}
+```
+
+```{r include = FALSE}
+function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2))  {
+  sigma <- matrix(c(1, 0.7, 0.7, 1), nrow = 2, ncol = 2)
+  dat <- MASS::mvrnorm(n = n, mu = c(0, 0), Sigma = sigma)
+  colnames(dat) <- c("x", "y")
+  cls <- paste0("class_", 1:2)
+}
+```
+
+### 
+
+In R, the **mvrnorm** function is part of the **MASS** package (Modern Applied Statistics with S) and is used to generate random samples from a multivariate normal distribution. 
+
+### Exercise 6
+
+Copy the previous code and, on the next line, type `paste0()`. Add the parameters `"class_"` and `1:2`. Set the `paste0` expression `cls` using `<-`. 
+
+```{r equicoval-results-6, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r equicoval-results-6-hint-1, eval = FALSE}
+function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2))  {
+  ...
+  cls <- paste0("class_", 1:2)
+}
+```
+
+```{r include = FALSE}
+function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2))  {
+  sigma <- matrix(c(1, 0.7, 0.7, 1), nrow = 2, ncol = 2)
+  dat <- MASS::mvrnorm(n = n, mu = c(0, 0), Sigma = sigma)
+  colnames(dat) <- c("x", "y")
+  cls <- paste0("class_", 1:2)
+}
+```
+
+### 
+
+**mvrnorm** parameters explained:
+`n`: This is the number of random samples (observations) you want to generate from the multivariate normal distribution.
+
+### Exercise 7
+
+Copy the previous code and, on the next line, type `as_tibble()`, add the parameter `dat`. Then, pipe the function to `mutate()`. First, add the parameter `linear_pred`, setting it equal to `!!eqn`.
+
+```{r equicoval-results-7, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r equicoval-results-7-hint-1, eval = FALSE}
+function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2))  {
+  ...
+  as_tibble(...) |>
+    mutate(
+      linear_pred = !!...
+    )
+}
+```
+
+```{r include = FALSE}
+function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2))  {
+  sigma <- matrix(c(1, 0.7, 0.7, 1), nrow = 2, ncol = 2)
+  dat <- MASS::mvrnorm(n = n, mu = c(0, 0), Sigma = sigma)
+  colnames(dat) <- c("x", "y")
+  cls <- paste0("class_", 1:2)
+  as_tibble(dat) |>
+    mutate(
+      linear_pred = !!eqn
+    )
+}
+```
+
+### 
+
+**mvrnorm** parameters explained:
+`mu`: This is a numeric vector representing the mean of the multivariate normal distribution. It should have the same length as the number of variables you want to generate.
+
+### Exercise 8
+
+Copy the previous code and update `linear_pred` to `linear_pred + rnorm(n, sd = error)`.
+
+```{r equicoval-results-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r equicoval-results-8-hint-1, eval = FALSE}
+function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2))  {
+  ...
+  as_tibble(dat) |>
+    mutate(
+      linear_pred = !!eqn,
+      linear_pred = ... + rnorm(n, sd = ...)
+    )
+}
+```
+
+```{r include = FALSE}
+function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2))  {
+  sigma <- matrix(c(1, 0.7, 0.7, 1), nrow = 2, ncol = 2)
+  dat <- MASS::mvrnorm(n = n, mu = c(0, 0), Sigma = sigma)
+  colnames(dat) <- c("x", "y")
+  cls <- paste0("class_", 1:2)
+  as_tibble(dat) |>
+    mutate(
+      linear_pred = !!eqn,
+      linear_pred = linear_pred + rnorm(n, sd = error)
+    )
+}
+```
+
+### 
+
+`linkinv()` returns the inverse link function of a ``parameters'' object. If the model's developer did not specify one (but did specify a link function) this function returns a numerical approximation of the link function.
+
+### Exercise 9
+
+Copy the previous code and add the parameter `prob`, setting it equal to `binomial()$linkinv(linear_pred)`.
+
+```{r equicoval-results-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r equicoval-results-9-hint-1, eval = FALSE}
+function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2))  {
+  ...
+  as_tibble(dat) |>
+    mutate(
+      linear_pred = !!eqn,
+      linear_pred = linear_pred + rnorm(n, sd = error),
+      prob = ...()$linkinv(...)
+    )
+}
+```
+
+```{r include = FALSE}
+function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2))  {
+  sigma <- matrix(c(1, 0.7, 0.7, 1), nrow = 2, ncol = 2)
+  dat <- MASS::mvrnorm(n = n, mu = c(0, 0), Sigma = sigma)
+  colnames(dat) <- c("x", "y")
+  cls <- paste0("class_", 1:2)
+  as_tibble(dat) |>
+    mutate(
+      linear_pred = !!eqn,
+      linear_pred = linear_pred + rnorm(n, sd = error),
+      prob = binomial()$linkinv(linear_pred)
+    )
+}
+```
+
+### 
+
+**mvrnorm** parameters explained:
+`Sigma`: This is a positive definite covariance matrix that defines the relationships and variabilities between the variables. It should have dimensions compatible with the length of mu (p x p, where p is the number of variables).
+
+### Exercise 10
+
+Copy the previous code and, on the next line, set `class` to an `ifelse()` statement. Set the first parameter in `ifelse()` to check `prob > runif(n)`. Add the parameter for if the check is true, `cls[1]`, and add for if the check is false, `cls[2]`.
+
+```{r equicoval-results-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r equicoval-results-10-hint-1, eval = FALSE}
+function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2))  {
+  ...
+  as_tibble(dat) |>
+    mutate(
+      linear_pred = !!eqn,
+      linear_pred = linear_pred + rnorm(n, sd = error),
+      prob = binomial()$linkinv(linear_pred),
+      class = ifelse(... > runif(n), cls[...], cls[...])
+    )
+}
+```
+
+```{r include = FALSE}
+function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2))  {
+  sigma <- matrix(c(1, 0.7, 0.7, 1), nrow = 2, ncol = 2)
+  dat <- MASS::mvrnorm(n = n, mu = c(0, 0), Sigma = sigma)
+  colnames(dat) <- c("x", "y")
+  cls <- paste0("class_", 1:2)
+  as_tibble(dat) |>
+    mutate(
+      linear_pred = !!eqn,
+      linear_pred = linear_pred + rnorm(n, sd = error),
+      prob = binomial()$linkinv(linear_pred),
+      class = ifelse(prob > runif(n), cls[1], cls[2])
+    )
+}
+```
+
+### 
+
+**MASS** package provides a collection of functions for linear/non-linear regression, cluster analysis, etc., and data sets that cover a wide range of statistical techniques.
+
+### Exercise 11
+
+Copy the previous code and add the final parameter to `mutate()`. Set `class` equal to `factor()`. Add the parameters `class` and `levels`, setting it equal to `cls`. Then, set the entire expression, from `as_tibble()`, to `dat` using `<-`.
+
+```{r equicoval-results-11, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r equicoval-results-11-hint-1, eval = FALSE}
+function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2))  {
+  ...
+  dat <-
+    as_tibble(dat) |>
+    mutate(
+      linear_pred = !!eqn,
+      linear_pred = linear_pred + rnorm(n, sd = error),
+      prob = binomial()$linkinv(linear_pred),
+      class = ifelse(prob > runif(n), cls[1], cls[2]),
+      class = factor(..., levels = ...)
+    )
+}
+```
+
+```{r include = FALSE}
+function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2)) {
+  sigma <- matrix(c(1, 0.7, 0.7, 1), nrow = 2, ncol = 2)
+  dat <- MASS::mvrnorm(n = n, mu = c(0, 0), Sigma = sigma)
+  colnames(dat) <- c("x", "y")
+  cls <- paste0("class_", 1:2)
+  dat <-
+    as_tibble(dat) |>
+    mutate(
+      linear_pred = !!eqn,
+      linear_pred = linear_pred + rnorm(n, sd = error),
+      prob = binomial()$linkinv(linear_pred),
+      class = ifelse(prob > runif(n), cls[1], cls[2]),
+      class = factor(class, levels = cls)
+    )
+}
+```
+
+### 
+
+The `paste0()` function in R is used to concatenate (combine) multiple character strings into a single string without any separator. It is a convenient way to join strings together.
+
+### Exercise 12
+
+Copy the previous code and, outside `mutate()` but within the function, type `dplyr::select()`. Add the parameters `dat`, `x`, `y`, and `class`. Then, set the entire function to `simulate_two_classes` using `<-`.
+
+```{r equicoval-results-12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r equicoval-results-12-hint-1, eval = FALSE}
+simulate_two_classes <-
+  function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2))  {
+  ...
+  dplyr::select(..., x, y, ...)
+}
+```
+
+```{r include = FALSE}
+simulate_two_classes <- 
+  function (n, error = 0.1, eqn = quote(-1 - 2 * x - 0.2 * x^2 + 2 * y^2))  {
+    sigma <- matrix(c(1, 0.7, 0.7, 1), nrow = 2, ncol = 2)
+    dat <- MASS::mvrnorm(n = n, mu = c(0, 0), Sigma = sigma)
+    colnames(dat) <- c("x", "y")
+    cls <- paste0("class_", 1:2)
+    dat <- 
+      as_tibble(dat) |>
+      mutate(
+        linear_pred = !!eqn,
+        linear_pred = linear_pred + rnorm(n, sd = error),
+        prob = binomial()$linkinv(linear_pred),
+        class = ifelse(prob > runif(n), cls[1], cls[2]),
+        class = factor(class, levels = cls)
+      )
+    dplyr::select(dat, x, y, class)
+  }
+```
+
+### 
+
+`paste0()` code creates two strings: "class_1" and "class_2". The 1:2 generates a numeric vector containing the numbers 1 and 2. `paste0()` then concatenates each element of the numeric vector with the string `"class_"`, resulting in the vector of character strings shown in the output.
+
+### Exercise 13
+
+Outside of the function, type `simulate_two_classes(200)` and set it to `training_set`. Then on the next line, type `simulate_two_classes(50)` and set it to `testing_set`.
+
+```{r equicoval-results-13, exercise = TRUE}
+
+```
+
+```{r equicoval-results-13-hint-1, eval = FALSE}
+training_set <- simulate_two_classes(...)
+testing_set <- simulate_two_classes(...)
+```
+
+```{r include = FALSE}
+training_set <- simulate_two_classes(200)
+testing_set <- simulate_two_classes(50)
+```
+
+### 
+
+`logistic_reg()` defines a generalized linear model for binary outcomes. A linear combination of the predictors is used to model the log odds of an event. This function can fit classification models. 
+
+### Exercise 14
+
+Pipe `logistic_reg()` to `set_engine()`. Add the parameter `"stan"`.
+
+```{r equicoval-results-14, exercise = TRUE}
+
+```
+
+```{r equicoval-results-14-hint-1, eval = FALSE}
+logistic_reg() |>
+  set_engine("...")
+```
+
+```{r include = FALSE}
+logistic_reg() |>
+  set_engine("stan")
+```
+
+### 
+
+Examples of different engines that can be used with `set_engine()`: `glm`, `ranger`, `xgboost`, `keras`, `spark`, `h20`, etc.
+
+### Exercise 15
+
+Copy the previous code and pipe it to `fit()`. Add the parameters `class ~ . + I(x^2)+ I(y^2)` and `data`, setting it equal to `training_set`. Then, set the entire expression to `two_class_mod` using `<-`.
+
+```{r equicoval-results-15, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r equicoval-results-15-hint-1, eval = FALSE}
+two_class_mod <-
+  ... |>
+  fit(..., data = ...)
+```
+
+```{r include = FALSE}
+two_class_mod <-
+  logistic_reg() |>
+  set_engine("stan") |>
+  fit(class ~ . + I(x^2)+ I(y^2), data = training_set)
+```
+
+### 
+
+`quote()` function is used to create a "quotation" of an expression without evaluating it immediately. Useful when working with non-standard evaluation (NSE) or when you want to capture an expression to manipulate it programmatically. 
+
+### Exercise 16
+
+Print `two_class_mod` using `print()`. Add the parameters `two_class_mod` and `digits = 3`.
+
+```{r equicoval-results-16, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r equicoval-results-16-hint-1, eval = FALSE}
+print(..., digits = 3)
+```
+
+```{r include = FALSE}
+print(two_class_mod, digits = 3)
+```
+
+### 
+
+We estimated a logistic regression model using Bayesian methods (using the default Gaussian prior distributions for the parameters).
+
+### Exercise 17
+
+Type in `augment()` and add the parameters `two_class_mod` and `testing_set`. Then, set the entire expression to `test_pred`.
+
+```{r equicoval-results-17, exercise = TRUE}
+
+```
+
+```{r equicoval-results-17-hint-1, eval = FALSE}
+test_pred <- augment(..., testing_set)
+```
+
+```{r include = FALSE}
+test_pred <- augment(two_class_mod, testing_set)
+```
+
+### 
+
+The `augment()` function is commonly associated with the broom package. It is used to augment statistical model objects with additional information or predictions, making them more suitable for further analysis, visualization, or reporting. 
+
+### Exercise 18
+
+Type `test_pred`. Pipe it to `head()` and hit "Run Code".
+
+```{r equicoval-results-18, exercise = TRUE}
+
+```
+
+```{r equicoval-results-18-hint-1, eval = FALSE}
+test_pred |>
+  ...()
+```
+
+```{r include = FALSE}
+test_pred |>
+  head()
+```
+
+### 
+
+With **tidymodels**, the **probably** package contains functions for equivocal zones. For cases with two classes, the `make_two_class_pred()` function creates a factor-like column that has the predicted classes with an equivocal zone.
+
+### Exercise 19
+
+Load the library `probably` using `library()`.
+
+```{r equicoval-results-19, exercise = TRUE}
+
+```
+
+```{r equicoval-results-19-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+#library(probably)
+```
+
+### 
+
+**probably**: Models can be improved by post-processing class probabilities, by: recalibration, conversion to hard probabilities, assessment of equivocal zones, and other activities. 'probably' contains tools for conducting these operations as well as calibration tools and conformal inference techniques for regression models.
+
+### Exercise 20
+
+Type `levels()` and the parameter `training_set$class`. Set the entire expression to `lvls` using `<-`.
+
+```{r equicoval-results-20, exercise = TRUE}
+
+```
+
+```{r equicoval-results-20-hint-1, eval = FALSE}
+lvls <- levels(...$class)
+```
+
+```{r include = FALSE}
+lvls <- levels(training_set$class)
+```
+
+### 
+
+One simple method for disqualifying results is to call them “equivocal” if the values are within some range around 50% (or the appropriate probability cutoff for a certain situation).
+
+### Exercise 21
+
+Type `test_pred` and pipe it to `mutate()`. Add the parameter `.pred_with_eqz`, setting it equal to `make_two_class_pred(.pred_class_1, lvls, buffer = 0.15)`. Set the entire expression to `test_pred1`.
+
+```{r equicoval-results-21, exercise = TRUE}
+
+```
+
+```{r equicoval-results-21-hint-1, eval = FALSE}
+test_pred1 <-
+  test_pred |>
+  mutate(...)
+```
+
+```{r include = FALSE}
+test_pred1 <-
+  test_pred |>
+  mutate(.pred_with_eqz = make_two_class_pred(.pred_class_1, lvls, buffer = 0.15))
+```
+
+### 
+
+`make_two_class_pred()` can be used to convert class probability estimates to `class_pred` objects with an optional equivocal zone.
+
+### Exercise 22
+
+Type `test_pred1` and pipe it to `count()`. Add the parameter `.pred_with_eqz`.
+
+```{r equicoval-results-22, exercise = TRUE}
+
+```
+
+```{r equicoval-results-22-hint-1, eval = FALSE}
+test_pred1 |>
+  count(...)
+```
+
+```{r include = FALSE}
+test_pred1 |>
+  count(.pred_with_eqz)
+```
+
+### 
+
+Since the factor levels are the same as the original data, confusion matrices and other statistics can be computed without error. When using standard functions from the **yardstick** package, the equivocal results are converted to `NA` and are not used in the calculations that use the hard class predictions.
+
+### Exercise 23
+
+Type `test_pred1` and pipe it to `conf_mat()`. Add the parameter `class` and `.pred_with_eqz`, giving the outcome of only reportable results.
+
+```{r equicoval-results-23, exercise = TRUE}
+
+```
+
+```{r equicoval-results-23-hint-1, eval = FALSE}
+test_pred |>
+  conf_mat(class, ...)
+```
+
+```{r include = FALSE}
+test_pred |>
+  conf_mat(class, .pred_with_eqz)
+```
+
+### 
+
+***_equivocal() functions provide multiple methods of checking for equivocal values, and finding their locations.
+
+### Exercise 24
+
+Create a function by typing `function()`. Add the parameter `buffer` and add brackets ({}) after `function()`.
+
+```{r equicoval-results-24, exercise = TRUE}
+
+```
+
+```{r equicoval-results-24-hint-1, eval = FALSE}
+function(...) {
+  
+}
+```
+
+```{r include = FALSE}
+function(buffer) {
+  
+}
+```
+
+### 
+
+The term "reportable rate" in statistics generally refers to a proportion or percentage that is calculated from data and is considered significant enough to be reported, especially in research papers, reports, or presentations.
+
+### Exercise 25
+
+Copy the previous code and, inside the brackets, type `test_pred` and pipe it to `mutate()`. Within `mutate()`, add the parameter `.pred_with_eqz`, setting it equal to `make_two_class_pred(.pred_class_1, lvls, buffer = buffer)`. Then, set this expression to `test_pred`.
+
+```{r equicoval-results-25, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r equicoval-results-25-hint-1, eval = FALSE}
+function(buffer){
+  test_pred <-
+    test_pred |>
+    mutate(.pred_with_eqz = ...)
+}
+```
+
+```{r include = FALSE}
+function(buffer){
+  test_pred <-
+    test_pred |>
+    mutate(.pred_with_eqz = make_two_class_pred(.pred_class_1, lvls, buffer = buffer))
+  
+}
+```
+
+### 
+
+If a `buffer` parameter is provided, predictions falling within the buffer range around the threshold might be considered as an "ambiguous" or "uncertain" class.
+
+### Exercise 26
+
+Copy the previous code and, on the next line, pipe `test_pred` to `accuracy()`. Add the parameters `class` and `.pred_with_eqz`. Then, set this expression to `acc` using `<-`.
+
+```{r equicoval-results-26, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r equicoval-results-26-hint-1, eval = FALSE}
+function(buffer){
+  ...
+  acc <- test_pred |> accuracy(..., ...)
+}
+```
+
+```{r include = FALSE}
+function(buffer){
+  test_pred <-
+    test_pred |>
+    mutate(.pred_with_eqz = make_two_class_pred(.pred_class_1, lvls, buffer = buffer))
+  acc <- test_pred |> accuracy(class, .pred_with_eqz)
+}
+```
+
+### 
+
+The `reportable_rate()` is defined as the percentage of class predictions that are not equivocal.
+
+### Exercise 27
+
+Copy the previous code and, on the next line, type `reportable_rate()`. Add the parameter `test_pred$.pred_with_eqz`. Then, set this expression to 
+
+```{r equicoval-results-27, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r equicoval-results-27-hint-1, eval = FALSE}
+function(buffer){
+  ...
+  rep_rate <- reportable_rate(test_pred$...)
+}
+```
+
+```{r include = FALSE}
+function(buffer){
+  test_pred <-
+    test_pred |>
+    mutate(.pred_with_eqz = make_two_class_pred(.pred_class_1, lvls, buffer = buffer))
+  acc <- test_pred |> accuracy(class, .pred_with_eqz)
+  rep_rate <- reportable_rate(test_pred$.pred_with_eqz)
+}
+```
+
+### 
+
+Since we used a Bayesian model, the probability estimates we found are actually the mean of the posterior predictive distribution. In other words, the Bayesian model gives us a distribution for the class probability.
+
+### Exercise 28
+
+Copy the previous code and, on the next line, type `tibble()`. Add the parameters `accuracy`, setting it equal to `acc$.estimate`, reportable, setting it equal to `rep_rate`, and `buffer`, setting it equal to `buffer`.
+Then, set the entire function to `eq_zone_results` using `<-`.
+
+```{r equicoval-results-28, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r equicoval-results-28-hint-1, eval = FALSE}
+eq_zone_results <-
+  function(buffer){
+  ...
+  tibble(accuracy = ..., reportable = ..., buffer = ...)
+}
+```
+
+```{r include = FALSE}
+eq_zone_results <-
+  function(buffer){
+  test_pred <-
+    test_pred |>
+    mutate(.pred_with_eqz = make_two_class_pred(.pred_class_1, lvls, buffer = buffer))
+  acc <- test_pred |> accuracy(class, .pred_with_eqz)
+  rep_rate <- reportable_rate(test_pred$.pred_with_eqz)
+  tibble(accuracy = acc$.estimate, reportable = rep_rate, buffer = buffer)
+}
+```
+
+### 
+
+In R, the `map()` function is part of the **purrr** package, a **tidymodels** package, which is a component of the tidyverse ecosystem. map() is used to apply a function to each element of a list or a vector and returns a new list with the results. 
+
+### Exercise 29
+
+Outside of the function, type `map()`. Within `seq()` of `map()`, add the parameters `0`, `0.1`, and `length.out`, setting it equal to `40`. Outside of `seq()`, add the parameter `eq_zone_results`.
+
+```{r equicoval-results-29, exercise = TRUE}
+
+```
+
+```{r equicoval-results-29-hint-1, eval = FALSE}
+map(seq(..., ..., length.out = ...), eq_zone_results)
+```
+
+```{r include = FALSE}
+map(seq(0, .1, length.out = 40), eq_zone_results)
+```
+
+### 
+
+`list_rbind()` combines elements into a data frame by row-binding them together with `vctrs::vec_rbind()`.
+
+### Exercise 30
+
+Copy the previous code and pipe it to `list_rbind()`. Then, pipe the code to `piviot_longer()`. Within `c()` of the function, add the parameters `c(-buffer)`, `names_to`, setting it equal to `"statistic"`, and `values_to`, setting it equal to `"value"`.
+
+```{r equicoval-results-30, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r equicoval-results-30-hint-1, eval = FALSE}
+... |>
+  list_rbind() |>
+  pivot_longer(c(...), names_to = ..., values_to = ...)
+```
+
+```{r include = FALSE}
+map(seq(0, .1, length.out = 40), eq_zone_results) |>
+  list_rbind() |>
+  pivot_longer(c(-buffer), names_to = "statistic", values_to = "value")
+```
+
+### 
+
+Measuring the standard deviation of this distribution gives us a standard error of prediction of the probability. In most cases, this value is directly related to the mean class probability.
+
+### Exercise 31
+
+Copy the previous code and pipe it to `ggplot()`. Within `aes()` of `ggplot()`, add the parameters `x`, setting it equal to `buffer`, `y`, setting it equal to `value`, and `lty`, setting it equal to `statistic`.
+
+```{r equicoval-results-31, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r equicoval-results-31-hint-1, eval = FALSE}
+... |>
+  ggplot(aes(x = ..., y = ..., lty = ...))
+```
+
+```{r include = FALSE}
+map(seq(0, .1, length.out = 40), eq_zone_results) |>
+  list_rbind() |>
+  pivot_longer(c(-buffer), names_to = "statistic", values_to = "value") |>
+  ggplot(aes(x = buffer, y = value, lty = statistic))
+```
+
+### 
+
+You might recall that, for a Bernoulli random variable with probability $p$, the variance is $p(1-p)$. Because of this relationship, the standard error is largest when the probability is 50%.
+
+### Exercise 32
+
+Copy the previous code and add `geom_step()`. Add the parameters `linewidth`, setting it equal to `1.2`, and `alpha`, setting it equal to `0.8`.
+
+```{r equicoval-results-32, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r equicoval-results-32-hint-1, eval = FALSE}
+... +
+  geom_step(linewidth = ..., alpha = ...)
+```
+
+```{r include = FALSE}
+map(seq(0, .1, length.out = 40), eq_zone_results) |>
+  list_rbind() |>
+  pivot_longer(c(-buffer), names_to = "statistic", values_to = "value") |>
+  ggplot(aes(x = buffer, y = value, lty = statistic)) +
+  geom_step(linewidth = 1.2, alpha = 0.8)
+```
+
+### 
+
+Instead of assigning an equivocal result using the class probability, we could instead use a cutoff on the standard error of prediction.
+ 
+### Exercise 33
+
+Copy the previous code and `labs()`. Add the parameters `y`, setting it equal to `NULL`, and `lty`, setting it equal to `NULL`.
+
+```{r equicoval-results-33, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r equicoval-results-33-hint-1, eval = FALSE}
+... +
+  labs(y = ..., lty = ...)
+```
+
+```{r include = FALSE}
+map(seq(0, .1, length.out = 40), eq_zone_results) |>
+  list_rbind() |>
+  pivot_longer(c(-buffer), names_to = "statistic", values_to = "value") |>
+  ggplot(aes(x = buffer, y = value, lty = statistic)) +
+  geom_step(linewidth = 1.2, alpha = 0.8) +
+  labs(y = NULL, lty = NULL)
+```
+
+### 
+
+One important aspect of the standard error of prediction is that it takes into account more than just the class probability. In cases where there is significant extrapolation or aberrant predictor values, the standard error might increase. 
+
+### Exercise 34
+
+Type `test_pred` and pipe it to `bind_cols()`. Add the parameter `predict()`. Within `predict()`, add the parameters `two_class_mod`, `testing_set`, `type`, setting it equal to `"pred_int"`, and `std_error`, setting it equal to `TRUE`. Set this entire expression to `test_pred`.
+
+```{r equicoval-results-34, exercise = TRUE}
+
+```
+
+```{r equicoval-results-34-hint-1, eval = FALSE}
+test_pred <-
+  test_pred |>
+  bind_cols(
+    predict(..., ..., type = "...", std_error = ...)
+  )
+```
+
+```{r include = FALSE}
+test_pred <-
+  test_pred |>
+  bind_cols(
+    predict(two_class_mod, testing_set, type = "pred_int", std_error = TRUE)
+  )
+```
+
+### 
+
+The benefit of using the standard error of prediction is that it might also flag predictions that are problematic (as opposed to simply uncertain).
+
+### 
+
+Great Job! You now know how to produce and evaluate equivocal results by implementing certain methodologies with the help of functions such as `reportable_rate()`, `levels()`, `augment()`, `logistic_reg()`, etc.
+
+## Determining Model Applicability
+### 
+
+Equivocal zones try to measure the reliability of a prediction based on the model outputs. It may be that model statistics, such as the standard error of prediction, cannot measure the impact of extrapolation, and so we need another way to assess whether to trust a prediction and answer, “Is our model applicable for predicting a specific data point?”
+
+### Exercise 1
+
+Load the data `chicago` by using `data()`.
+
+```{r determining-model-ap-1, exercise = TRUE}
+
+```
+
+```{r determining-model-ap-1-hint-1, eval = FALSE}
+data(...)
+```
+
+```{r include = FALSE}
+data(chicago)
+```
+
+### 
+
+Let’s take the Chicago train data used extensively in Kuhn and Johnson [2019](https://bookdown.org/max/FES/chicago-intro.html) and first shown in a previous tutorial.
+
+### Exercise 2
+
+Pipe `Chicago` to `select()`. Add the parameters `ridership`, `date`, and `one_of(stations)`. Set this expression to `Chicago` using `<-`.
+
+```{r determining-model-ap-2, exercise = TRUE}
+
+```
+
+```{r determining-model-ap-2-hint-1, eval = FALSE}
+Chicago |> select(..., ..., one_of(...))
+```
+
+```{r include = FALSE}
+Chicago <- Chicago %>% select(ridership, date, one_of(stations))
+```
+
+### 
+
+The goal is to predict the number of customers entering the Clark and Lake train station each day.
+
+### Exercise 3
+
+Type `nrow()` and add the parameter `Chicago`. Set this expression to `n` using `<-`.
+
+```{r determining-model-ap-3, exercise = TRUE}
+
+```
+
+```{r determining-model-ap-3-hint-1, eval = FALSE}
+n <- nrow(...)
+```
+
+```{r include = FALSE}
+n <- nrow(Chicago)
+```
+
+### 
+
+The data set in the **modeldata** package (a tidymodels package with example data sets) has daily values between January 22, 2001 and August 28, 2016.
+
+### Exercise 4
+
+Pipe `Chicago` to `slice()`. Add the parameter `1:(n-14)` and set the entire expression to `Chicago_train`.
+
+```{r determining-model-ap-4, exercise = TRUE}
+
+```
+
+```{r determining-model-ap-4-hint-1, eval = FALSE}
+Chicago_train <- Chicago |> slice(...:(...))
+```
+
+```{r include = FALSE}
+Chicago_train <- Chicago |> slice(1:(n - 14))
+```
+
+### 
+
+Using the standard error as a measure to preclude samples from being predicted can also be applied to models with numeric outcomes. 
+
+### Exercise 5
+
+Pipe `Chicago` to `slice()`. Add the parameter `(n - 13):n`. Set this expression to `Chicago_test` using `<-`.
+
+```{r determining-model-ap-5, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r determining-model-ap-5-hint-1, eval = FALSE}
+Chicago_test <- Chicago |> slice((...):...)
+```
+
+```{r include = FALSE}
+Chicago_test <- Chicago |> slice((n - 13):n)
+```
+
+### 
+
+The main predictors are lagged ridership data at different train stations, including Clark and Lake, as well as the date. The ridership predictors are highly correlated with one another.
+
+### Exercise 6
+
+Type `recipe()`. Add the parameter `ridership ~ .`, and `data`, setting it equal to `Chicago_train`.
+
+```{r determining-model-ap-6, exercise = TRUE}
+
+```
+
+```{r determining-model-ap-6-hint-1, eval = FALSE}
+recipe(..., data = ...)
+```
+
+```{r include = FALSE}
+recipe(ridership ~ ., data = Chicago_train)
+```
+
+### 
+
+In the following recipe, the date column is expanded into several new features, and the ridership predictors are represented using partial least squares (PLS) components. 
+
+### Exercise 7
+
+Copy the previous code and pipe it to `step_date()`. Add the parameter `date`. Then, pipe the code to `step_holiday()`. Add the parameters `date` and `keep_original_cols`, setting it equal to `FALSE`.
+
+```{r determining-model-ap-7, exercise = TRUE}
+
+```
+
+```{r determining-model-ap-7-hint-1, eval = FALSE}
+... |>
+  step_date(...) |>
+  step_holiday(..., keep_original_cols = ...)
+```
+
+```{r include = FALSE}
+recipe(ridership ~ ., data = Chicago_train) |>
+  step_date(date) |>
+  step_holiday(date, keep_original_cols = FALSE)
+```
+
+### 
+
+PLS [Geladi and Kowalski 1986](https://www.tmwr.org/trust#ref-Geladi:1986) is a supervised version of principal component analysis where the new features have been decorrelated but are predictive of the outcome data.
+
+### Exercise 8
+
+Copy the previous code and pipe it to `step_dummy()`. Add the parameter `all_nominal()`. Then, pipe the code to `step_zv()`, adding the parameter `all_predictors()`.
+
+```{r determining-model-ap-8, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r determining-model-ap-8-hint-1, eval = FALSE}
+... |>
+  step_dummy(...()) |>
+  step_zv(...())
+```
+
+```{r include = FALSE}
+recipe(ridership ~ ., data = Chicago_train) |>
+  step_date(date) |>
+  step_holiday(date, keep_original_cols = FALSE) |>
+  step_dummy(all_nominal()) |>
+  step_zv(all_predictors())
+```
+
+### 
+
+`step_holiday()` creates a specification of a recipe step that will convert date data into one or more binary indicator variables for common holidays.
+
+### Exercise 9
+
+Copy the previous code and pipe it to `step_normalize()`. Add the parameter `!!!stations`.
+
+```{r determining-model-ap-9, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r determining-model-ap-9-hint-1, eval = FALSE}
+... |>
+  step_normalize(!!!...)
+```
+
+```{r include = FALSE}
+recipe(ridership ~ ., data = Chicago_train) |>
+  step_date(date) |>
+  step_holiday(date, keep_original_cols = FALSE) |>
+  step_dummy(all_nominal()) |>
+  step_zv(all_predictors()) |>
+  step_normalize(!!!stations)
+```
+
+### 
+
+`step_pls()` creates a specification of a recipe step that will convert numeric data into one or more new dimensions.
+
+### Exercise 10
+
+Copy the previous code and pipe it to `step_pls()`. Add the parameters `!!!stations`, `num_comp`, setting it equal to `10`, and `outcome`, setting it equal to `vars(ridership)`. Finally, set the entire expression to `base_recipe` using `<-`.
+
+```{r determining-model-ap-10, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r determining-model-ap-10-hint-1, eval = FALSE}
+base_recipe <-
+  ... |>
+  step_pls(!!!..., num_comp = ..., outcome = vars(...))
+```
+
+```{r include = FALSE}
+base_recipe <-
+  recipe(ridership ~ ., data = Chicago_train) |>
+  step_date(date) |>
+  step_holiday(date, keep_original_cols = FALSE) |>
+  step_dummy(all_nominal()) |>
+  step_zv(all_predictors()) |>
+  step_normalize(!!!stations) |>
+  step_pls(!!!stations, num_comp = 10, outcome = vars(ridership))
+```
+
+### 
+
+Now, lets create a specification for the model fit.
+
+### Exercise 11
+
+Pipe `linear_reg()` to `set_engine()`, adding the parameter `"lm"` to `set_engine()`. Then, set the entire expression to `lm_spec` using `<-`.
+
+```{r determining-model-ap-11, exercise = TRUE}
+
+```
+
+```{r determining-model-ap-11-hint-1, eval = FALSE}
+lm_spec <-
+  linear_reg() |>
+  set_engine("...")
+```
+
+```{r include = FALSE}
+lm_spec <-
+  linear_reg() |>
+  set_engine("lm")
+```
+
+### 
+
+In cases where there is significant extrapolation or aberrant predictor values, the standard error might increase. The benefit of using the standard error of prediction is that it might also flag predictions that are problematic (as opposed to simply uncertain).
+
+### Exercise 12
+
+Pipe `workflow()` to `add_recipe()`, adding the parameter `base_recipe` to `add_recipe()`. Then, pipe the code to `add_model(lm_spec)` and set the whole expression to `lm_wflow()` using `<-`.
+
+```{r determining-model-ap-12, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r determining-model-ap-12-hint-1, eval = FALSE}
+lm_wflow <-
+  workflow() |>
+  ...(base_recipe) |>
+  add_model(...)
+```
+
+```{r include = FALSE}
+lm_wflow <-
+  workflow() |>
+  add_recipe(base_recipe) |>
+  add_model(lm_spec)
+```
+
+### 
+
+One reason we used the Bayesian model is that it naturally estimates the standard error of prediction; not many models can calculate this.
+
+### Exercise 13
+
+Now let's fit the model using `fit()`. Type `fit()` and add the parameters `lm_wflow` and `data`, setting it equal to `Chicago_train`. Set this entire expression to `lm_fit` using `<-`.
+
+```{r determining-model-ap-13, exercise = TRUE}
+
+```
+
+```{r determining-model-ap-13-hint-1, eval = FALSE}
+lm_fit <- fit(..., data = ...)
+```
+
+```{r include = FALSE}
+lm_fit <- fit(lm_wflow, data = Chicago_train)
+```
+
+### 
+
+How well do the data fit on the test set? We can `predict()` for the test set to find both predictions and prediction intervals.
+
+### Exercise 14
+
+Type `predict()` and add the parameters `lm_fit` and `Chicago_test`.
+
+```{r determining-model-ap-14, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r determining-model-ap-14-hint-1, eval = FALSE}
+predict(..., ...)
+```
+
+```{r include = FALSE}
+predict(lm_fit, Chicago_test)
+
+```
+
+### 
+
+For our test set, using `type = "pred_int"` will produce upper and lower limits and the `std_error` adds a column for that quantity.
+
+### Exercise 15
+
+Copy the previous code and pipe it to `bind_cols()`. Add the parameters `predict()` and `Chicago_test`. Within `predict()`, add the parameters `lm_fit`, `Chicago_test`, and `type`, setting it equal to `"pred_int"`. Then set the entire expression to `res_test` using `<-`.
+
+```{r determining-model-ap-15, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r determining-model-ap-15-hint-1, eval = FALSE}
+res_test <-
+  ... |>
+  bind_cols(
+    predict(..., ..., type= "..."),
+    Chicago_test
+  )
+```
+
+```{r include = FALSE}
+res_test <-
+  predict(lm_fit, Chicago_test) |>
+  bind_cols(
+    predict(lm_fit, Chicago_test, type = "pred_int"),
+    Chicago_test
+  )
+```
+
+### 
+
+Confidence and prediction intervals for linear regression expand as the data become more and more removed from the center of the training set. However, that effect is not dramatic enough to flag these predictions as being poor.
+
+### Exercise 16
+
+Pipe `res_test` to `select()` and add the parameters `date`, `ridership`, and `starts_with(".pred")`.
+
+```{r determining-model-ap-16, exercise = TRUE}
+
+```
+
+```{r determining-model-ap-16-hint-1, eval = FALSE}
+res_test |> select(date, ..., starts_with("..."))
+```
+
+```{r include = FALSE}
+res_test |> select(date, ridership, starts_with(".pred"))
+```
+
+### 
+
+There are a variety of methods to compute an applicability domain model, such as Jaworska, Nikolova-Jeliazkova, and Aldenberg [2005](https://www.tmwr.org/trust#ref-Jaworska) or Netzeva et al. [2005](https://www.tmwr.org/trust#ref-Netzeva). 
+
+### Exercise 17
+
+Pipe `rest_test` to `rmse()`. Add the parameters `ridership` and `.pred`.
+
+```{r determining-model-ap-17, exercise = TRUE}
+
+```
+
+```{r determining-model-ap-17-hint-1, eval = FALSE}
+rest_test |> rmse(..., ...)
+```
+
+```{r include = FALSE}
+rest_test |> rmse(ridership, .pred)
+```
+
+### 
+
+One method that computes an applicability domain model well uses principal component analysis (PCA) on the numeric predictor values. We’ll illustrate the process by using only two of the predictors that correspond to ridership at different stations (California and Austin stations). 
+
+### Exercise 18
+
+Type `predict()` and add the parameters `lm_fit` and `Chicago_2020`.
+
+```{r determining-model-ap-18, exercise = TRUE}
+
+```
+
+```{r determining-model-ap-18-hint-1, eval = FALSE}
+predict(..., ...)
+```
+
+```{r include = FALSE}
+predict(lm_fit, Chicago_2020)
+```
+
+### 
+
+The `bind_cols()` function in R is part of the **dplyr** package, which is a core component of the tidyverse ecosystem. It is used to combine data frames or tibbles by column-wise binding, effectively concatenating them horizontally.
+
+### Exercise 19
+
+Copy the previous code and pipe it to `bind_cols()`. Add the parameter `predict()` and `Chicago_2020`. Within `predict()`, add the parameters `lm_fit`, `Chicago_2020`, and `type` setting it equal to `"pred_int"`. Then, set the entire expression to `res_2020`.
+
+```{r determining-model-ap-19, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r determining-model-ap-19-hint-1, eval = FALSE}
+res_2020 <-
+  ... |>
+  bind_cols(
+    predict(lm_fit, Chicago_2020, type = "..."),
+    ...
+  )
+```
+
+```{r include = FALSE}
+res_2020 <-
+  predict(lm_fit, Chicago_2020) |>
+  bind_cols(
+    predict(lm_fit, Chicago_2020, type = "pred_int"),
+    Chicago_2020
+  ) 
+```
+
+### 
+
+If this model were deployed, how well would it have done a few years later in June 2020? The model successfully makes a prediction, as a predictive model almost always will when given input data.
+
+### Exercise 20
+
+Pipe `res_2020` to `select()`. Add the parameters `date` and `contains(".pred")`.
+
+```{r determining-model-ap-20, exercise = TRUE}
+
+```
+
+```{r determining-model-ap-20-hint-1, eval = FALSE}
+res_2020 |> select(..., contain("..."))
+```
+
+```{r include = FALSE}
+res_2020 |> select(..., contain(".pred"))
+```
+
+### 
+
+The prediction intervals are about the same width, even though these data are well beyond the time period of the original training set. However, given the global pandemic in 2020, the performance on these data are abysmal.
+
+### Exercise 21
+
+Pipe `res_2020` to `select()`. Add the parameters `date`, `ridership`, and `starts_with(".pred")`.
+
+```{r determining-model-ap-21, exercise = TRUE}
+
+```
+
+```{r determining-model-ap-21-hint-1, eval = FALSE}
+res_2020 |> select(date, ..., starts_with("..."))
+```
+
+```{r include = FALSE}
+res_2020 %>% select(date, ridership, starts_with(".pred"))
+```
+
+### 
+
+We’ll use the 20 lagged station ridership predictors as inputs into the PCA analysis. For our example, we’ll use a large value that indicates we should use enough components to account for 99% of the variation in the ridership predictors.
+
+### Exercise 22
+
+Load the library **applicable** using `library()`.
+
+```{r determining-model-ap-22, exercise = TRUE}
+
+```
+
+```{r determining-model-ap-22-hint-1, eval = FALSE}
+library(...)
+```
+
+```{r include = FALSE}
+library(applicable)
+```
+
+### 
+
+The applicable package can develop an applicability domain model using PCA. There is an additional argument called threshold that determines how many components are used in the distance calculation.
+
+### Exercise 23
+
+Type `apd_pca()`. Add the parameters `~.`, `data`, setting that equal to `Chicago_train`, and `threshold`, setting that equal to `0.99`.
+
+```{r determining-model-ap-23, exercise = TRUE}
+
+```
+
+```{r determining-model-ap-23-hint-1, eval = FALSE}
+apd_pca(..., data = ..., threshold = ...)
+```
+
+```{r include = FALSE}
+#apd_pca(~ ., data = Chicago_train, threshold = 0.99)
+```
+
+### 
+
+The 2020 sample is farther from the center than any of the training set samples (with a percentile of 100%). This indicates the sample is very extreme and that its corresponding prediction would be a severe extrapolation (and probably should not be reported).
+
+### Exercise 24
+
+Copy the previous code and in the `data` argument, pipe `Chicago_train` to `select()`. Within `select()`, add the parameter `one_of(stations)`. Then, set the entire expression to `pca_stat` and run it on the next line.
+
+```{r determining-model-ap-24, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r determining-model-ap-24-hint-1, eval = FALSE}
+pca_stat <-
+  apd_pca(~ ., data = Chicago_train |> ...(one_of(...)), threshold = 0.99)
+```
+
+```{r include = FALSE}
+# pca_stat <-
+#   apd_pca(~ ., data = Chicago_train |> select(one_of(stations)), threshold = 0.99)
+# 
+# pca_stat
+```
+
+### 
+
+For `score()` with `by.node = TRUE`, a vector of numeric values, the individual node contributions to the score of the Bayesian network. Otherwise, a single numeric value, the score of the Bayesian network.
+
+### Exercise 25
+
+Type `score()` and add the parameters `pca_stat` and `Chicago_test`. Pipe this code to `select()` and add the parameters `starts_with("distance")`.
+
+```{r determining-model-ap-25, exercise = TRUE}
+
+```
+
+```{r determining-model-ap-25-hint-1, eval = FALSE}
+score(..., ...) |> select(starts_with("..."))
+```
+
+```{r include = FALSE}
+score(pca_stat, Chicago_test) |> select(starts_with("distance"))
+```
+
+### 
+
+Now let's look at the 2020 data.
+
+### Exercise 26
+
+Copy the previous code and change `Chicago_test` to `Chicago_2020`.
+
+```{r determining-model-ap-26, exercise = TRUE}
+
+```
+
+<button onclick = "transfer_code(this)">Copy previous code</button>
+
+```{r determining-model-ap-26-hint-1, eval = FALSE}
+score(pca_stat, ...) |> select(starts_with("distance"))
+
+```
+
+```{r include = FALSE}
+score(pca_stat, Chicago_test) |> select(starts_with("distance"))
+
+```
+
+### 
+
+The **applicable** package also contains specialized methods for data sets where all of the predictors are binary. This method computes similarity scores between training set data points to define the reference distribution.
+
+### 
+
+Great Job! You now know how to determine model applicability by trying to predict the number of customers entering the Clark and Lake train station each day.
+
+## Summary
+### 
+
+This tutorial covered [Chapter 19: When Should you Trust Your Predictions?](https://www.tmwr.org/trust) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. This tutorial showed two methods for evaluating whether predictions should be reported to the consumers of models. Equivocal zones deal with outcomes/predictions and can be helpful when the amount of uncertainty in a prediction is too large.
+
+```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
+```
