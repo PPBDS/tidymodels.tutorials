@@ -4110,14 +4110,14 @@
     },
     "tutorial.helpers": {
       "Package": "tutorial.helpers",
-      "Version": "0.2.5.9005",
+      "Version": "0.2.5.9009",
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
-      "RemoteRepo": "tutorial.helpers",
       "RemoteUsername": "PPBDS",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "cc4569bd112ae397246ad6720fb32ed8d6182e0d",
+      "RemoteRepo": "tutorial.helpers",
+      "RemoteRef": "main",
+      "RemoteSha": "aef2ee93002a35d0b7a451d5c7ca2a861fe4ceba",
       "Requirements": [
         "R",
         "dplyr",
@@ -4133,7 +4133,7 @@
         "stringr",
         "tibble"
       ],
-      "Hash": "55228ea53e0c8749496bdd8892c9d9d4"
+      "Hash": "c40c72e0bb9d54fbf423333ef112e5ef"
     },
     "tweenr": {
       "Package": "tweenr",
