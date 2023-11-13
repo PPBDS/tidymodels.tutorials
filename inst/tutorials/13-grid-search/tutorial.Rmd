@@ -74,6 +74,8 @@ mlp_param <-
 
 roc_res <- metric_set(roc_auc)
 
+## error starts here
+
 mlp_reg_tune <-
   mlp_wflow |>
   tune_grid(
@@ -81,6 +83,7 @@ mlp_reg_tune <-
     grid = mlp_param |> grid_regular(levels = 3),
     metrics = roc_res
   )
+
 
 mlp_sfd_tune <-
   mlp_wflow |>
