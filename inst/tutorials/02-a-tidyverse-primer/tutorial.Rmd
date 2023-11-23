@@ -50,16 +50,16 @@ result <- compute_log_ratio(mtcars$mpg, mtcars$wt)
 ## Introduction
 ### 
 
-This tutorial covers [Chapter 2: Tidyverse Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We briefly discuss important principles of the [*Tidyverse*](https://www.tidyverse.org) design philosophy and how they apply in the context of modeling software that is easy to use properly and supports good statistical practices. The [**tidymodels**](https://www.tidymodels.org/) and the [**tidyverse**](https://tidyverse.tidyverse.org/) packages build on the R language, and [**tidymodels**](https://www.tidymodels.org/packages/) applies *Tidyverse* principles to building models.
+This tutorial explores [Chapter 2: Tidyverse Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles) in [*Tidy Modeling with R*](https://www.tmwr.org/) authored by Max Kuhn and Julia Silge. We will dvelve into the important principles of the [*Tidyverse*](https://www.tidyverse.org) design philosophy, discovering their relevance in the context of modeling software. This tutorial illuminates key concepts that contribute to the creation of user-friendly modeling software and support sound statistical practices. The integration of  [**tidymodels**](https://www.tidymodels.org/) and the [**tidyverse**](https://tidyverse.tidyverse.org/) packages is pivotal. The [**tidymodels**](https://www.tidymodels.org/packages/) applies *Tidyverse* principles to building models , enhancing the overall modeling experience.
 
 ## Tidyverse principles
 ### 
 
-The full set of strategies and tactics for writing R code in the *Tidyverse* style can be found at this [website](https://design.tidyverse.org). Here we can briefly describe several of the general *Tidyverse* design principles, their motivation, and how we think about modeling as an application of these principles.
+Learn R coding in the **Tidyverse** style at this [website](https://design.tidyverse.org). We'll touch on essential **Tidyverse** design principles and how they relate to modeling.
 
 ### Exercise 1
 
-Load the **tidyverse** library.
+Load the **tidyverse** library using `library()`.
 
 ```{r tidyverse-principles-1, exercise = TRUE}
 
@@ -75,7 +75,7 @@ library(tidyverse)
 
 ### 
 
-At first we will not be using the **tidyverse** functions, as we are trying to understand the core language of R.
+Since the beginning of the twenty-first century, mathematical models have become ubiquitous in our daily lives. From ordering a product from a website, typing a text message to a friend and having it autocorrected, and checking email, there is a good chance that some type of model was involved. 
 
 
 ### Exercise 3
@@ -87,6 +87,10 @@ Type `mtcars` and hit "Run Code."
 ```
 
 ```{r tidyverse-principles-3-hint-1, eval = FALSE}
+mtcars
+```
+
+```{r, include=FALSE}
 mtcars
 ```
 
@@ -106,6 +110,10 @@ Next, we will extract the information regarding the first row of `mtcars`. In sq
 
 ```{r tidyverse-principles-4-hint-1, eval = FALSE}
 mtcars[..., ]
+```
+
+```{r include=FALSE}
+mtcars[1,]
 ```
 
 ### 
@@ -249,6 +257,10 @@ arrange(.data = mtcars, gear, mpg)
 
 ```
 
+```{r, include=FALSE}
+arrange(.data = mtcars, gear, mpg)
+```
+
 ### 
 
 Notice that the output is the exactly similar in Exercise 9. This is the way order a data frame using the `tidyverse` function `arrange()`.
@@ -262,7 +274,7 @@ Great job! You have learned the core language of R and compared its functionalit
 
 <!-- Fix this intro -->
 
-Whenever possible, functions should avoid returning a novel data structure. This reduces the cognitive load when using software; no additional syntax or methods are required.
+Functions should strive to leverage existing data structures whenever feasible. This practice minimizes cognitive load for users, eliminating the need for additional syntax or methods when interacting with the software.
 
 ### 
 
@@ -283,6 +295,10 @@ library(...)
 ```{r include = FALSE}
 library(rsample)
 ```
+
+###
+
+It is important that the modeling software you use is easy to operate properly. The user interface should not be so poorly designed that the user would not know that they used it inappropriately.
 
 ### Exercise 2
 
@@ -330,10 +346,8 @@ We will explore **rsample** using the bootstrap method. Access `bootstraps()` fr
 ...::bootstraps()
 ```
 
-<!-- DK: Shouldn't error = TRUE work here? -->
-
-```{r include = FALSE}
-#rsample::bootstraps()
+```{r include = FALSE error = TRUE}
+rsample::bootstraps()
 
 ```
 
@@ -359,7 +373,7 @@ rsample::bootstraps(mtcars)
 
 ### 
 
-As you can see, this outputs 25 rows of bootstraps. But we only want 3 bootstrap splits.
+This outputs 25 rows of bootstraps. But we only want 3 bootstrap splits.
 
 ### Exercise 6
 
