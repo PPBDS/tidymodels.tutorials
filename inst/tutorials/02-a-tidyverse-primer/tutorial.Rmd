@@ -78,19 +78,19 @@ library(tidyverse)
 Since the beginning of the twenty-first century, mathematical models have become ubiquitous in our daily lives. From ordering a product from a website, typing a text message to a friend and having it autocorrected, and checking email, there is a good chance that some type of model was involved. 
 
 
-### Exercise 3
+### Exercise 2
 
 Type `mtcars` and hit "Run Code."
 
-```{r tidyverse-principles-3, exercise = TRUE}
+```{r tidyverse-principles-2, exercise = TRUE}
 
 ```
 
-```{r tidyverse-principles-3-hint-1, eval = FALSE}
+```{r tidyverse-principles-2-hint-1, eval = FALSE}
 mtcars
 ```
 
-```{r, include=FALSE}
+```{r include = FALSE}
 mtcars
 ```
 
@@ -98,9 +98,31 @@ mtcars
 
 `mtcars` is an R data frame with information about `r dim(mtcars)[1]` cars.
 
-### Exercise 4
+### Exercise 3
 
 Next, we will extract the information regarding the first row of `mtcars`. In square brackets, next to `mtcars`, put `1,` and hit "Run Code."
+
+```{r tidyverse-principles-3, exercise = TRUE}
+
+```
+
+<button onclick="transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-principles-3-hint-1, eval = FALSE}
+mtcars[..., ]
+```
+
+```{r include = FALSE}
+mtcars[1,]
+```
+
+### 
+
+We can now see that every column of the first row in `mtcars` is printed.
+
+### Exercise 4
+
+Next, we will try extracting the second and fourth row. Copy the previous code from before and inside the brackets, remove `1,` and select the rows `2,4` using `c()`. Remember to use a `,` after you put the vector in the bracket.
 
 ```{r tidyverse-principles-4, exercise = TRUE}
 
@@ -109,28 +131,6 @@ Next, we will extract the information regarding the first row of `mtcars`. In sq
 <button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-principles-4-hint-1, eval = FALSE}
-mtcars[..., ]
-```
-
-```{r include=FALSE}
-mtcars[1,]
-```
-
-### 
-
-We can now see that every column of the first row in `mtcars` is printed.
-
-### Exercise 5
-
-Next, we will try extracting the second and fourth row. Copy the previous code from before and inside the brackets, remove `1,` and select the rows `2,4` using `c()`. Remember to use a `,` after you put the vector in the bracket.
-
-```{r tidyverse-principles-5, exercise = TRUE}
-
-```
-
-<button onclick="transfer_code(this)">Copy previous code</button>
-
-```{r tidyverse-principles-5-hint-1, eval = FALSE}
 mtcars[...(2, 4), ]
 ```
 
@@ -142,15 +142,15 @@ mtcars[c(2, 4), ]
 
 Now you can see every column printed for the second and fourth row of `mtcars`.
 
-### Exercise 6
+### Exercise 5
 
 Now we will look at the `gear` column in `mtcars`. Extract `gear` from `mtcars` using `$`.
 
-```{r tidyverse-principles-6, exercise = TRUE}
+```{r tidyverse-principles-5, exercise = TRUE}
 
 ```
 
-```{r tidyverse-principles-6-hint-1, eval = FALSE}
+```{r tidyverse-principles-5-hint-1, eval = FALSE}
 ...$gear
 ```
 
@@ -162,15 +162,15 @@ mtcars$gear
 
 Each car in `mtcars` has a listed amount of gears ranging from 3 to 5. This can be ordered, however.
 
-### Exercise 7
+### Exercise 6
 
 To understand the functionality of `order()`, pass in a vector argument of `6, 9, 8` using `c()`.
 
-```{r tidyverse-principles-7, exercise = TRUE}
+```{r tidyverse-principles-6, exercise = TRUE}
 
 ```
 
-```{r tidyverse-principles-7-hint-1, eval = FALSE}
+```{r tidyverse-principles-6-hint-1, eval = FALSE}
 order(...(6, 9, 8))
 ```
 
@@ -182,17 +182,17 @@ order(c(6, 9, 8))
 
 The `order()` does not order the elements as entered in the arguments, but rather sorts them and returns the index of each value.
 
-### Exercise 8
+### Exercise 7
 
 Copy the previous code. Now, instead, pass `mtcars$gear` as the argument.
 
-```{r tidyverse-principles-8, exercise = TRUE}
+```{r tidyverse-principles-7, exercise = TRUE}
 
 ```
 
 <button onclick="transfer_code(this)">Copy previous code</button>
 
-```{r tidyverse-principles-8-hint-1, eval = FALSE}
+```{r tidyverse-principles-7-hint-1, eval = FALSE}
 order(mtcars$...)
 ```
 
@@ -204,17 +204,17 @@ order(mtcars$gear)
 
 The `order()` sorts a string vector by looking at the first letter of each string and sorting it in alphabetical order, returning the indexes of the words in the vector.
 
-### Exercise 9
+### Exercise 8
 
 Copy the previous code. In `mtcars[]`, pass in the previous code in the brackets. Don't forget the `,` after the `order()` expression within the brackets!
 
-```{r tidyverse-principles-9, exercise = TRUE}
+```{r tidyverse-principles-8, exercise = TRUE}
 
 ```
 
 <button onclick="transfer_code(this)">Copy previous code</button>
 
-```{r tidyverse-principles-9-hint-1, eval = FALSE}
+```{r tidyverse-principles-8-hint-1, eval = FALSE}
 mtcars[order(...$gear), ]
 ```
 
@@ -226,17 +226,17 @@ mtcars[order(mtcars$gear), ]
 
 As you can see, the mtcars data frame column `gear` is ordered from *descending* order using the `order()` function.
 
-### Exercise 10
+### Exercise 9
 
 Copy the previous code. Add `mtcars$mpg` into the `order()` function. Don't forget the `,` after the `order()` expression within the brackets!
 
-```{r tidyverse-principles-10, exercise = TRUE}
+```{r tidyverse-principles-9, exercise = TRUE}
 
 ```
 
 <button onclick="transfer_code(this)">Copy previous code</button>
 
-```{r tidyverse-principles-10-hint-1, eval = FALSE}
+```{r tidyverse-principles-9-hint-1, eval = FALSE}
 mtcars[order(mtcars$..., mtcars$...), ]
 ```
 
@@ -248,16 +248,16 @@ mtcars[order(mtcars$gear, mtcars$mpg), ]
 
 We have now successfully order the data frame `mtcars` by `mpg` and `gears`. You can see that for each `gear` value, the `mpg` is in descending order.
 
-### Exercise 11
+### Exercise 10
 
 Run the code below.
 
-```{r tidyverse-principles-11, exercise = TRUE}
+```{r tidyverse-principles-10, exercise = TRUE}
 arrange(.data = mtcars, gear, mpg)
 
 ```
 
-```{r, include=FALSE}
+```{r include = FALSE}
 arrange(.data = mtcars, gear, mpg)
 ```
 
@@ -296,7 +296,7 @@ library(...)
 library(rsample)
 ```
 
-###
+### 
 
 It is important that the modeling software you use is easy to operate properly. The user interface should not be so poorly designed that the user would not know that they used it inappropriately.
 
@@ -346,8 +346,8 @@ We will explore **rsample** using the bootstrap method. Access `bootstraps()` fr
 ...::bootstraps()
 ```
 
-```{r include = FALSE error = TRUE}
-rsample::bootstraps()
+```{r include = FALSE}
+#rsample::bootstraps()
 
 ```
 
