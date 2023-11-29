@@ -802,7 +802,7 @@ head(mtcars$mpg, 3) |>
   map_dbl(...)
 ```
 
-```{r include = FALSE}
+```{r design-for-the-pipe-and-functi-18-test, include = FALSE}
 head(mtcars$mpg, 3) |>
   map_dbl(sqrt)
 ```
@@ -834,7 +834,7 @@ Type in `data.frame()`.
 
 ```
 
-```{r include = FALSE}
+```{r tidyverse-syntax-1-test, include = FALSE}
 data.frame()
 ```
 
@@ -856,7 +856,7 @@ Copy the previous code. Add the column name parameter, `"column 1"`, in the `dat
 data.frame("...")
 ```
 
-```{r include = FALSE}
+```{r tidyverse-syntax-2-test, include = FALSE}
 data.frame("column 1")
 ```
 
@@ -878,7 +878,7 @@ As you can see, there is only one row with the name of the column. The column na
 data.frame("...", check.names = ...)
 ```
 
-```{r include = FALSE}
+```{r tidyverse-syntax-3-test, include = FALSE}
 data.frame("column 1", check.names = FALSE)
 ```
 
@@ -900,7 +900,7 @@ Now lets assign values to the column using the `=` sign. Copy the previous code 
 data.frame("..." = 1:3, check.names = ...)
 ```
 
-```{r include = FALSE}
+```{r tidyverse-syntax-4-test, include = FALSE}
 data.frame("column 1" = 1:3, check.names = FALSE)
 ```
 
