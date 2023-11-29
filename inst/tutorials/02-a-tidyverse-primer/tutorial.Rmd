@@ -90,7 +90,7 @@ Type `mtcars` and hit "Run Code."
 mtcars
 ```
 
-```{r include = FALSE}
+```{r tidyverse-principles-2-test, include = FALSE}
 mtcars
 ```
 
@@ -112,7 +112,7 @@ Next, we will extract the information regarding the first row of `mtcars`. In sq
 mtcars[..., ]
 ```
 
-```{r include = FALSE}
+```{r tidyverse-principles-3-test, include = FALSE}
 mtcars[1,]
 ```
 
@@ -134,7 +134,7 @@ Next, we will try extracting the second and fourth row. Copy the previous code f
 mtcars[...(2, 4), ]
 ```
 
-```{r include = FALSE}
+```{r tidyverse-principles-4-test, include = FALSE}
 mtcars[c(2, 4), ]
 ```
 
@@ -154,7 +154,7 @@ Now we will look at the `gear` column in `mtcars`. Extract `gear` from `mtcars` 
 ...$gear
 ```
 
-```{r include = FALSE}
+```{r tidyverse-principles-5-test, include = FALSE}
 mtcars$gear
 ```
 
@@ -174,7 +174,7 @@ To understand the functionality of `order()`, pass in a vector argument of `6, 9
 order(...(6, 9, 8))
 ```
 
-```{r include = FALSE}
+```{r tidyverse-principles-6-test, include = FALSE}
 order(c(6, 9, 8))
 ```
 
@@ -196,7 +196,7 @@ Copy the previous code. Now, instead, pass `mtcars$gear` as the argument.
 order(mtcars$...)
 ```
 
-```{r include = FALSE}
+```{r tidyverse-principles-7-test, include = FALSE}
 order(mtcars$gear)
 ```
 
@@ -218,7 +218,7 @@ Copy the previous code. In `mtcars[]`, pass in the previous code in the brackets
 mtcars[order(...$gear), ]
 ```
 
-```{r include = FALSE}
+```{r tidyverse-principles-8-test, include = FALSE}
 mtcars[order(mtcars$gear), ]
 ```
 
@@ -240,7 +240,7 @@ Copy the previous code. Add `mtcars$mpg` into the `order()` function. Don't forg
 mtcars[order(mtcars$..., mtcars$...), ]
 ```
 
-```{r include = FALSE}
+```{r tidyverse-principles-9-test, include = FALSE}
 mtcars[order(mtcars$gear, mtcars$mpg), ]
 ```
 
@@ -257,7 +257,7 @@ arrange(.data = mtcars, gear, mpg)
 
 ```
 
-```{r include = FALSE}
+```{r tidyverse-principles-10-test, include = FALSE}
 arrange(.data = mtcars, gear, mpg)
 ```
 
@@ -292,7 +292,7 @@ Load the `rsample` library.
 library(...)
 ```
 
-```{r include = FALSE}
+```{r reuse-existing-data-structures-1-test, include = FALSE}
 library(rsample)
 ```
 
@@ -346,7 +346,7 @@ We will explore **rsample** using the bootstrap method. Access `bootstraps()` fr
 ...::bootstraps()
 ```
 
-```{r include = FALSE}
+```{r reuse-existing-data-structures-4-test, include = FALSE}
 #rsample::bootstraps()
 
 ```
@@ -367,7 +367,7 @@ Using the previous code, enter `mtcars` in `bootstraps()`.
 rsample::bootstraps(...)
 ```
 
-```{r include = FALSE}
+```{r reuse-existing-data-structures-5-test, include = FALSE}
 rsample::bootstraps(mtcars)
 ```
 
