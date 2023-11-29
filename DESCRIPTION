@@ -1,5 +1,5 @@
 Package: tidymodels.tutorials
-Title: Tutorials for Tidy Modeling with R
+Title: Tutorials for "Tidy Modeling with R"
 Version: 0.0.0.9002
 Authors@R: 
     person(given = "David",
