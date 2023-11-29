@@ -50,16 +50,16 @@ result <- compute_log_ratio(mtcars$mpg, mtcars$wt)
 ## Introduction
 ### 
 
-This tutorial covers [Chapter 2: Tidyverse Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We briefly discuss important principles of the [*Tidyverse*](https://www.tidyverse.org) design philosophy and how they apply in the context of modeling software that is easy to use properly and supports good statistical practices. The [**tidymodels**](https://www.tidymodels.org/) and the [**tidyverse**](https://tidyverse.tidyverse.org/) packages build on the R language, and [**tidymodels**](https://www.tidymodels.org/packages/) applies *Tidyverse* principles to building models.
+This tutorial explores [Chapter 2: Tidyverse Principles](https://www.tmwr.org/tidyverse.html#tidyverse-principles) in [*Tidy Modeling with R*](https://www.tmwr.org/) authored by Max Kuhn and Julia Silge. We will dvelve into the important principles of the [*Tidyverse*](https://www.tidyverse.org) design philosophy, discovering their relevance in the context of modeling software. This tutorial illuminates key concepts that contribute to the creation of user-friendly modeling software and support sound statistical practices. The integration of  [**tidymodels**](https://www.tidymodels.org/) and the [**tidyverse**](https://tidyverse.tidyverse.org/) packages is pivotal. The [**tidymodels**](https://www.tidymodels.org/packages/) applies *Tidyverse* principles to building models , enhancing the overall modeling experience.
 
 ## Tidyverse principles
 ### 
 
-The full set of strategies and tactics for writing R code in the *Tidyverse* style can be found at this [website](https://design.tidyverse.org). Here we can briefly describe several of the general *Tidyverse* design principles, their motivation, and how we think about modeling as an application of these principles.
+Learn R coding in the **Tidyverse** style at this [website](https://design.tidyverse.org). We'll touch on essential **Tidyverse** design principles and how they relate to modeling.
 
 ### Exercise 1
 
-Load the **tidyverse** library.
+Load the **tidyverse** library using `library()`.
 
 ```{r tidyverse-principles-1, exercise = TRUE}
 
@@ -75,18 +75,22 @@ library(tidyverse)
 
 ### 
 
-At first we will not be using the **tidyverse** functions, as we are trying to understand the core language of R.
+Since the beginning of the twenty-first century, mathematical models have become ubiquitous in our daily lives. From ordering a product from a website, typing a text message to a friend and having it autocorrected, and checking email, there is a good chance that some type of model was involved. 
 
 
-### Exercise 3
+### Exercise 2
 
 Type `mtcars` and hit "Run Code."
 
-```{r tidyverse-principles-3, exercise = TRUE}
+```{r tidyverse-principles-2, exercise = TRUE}
 
 ```
 
-```{r tidyverse-principles-3-hint-1, eval = FALSE}
+```{r tidyverse-principles-2-hint-1, eval = FALSE}
+mtcars
+```
+
+```{r include = FALSE}
 mtcars
 ```
 
@@ -94,9 +98,31 @@ mtcars
 
 `mtcars` is an R data frame with information about `r dim(mtcars)[1]` cars.
 
-### Exercise 4
+### Exercise 3
 
 Next, we will extract the information regarding the first row of `mtcars`. In square brackets, next to `mtcars`, put `1,` and hit "Run Code."
+
+```{r tidyverse-principles-3, exercise = TRUE}
+
+```
+
+<button onclick="transfer_code(this)">Copy previous code</button>
+
+```{r tidyverse-principles-3-hint-1, eval = FALSE}
+mtcars[..., ]
+```
+
+```{r include = FALSE}
+mtcars[1,]
+```
+
+### 
+
+We can now see that every column of the first row in `mtcars` is printed.
+
+### Exercise 4
+
+Next, we will try extracting the second and fourth row. Copy the previous code from before and inside the brackets, remove `1,` and select the rows `2,4` using `c()`. Remember to use a `,` after you put the vector in the bracket.
 
 ```{r tidyverse-principles-4, exercise = TRUE}
 
@@ -105,24 +131,6 @@ Next, we will extract the information regarding the first row of `mtcars`. In sq
 <button onclick="transfer_code(this)">Copy previous code</button>
 
 ```{r tidyverse-principles-4-hint-1, eval = FALSE}
-mtcars[..., ]
-```
-
-### 
-
-We can now see that every column of the first row in `mtcars` is printed.
-
-### Exercise 5
-
-Next, we will try extracting the second and fourth row. Copy the previous code from before and inside the brackets, remove `1,` and select the rows `2,4` using `c()`. Remember to use a `,` after you put the vector in the bracket.
-
-```{r tidyverse-principles-5, exercise = TRUE}
-
-```
-
-<button onclick="transfer_code(this)">Copy previous code</button>
-
-```{r tidyverse-principles-5-hint-1, eval = FALSE}
 mtcars[...(2, 4), ]
 ```
 
@@ -134,15 +142,15 @@ mtcars[c(2, 4), ]
 
 Now you can see every column printed for the second and fourth row of `mtcars`.
 
-### Exercise 6
+### Exercise 5
 
 Now we will look at the `gear` column in `mtcars`. Extract `gear` from `mtcars` using `$`.
 
-```{r tidyverse-principles-6, exercise = TRUE}
+```{r tidyverse-principles-5, exercise = TRUE}
 
 ```
 
-```{r tidyverse-principles-6-hint-1, eval = FALSE}
+```{r tidyverse-principles-5-hint-1, eval = FALSE}
 ...$gear
 ```
 
@@ -154,15 +162,15 @@ mtcars$gear
 
 Each car in `mtcars` has a listed amount of gears ranging from 3 to 5. This can be ordered, however.
 
-### Exercise 7
+### Exercise 6
 
 To understand the functionality of `order()`, pass in a vector argument of `6, 9, 8` using `c()`.
 
-```{r tidyverse-principles-7, exercise = TRUE}
+```{r tidyverse-principles-6, exercise = TRUE}
 
 ```
 
-```{r tidyverse-principles-7-hint-1, eval = FALSE}
+```{r tidyverse-principles-6-hint-1, eval = FALSE}
 order(...(6, 9, 8))
 ```
 
@@ -174,17 +182,17 @@ order(c(6, 9, 8))
 
 The `order()` does not order the elements as entered in the arguments, but rather sorts them and returns the index of each value.
 
-### Exercise 8
+### Exercise 7
 
 Copy the previous code. Now, instead, pass `mtcars$gear` as the argument.
 
-```{r tidyverse-principles-8, exercise = TRUE}
+```{r tidyverse-principles-7, exercise = TRUE}
 
 ```
 
 <button onclick="transfer_code(this)">Copy previous code</button>
 
-```{r tidyverse-principles-8-hint-1, eval = FALSE}
+```{r tidyverse-principles-7-hint-1, eval = FALSE}
 order(mtcars$...)
 ```
 
@@ -196,17 +204,17 @@ order(mtcars$gear)
 
 The `order()` sorts a string vector by looking at the first letter of each string and sorting it in alphabetical order, returning the indexes of the words in the vector.
 
-### Exercise 9
+### Exercise 8
 
 Copy the previous code. In `mtcars[]`, pass in the previous code in the brackets. Don't forget the `,` after the `order()` expression within the brackets!
 
-```{r tidyverse-principles-9, exercise = TRUE}
+```{r tidyverse-principles-8, exercise = TRUE}
 
 ```
 
 <button onclick="transfer_code(this)">Copy previous code</button>
 
-```{r tidyverse-principles-9-hint-1, eval = FALSE}
+```{r tidyverse-principles-8-hint-1, eval = FALSE}
 mtcars[order(...$gear), ]
 ```
 
@@ -218,17 +226,17 @@ mtcars[order(mtcars$gear), ]
 
 As you can see, the mtcars data frame column `gear` is ordered from *descending* order using the `order()` function.
 
-### Exercise 10
+### Exercise 9
 
 Copy the previous code. Add `mtcars$mpg` into the `order()` function. Don't forget the `,` after the `order()` expression within the brackets!
 
-```{r tidyverse-principles-10, exercise = TRUE}
+```{r tidyverse-principles-9, exercise = TRUE}
 
 ```
 
 <button onclick="transfer_code(this)">Copy previous code</button>
 
-```{r tidyverse-principles-10-hint-1, eval = FALSE}
+```{r tidyverse-principles-9-hint-1, eval = FALSE}
 mtcars[order(mtcars$..., mtcars$...), ]
 ```
 
@@ -240,13 +248,17 @@ mtcars[order(mtcars$gear, mtcars$mpg), ]
 
 We have now successfully order the data frame `mtcars` by `mpg` and `gears`. You can see that for each `gear` value, the `mpg` is in descending order.
 
-### Exercise 11
+### Exercise 10
 
 Run the code below.
 
-```{r tidyverse-principles-11, exercise = TRUE}
+```{r tidyverse-principles-10, exercise = TRUE}
 arrange(.data = mtcars, gear, mpg)
 
+```
+
+```{r include = FALSE}
+arrange(.data = mtcars, gear, mpg)
 ```
 
 ### 
@@ -262,7 +274,7 @@ Great job! You have learned the core language of R and compared its functionalit
 
 <!-- Fix this intro -->
 
-Whenever possible, functions should avoid returning a novel data structure. This reduces the cognitive load when using software; no additional syntax or methods are required.
+Functions should strive to leverage existing data structures whenever feasible. This practice minimizes cognitive load for users, eliminating the need for additional syntax or methods when interacting with the software.
 
 ### 
 
@@ -283,6 +295,10 @@ library(...)
 ```{r include = FALSE}
 library(rsample)
 ```
+
+### 
+
+It is important that the modeling software you use is easy to operate properly. The user interface should not be so poorly designed that the user would not know that they used it inappropriately.
 
 ### Exercise 2
 
@@ -330,8 +346,6 @@ We will explore **rsample** using the bootstrap method. Access `bootstraps()` fr
 ...::bootstraps()
 ```
 
-<!-- DK: Shouldn't error = TRUE work here? -->
-
 ```{r include = FALSE}
 #rsample::bootstraps()
 
@@ -359,7 +373,7 @@ rsample::bootstraps(mtcars)
 
 ### 
 
-As you can see, this outputs 25 rows of bootstraps. But we only want 3 bootstrap splits.
+This outputs 25 rows of bootstraps. But we only want 3 bootstrap splits.
 
 ### Exercise 6
 
