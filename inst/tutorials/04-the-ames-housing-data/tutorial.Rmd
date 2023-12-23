@@ -34,7 +34,7 @@ gg_hist <- ggplot(ames, aes(x = Sale_Price)) +
 ## Introduction
 ### 
 
-This tutorial covers [Chapter 4: The Ames Housing Data](https://www.tmwr.org/ames.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We will introduce the Ames housing data set [(De Cock 2011)](https://www.tmwr.org/ames.html#ref-ames), which we will use in modeling examples in later tutorials. Exploratory data analysis, like what we walk through in this tutorial, is an important first step in building a reliable model.
+This tutorial explores [Chapter 4: The Ames Housing Data](https://www.tmwr.org/ames.html) from [*Tidy Modeling with R*](https://www.tmwr.org/) by Max Kuhn and Julia Silge. We'll introduce the Ames housing data set [(De Cock 2011)](https://www.tmwr.org/ames.html#ref-ames), a key component in upcoming modeling examples. Conducting exploratory data analysis, as demonstrated in this tutorial, serves as a initial phase in constructing a dependable model. 
 
 ## Exploring Features of Homes in Ames
 ### 
