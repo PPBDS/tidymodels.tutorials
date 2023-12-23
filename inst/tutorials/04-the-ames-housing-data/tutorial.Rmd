@@ -57,15 +57,15 @@ The Ames data has been made available through the **modeldata** package, which i
 
 Load the library **tidymodels** using `library()`.
 
-```{r exploring-features-o-1, exercise = TRUE}
+```{r exploring-features-of-homes-in-1, exercise = TRUE}
 
 ```
 
-```{r exploring-features-o-1-hint-1, eval = FALSE}
+```{r exploring-features-of-homes-in-1-hint-1, eval = FALSE}
 library(...)
 ```
 
-```{r include = FALSE}
+```{r exploring-features-of-homes-in-1-test, include = FALSE}
 library(tidymodels)
 ```
 
@@ -77,15 +77,15 @@ The core **tidymodels** packages: [**rsample**](https://rsample.tidymodels.org/)
 
 Now load the data `ames` from the package using the `data()` function.
 
-```{r exploring-features-o-2, exercise = TRUE}
+```{r exploring-features-of-homes-in-2, exercise = TRUE}
 
 ```
 
-```{r exploring-features-o-2-hint-1, eval = FALSE}
+```{r exploring-features-of-homes-in-2-hint-1, eval = FALSE}
 data(...)
 ```
 
-```{r include = FALSE}
+```{r exploring-features-of-homes-in-2-test, include = FALSE}
 data(ames)
 ```
 
@@ -97,15 +97,15 @@ In R, the dim() function is used to retrieve or set the dimensions of an object,
 
 We want to look at how many rows and columns are in `ames`. Use `dim()` with `ames` as the parameter to retrieve a vector of (# of rows, # of columns).
 
-```{r exploring-features-o-3, exercise = TRUE}
+```{r exploring-features-of-homes-in-3, exercise = TRUE}
 
 ```
 
-```{r exploring-features-o-3-hint-1, eval = FALSE}
+```{r exploring-features-of-homes-in-3-hint-1, eval = FALSE}
 dim(...)
 ```
 
-```{r include = FALSE}
+```{r exploring-features-of-homes-in-3-test, include = FALSE}
 dim(ames)
 ```
 
@@ -119,11 +119,11 @@ Let’s start our exploratory data analysis by focusing on the outcome we want t
 
 Type in ames to see the data that we are looking at.
 
-```{r exploring-features-o-4, exercise = TRUE}
+```{r exploring-features-of-homes-in-4, exercise = TRUE}
 
 ```
 
-```{r exploring-features-o-4-hint-1, eval = FALSE}
+```{r exploring-features-of-homes-in-4-hint-1, eval = FALSE}
 ames
 ```
 
@@ -135,18 +135,18 @@ The root mean squared error (RMSE) is a common performance metric used in regres
 
 Copy the previous code and pipe it to ggplot() to start creating a histogram.
 
-```{r exploring-features-o-5, exercise = TRUE}
+```{r exploring-features-of-homes-in-5, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r exploring-features-o-5-hint-1, eval = FALSE}
+```{r exploring-features-of-homes-in-5-hint-1, eval = FALSE}
 ames |>
   ...()
 ```
 
-```{r include = FALSE}
+```{r exploring-features-of-homes-in-5-test, include = FALSE}
 ames |>
   ggplot()
 ```
@@ -159,18 +159,18 @@ In R, ggplot() is a function from the **ggplot2** package, which is a powerful a
 
 We need to establish the x-axis on the graph. Copy the previous code and, using `aes()` within in `ggplot()`, set `x` equal to `Sale_Price`.
 
-```{r exploring-features-o-6, exercise = TRUE}
+```{r exploring-features-of-homes-in-6, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r exploring-features-o-6-hint-1, eval = FALSE}
+```{r exploring-features-of-homes-in-6-hint-1, eval = FALSE}
 ... |>
   ggplot(aes(x = ...))
 ```
 
-```{r include = FALSE}
+```{r exploring-features-of-homes-in-6-test, include = FALSE}
 ames |>
   ggplot(aes(x = Sale_Price))
 ```
@@ -183,18 +183,18 @@ The disadvantages of transforming the outcome mostly relate to interpretation of
 
 Now we will created the histogram. Copy the previous code and add the geom_hist() function to ggplot() using the `+` symbol.
 
-```{r exploring-features-o-7, exercise = TRUE}
+```{r exploring-features-of-homes-in-7, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r exploring-features-o-7-hint-1, eval = FALSE}
+```{r exploring-features-of-homes-in-7-hint-1, eval = FALSE}
 ... +
   geom_histogram()
 ```
 
-```{r include = FALSE}
+```{r exploring-features-of-homes-in-7-test, include = FALSE}
 ames |>
   ggplot(aes(x = Sale_Price)) +
     geom_histogram()
@@ -208,18 +208,18 @@ In **ggplot2**, geom_histogram() is a function used to create a histogram, which
 
 Lets add `bins` to the histogram. Copy the previous code and in geom_histogram(), add the parameter `bins`, setting it equal to `50`.
 
-```{r exploring-features-o-8, exercise = TRUE}
+```{r exploring-features-of-homes-in-8, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r exploring-features-o-8-hint-1, eval = FALSE}
+```{r exploring-features-of-homes-in-8-hint-1, eval = FALSE}
 ... +
   geom_histogram(bins = ...)
 ```
 
-```{r include = FALSE}
+```{r exploring-features-of-homes-in-8-test, include = FALSE}
 ames |>
   ggplot(aes(x = Sale_Price)) +
     geom_histogram(bins = 50)
@@ -233,18 +233,18 @@ This plot shows us that the data are right-skewed; there are more inexpensive ho
 
 Lets add `col` (color) to the histogram. Copy the previous code and in geom_histogram(), add the parameter `col`, setting it equal to `"white"`.
 
-```{r exploring-features-o-9, exercise = TRUE}
+```{r exploring-features-of-homes-in-9, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r exploring-features-o-9-hint-1, eval = FALSE}
+```{r exploring-features-of-homes-in-9-hint-1, eval = FALSE}
 ... +
   geom_histogram(bins = 50, col = "...")
 ```
 
-```{r include = FALSE}
+```{r exploring-features-of-homes-in-9-test, include = FALSE}
 ames |>
   ggplot(aes(x = Sale_Price)) +
     geom_histogram(bins = 50, col = "white")
@@ -258,18 +258,18 @@ From a statistical perspective, a logarithmic transform may also stabilize the v
 
 Copy the previous code and add `scale_x_log10()`.
 
-```{r exploring-features-o-10, exercise = TRUE}
+```{r exploring-features-of-homes-in-10, exercise = TRUE}
 
 ```
 
 <button onclick = "transfer_code(this)">Copy previous code</button>
 
-```{r exploring-features-o-10-hint-1, eval = FALSE}
+```{r exploring-features-of-homes-in-10-hint-1, eval = FALSE}
 ... +
   scale_x_...()
 ```
 
-```{r include = FALSE}
+```{r exploring-features-of-homes-in-10-test, include = FALSE}
 ames |>
   ggplot(aes(x = Sale_Price)) +
     geom_histogram(bins = 50, col = "white") +
@@ -280,7 +280,7 @@ ames |>
 
 The advantages of this type of transformation are that no houses would be predicted with negative sale prices and that errors in predicting expensive houses will not have an undue influence on the model. 
 
-###
+### 
 
 Great Job! You now understood the basic concept of exploratory data analysis by analyzing the sale price of homes in Ames, Iowa. 
 
