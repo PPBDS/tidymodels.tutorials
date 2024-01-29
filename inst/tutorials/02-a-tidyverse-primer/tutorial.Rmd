@@ -389,7 +389,7 @@ Using the previous code, only produce 3 splits using the `times` parameter in `b
 rsample::bootstraps(mtcars, ... = 3)
 ```
 
-```{r include = FALSE}
+```{r reuse-existing-data-structures-6-test, include = FALSE}
 rsample::bootstraps(mtcars, times = 3)
 ```
 
@@ -416,6 +416,10 @@ First, as seen in the previous section, run the code below.
 arrange(mtcars, gear)
 ```
 
+```{r design-for-the-pipe-and-functi-1-test, include = FALSE}
+arrange(mtcars,gear)
+```
+
 ### 
 
 `slice()` lets you index rows by their integer locations. It allows you to select, remove, and duplicate rows.
@@ -434,7 +438,7 @@ Copy the previous code and add it as a parameter in `slice()`.
 slice(...(mtcars, gear))
 ```
 
-```{r include = FALSE}
+```{r design-for-the-pipe-and-functi-2-test, include = FALSE}
 slice(arrange(mtcars, gear))
 ```
 
@@ -456,7 +460,7 @@ Copy the previous code. Add the parameter `5` in `slice()`.
 slice(...(mtcars, gear), 5)
 ```
 
-```{r include = FALSE}
+```{r design-for-the-pipe-and-functi-3-test, include = FALSE}
 slice(arrange(mtcars, gear), 5)
 ```
 
@@ -478,7 +482,7 @@ Copy the previous code and replace the parameter `5` with `1:10`.
 slice(arrange(mtcars, gear), ...)
 ```
 
-```{r include = FALSE}
+```{r design-for-the-pipe-and-functi-4-test, include = FALSE}
 slice(arrange(mtcars, gear), 1:10)
 ```
 
@@ -499,7 +503,7 @@ mtcars |>
   arrange(...)
 ```
 
-```{r include = FALSE}
+```{r design-for-the-pipe-and-functi-5-test, include = FALSE}
 mtcars |>
   arrange(gear)
 ```
@@ -520,7 +524,7 @@ mtcars |>
   slice(...)
 ```
 
-```{r include = FALSE}
+```{r design-for-the-pipe-and-functi-6-test, include = FALSE}
 mtcars |>
   arrange(gear) |>
   slice(1:10)
@@ -535,6 +539,12 @@ User readability is crucial to making coding a more friendly environment for col
 When plotting using **ggplot**, the pipe operator becomes invalid. To `"pipe"` in when plotting, use the `+` symbol. Run the code below to observe plotting.
 
 ```{r design-for-the-pipe-and-functi-7, exercise = TRUE}
+ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point() + 
+  geom_smooth(method = lm)
+```
+
+```{r design-for-the-pipe-and-functi-7-test, include = FALSE}
 ggplot(mtcars, aes(x = wt, y = mpg)) +
   geom_point() + 
   geom_smooth(method = lm)
@@ -575,7 +585,7 @@ compute_log_ratio <- ...(mpg, wt){
 }
 ```
 
-```{r include = FALSE}
+```{r design-for-the-pipe-and-functi-8-test, include = FALSE}
 compute_log_ratio <- function(mpg, wt){
   
 }
@@ -601,7 +611,7 @@ Since we are computing the log ratio, we need to set the base of the log to 1. C
 }
 ```
 
-```{r include = FALSE}
+```{r design-for-the-pipe-and-functi-9-test, include = FALSE}
 compute_log_ratio <- function(mpg, wt, log_base = exp(1)){
   
 }
@@ -627,7 +637,7 @@ It is crucial to have the return statement in the function. Copy the previous co
 }
 ```
 
-```{r include = FALSE}
+```{r design-for-the-pipe-and-functi-10-test, include = FALSE}
 compute_log_ratio <- function(mpg, wt, log_base = exp(1)){
   return()
 }
@@ -653,7 +663,7 @@ The log() function, in this case, will take the ratio between `mpg/wt` and take 
 }
 ```
 
-```{r include = FALSE}
+```{r design-for-the-pipe-and-functi-11-test, include = FALSE}
 compute_log_ratio <- function(mpg, wt, log_base = exp(1)){
   return(log(mpg/wt))
 }
@@ -675,7 +685,7 @@ Copy the previous code and add `base` as a parameter for `log()`, which is equal
 }
 ```
 
-```{r include = FALSE}
+```{r design-for-the-pipe-and-functi-12-test, include = FALSE}
 compute_log_ratio <- function(mpg, wt, log_base = exp(1)){
   return(log(mpg/wt), base = log_base)
 }
@@ -715,7 +725,7 @@ Set the arguments of the function to the columns `mpg` and `wt` from `mtcars` us
 result <- compute_log_ratio(mtcars$..., mtcars$...)
 ```
 
-```{r include = FALSE}
+```{r design-for-the-pipe-and-functi-14-test, include = FALSE}
 #result <- compute_log_ratio(mtcars$mpg, mtcars$wt)
 ```
 
@@ -733,7 +743,7 @@ Finally, copy the previous code and print this value on the next line using `pri
 print(...)
 ```
 
-```{r include = FALSE}
+```{r design-for-the-pipe-and-functi-15-test, include = FALSE}
 print(result)
 ```
 
@@ -755,7 +765,7 @@ First, within the function head(), add the parameter `mtcars$mpg` and `3`, since
 head(mtcars$mpg, ...)
 ```
 
-```{r include = FALSE}
+```{r design-for-the-pipe-and-functi-16-test, include = FALSE}
 head(mtcars$mpg, 3)
 ```
 
@@ -778,7 +788,7 @@ Copy the previous code. Pipe the code to `map()` and add the parameter `sqrt`, a
   map(sqrt)
 ```
 
-```{r include = FALSE}
+```{r design-for-the-pipe-and-functi-17-test, include = FALSE}
 head(mtcars$mpg, 3) |>
   map(sqrt)
 ```
@@ -918,7 +928,7 @@ Now to create another row, copy the previous code and add the column name parame
 df <- data.frame("column 1" = 1:3, `...` = 4:6, check.names = ...)
 ```
 
-```{r include = FALSE}
+```{r tidyverse-syntax-5-test, include = FALSE}
 df <- data.frame("column 1" = 1:3, `two` = 4:6, check.names = FALSE)
 ```
 
@@ -940,7 +950,7 @@ Copy the previous code. Replace `data.frame()` with `tibble()`, keeping the firs
 tbl <- tibble(`...` = 1:3, `...` = 4:6)
 ```
 
-```{r include = FALSE}
+```{r tidyverse-syntax-6-test, include = FALSE}
 tbl <- tibble(`column 1` = 1:3, `two` = 4:6)
 ```
 
@@ -963,7 +973,7 @@ tbl[, ...]
 df[, ...]
 ```
 
-```{r include = FALSE}
+```{r tidyverse-syntax-7-test, include = FALSE}
 tbl[, "two"]
 df[, "two"]
 ```
@@ -986,7 +996,7 @@ Standard data frames enable partial matching of arguments so that code using onl
 ...$tw
 ```
 
-```{r include = FALSE}
+```{r tidyverse-syntax-8-test, include = FALSE}
 df$tw
 ```
 
@@ -1040,7 +1050,7 @@ First, we will be using the **lubridate** package to convert the dates into the 
 library(...)
 ```
 
-```{r include = FALSE}
+```{r tidyverse-syntax-10-test, include = FALSE}
 library(lubridate)
 ```
 
@@ -1056,7 +1066,7 @@ We will also need the **readr** package to use functions that deal with csv file
 library(...)
 ```
 
-```{r include = FALSE}
+```{r tidyverse-syntax-11-test, include = FALSE}
 library(readr)
 ```
 
@@ -1084,7 +1094,7 @@ Now that the data set is assigned to `url`, we will now read the data using the 
 chicago <- read_csv(...)
 ```
 
-```{r include = FALSE}
+```{r tidyverse-syntax-13-test, include = FALSE}
 chicago <- read_csv(url)
 ```
 
@@ -1105,7 +1115,7 @@ chicago |>
   select(..., ..., ...)
 ```
 
-```{r include = FALSE}
+```{r tidyverse-syntax-14-test, include = FALSE}
 chicago |>
   select(stationname, date, rides)
 ```
@@ -1129,7 +1139,7 @@ chicago |>
   select(... = stationname, date, rides)
 ```
 
-```{r include = FALSE}
+```{r tidyverse-syntax-15-test, include = FALSE}
 chicago |>
   select(station = stationname, date, rides)
 ```
@@ -1153,7 +1163,7 @@ We need to change the dates in the data set to the correct R form using `mdy()`.
   mutate(date = mdy(...))
 ```
 
-```{r include = FALSE}
+```{r tidyverse-syntax-16-test, include = FALSE}
 chicago |>
   select(station = stationname, date, rides) |>
   mutate(date = mdy(date))
@@ -1178,7 +1188,7 @@ We also want to make the rides in the units of 1k. Copy the previous code and se
   mutate(date = mdy(...), rides = .../1000)
 ```
 
-```{r include = FALSE}
+```{r tidyverse-syntax-17-test, include = FALSE}
 chicago |>
   select(station = stationname, date, rides) |>
   mutate(date = mdy(date), rides = rides/1000)
@@ -1203,7 +1213,7 @@ To summarize the records using the maximum number of rides, we first need to gro
   group_by(..., ...)
 ```
 
-```{r include = FALSE}
+```{r tidyverse-syntax-18-test, include = FALSE}
 chicago |>
   select(station = stationname, date, rides) |>
   mutate(date = mdy(date), rides = rides/1000) |>
@@ -1231,7 +1241,7 @@ Now that we have grouped the data set by date and station, we will now summarize
   summarize(rides = max(...))
 ```
 
-```{r include = FALSE}
+```{r tidyverse-syntax-19-test, include = FALSE}
 chicago |>
   select(station = stationname, date, rides) |>
   mutate(date = mdy(date), rides = rides/1000) |>
@@ -1258,7 +1268,7 @@ Finally, we do not want the grouped structure to remain after summarizing the da
   summarize(rides = max(rides), .groups = "...")
 ```
 
-```{r include = FALSE}
+```{r tidyverse-syntax-20-test, include = FALSE}
 chicago |>
   select(station = stationname, date, rides) |>
   mutate(date = mdy(date), rides = rides/1000) |>
